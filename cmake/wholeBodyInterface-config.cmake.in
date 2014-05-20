@@ -1,0 +1,30 @@
+# Locate wholeBodyInterface install directory
+
+# This module defines
+# wholeBodyInterface_VERSION_MAJOR
+# wholeBodyInterface_VERSION_MINOR
+# wholeBodyInterface_VERSION_PATCH
+# wholeBodyInterface_INCLUDE_DIRS
+# wholeBodyInterface_LIBRARIES
+# wholeBodyInterface_FOUND, is set to true
+
+
+if(NOT wholeBodyInterface_FOUND)
+  message( "Looking for wholeBodyInterface in: @CMAKE_INSTALL_PREFIX@")
+
+  # Version
+  set(wholeBodyInterface_VERSION "@wholeBodyInterface_VERSION@")
+  set(wholeBodyInterface_VERSION_MAJOR "@wholeBodyInterface_VERSION_MAJOR@")
+  set(wholeBodyInterface_VERSION_MINOR "@wholeBodyInterface_VERSION_MINOR@")
+  set(wholeBodyInterface_VERSION_PATCH "@wholeBodyInterface_VERSION_PATCH@")
+  set(wholeBodyInterface_VERSION_TWEAK "")
+
+  set(wholeBodyInterface_INCLUDE_DIRS "@CMAKE_INSTALL_PREFIX@/include" )
+  set(wholeBodyInterface_LIBRARY_DIRS "@CMAKE_INSTALL_PREFIX@/lib")
+  set(wholeBodyInterface_LIBRARIES "@LIBRARYNAME@" )
+  include("@CMAKE_INSTALL_PREFIX@/share/wholeBodyInterface/wholeBodyInterface-target.cmake")
+  set(wholeBodyInterface_FOUND TRUE)
+
+endif(NOT wholeBodyInterface_FOUND)
+
+
