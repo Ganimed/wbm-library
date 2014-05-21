@@ -1,6 +1,7 @@
 # Copyright: (C) 2013 CoDyCo Consortium
 # Authors: Andrea Del Prete
 # CopyPolicy: Released under the terms of the GNU GPL v2.0 (or any later version).
+cmake_minimum_required(VERSION 2.8)
 
 SET(PROJECTNAME wholeBodyInterface)
 SET(LIBRARYNAME whole-body-interface)
@@ -87,8 +88,8 @@ EXPORT(TARGETS ${LIBRARYNAME} FILE "${PROJECT_BINARY_DIR}/${PROJECTNAME}-target.
 
 #EXPORT(PACKAGE ${PROJECTNAME})
 
-CONFIGURE_FILE(cmake/${PROJECTNAME}-config.cmake.in ${PROJECT_BINARY_DIR}/${PROJECTNAME}-config.cmake @ONLY)
-CONFIGURE_FILE(cmake/${PROJECTNAME}-config-version.cmake.in ${PROJECT_BINARY_DIR}/${PROJECTNAME}-config-version.cmake @ONLY)
+CONFIGURE_FILE(cmake/${PROJECTNAME}Config.cmake.in ${PROJECT_BINARY_DIR}/${PROJECTNAME}Config.cmake @ONLY)
+CONFIGURE_FILE(cmake/${PROJECTNAME}ConfigVersion.cmake.in ${PROJECT_BINARY_DIR}/${PROJECTNAME}ConfigVersion.cmake @ONLY)
 
 INSTALL(FILES ${PROJECT_BINARY_DIR}/${PROJECTNAME}-config.cmake DESTINATION share/${PROJECTNAME})
 INSTALL(FILES ${PROJECT_BINARY_DIR}/${PROJECTNAME}-config-version.cmake DESTINATION share/${PROJECTNAME})
