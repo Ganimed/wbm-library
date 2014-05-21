@@ -18,6 +18,9 @@ find_package(YCM REQUIRED)
 include(YCMDefaultDirs)
 ycm_default_dirs(${VARS_PREFIX})
 
+option(CODYCO_USES_URDFDOM "Compile yarpWholeBodyInterface with URDF support" TRUE)
+option(ICUBWBI_USE_EXTERNAL_TORQUE_CONTROL "Compile yarpwholebodyinterface to use JTC external torque control" FALSE)
+
 find_package(YARP REQUIRED)
 find_package(ICUB REQUIRED)
 find_package(iDynTree REQUIRED)
@@ -79,7 +82,8 @@ target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOU
                                            ${wholeBodyInterface_INCLUDE_DIRS})
 
 target_link_libraries(${LIBRARY_NAME}  ${YARP_LIBRARIES}
-                                       ${iDynTree_LIBRARIES})
+                                       ${iDynTree_LIBRARIES}
+                                       ${wholeBodyInterface_LIBRARIES})
 
 install(TARGETS ${LIBRARY_NAME}
         EXPORT  ${PROJECT_NAME}
