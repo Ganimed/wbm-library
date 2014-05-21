@@ -1,7 +1,7 @@
 # Copyright: (C) 2013 CoDyCo Consortium
 # Authors: Andrea Del Prete
 # CopyPolicy: Released under the terms of the GNU GPL v2.0 (or any later version).
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.11)
 
 SET(PROJECTNAME wholeBodyInterface)
 SET(LIBRARYNAME whole-body-interface)
@@ -64,6 +64,8 @@ else()
     set(LIB_TYPE SHARED)
 endif()
 
+
+
 add_library(${LIBRARYNAME} ${LIB_TYPE} ${folder_source} ${folder_header})
 
 SET_TARGET_PROPERTIES(${LIBRARYNAME} PROPERTIES
@@ -74,7 +76,8 @@ SET_TARGET_PROPERTIES(${LIBRARYNAME} PROPERTIES
   PUBLIC_HEADER "${folder_header}"
   )
 
-
+target_include_directories(${LIBRARYNAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
+                                                 "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${${VARS_PREFIX}_INSTALL_INCLUDEDIR}>")
 INSTALL(TARGETS ${LIBRARYNAME}
   EXPORT ${PROJECTNAME}-target
   ARCHIVE DESTINATION lib
