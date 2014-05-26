@@ -7,7 +7,7 @@ project(yarpWholeBodyInterface CXX)
 
 set(LIBRARY_NAME yarpwholebodyinterface)
 set(VARS_PREFIX ${PROJECT_NAME})
-set(INCLUDE_DIRS include/wbiIcub)
+set(INCLUDE_DIRS wbiIcub)
 
 set(${VARS_PREFIX}_MAJOR_VERSION 0)
 set(${VARS_PREFIX}_MINOR_VERSION 0)
