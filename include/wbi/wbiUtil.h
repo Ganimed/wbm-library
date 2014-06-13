@@ -39,19 +39,6 @@ namespace wbi
     #endif
 #endif
 
-    // iterate over all body parts of the specified jointIds
-#define FOR_ALL_BODY_PARTS_OF(itBp, jIds)   for (LocalIdList::const_iterator itBp=jIds.begin(); itBp!=jIds.end(); itBp++)
-    // iterate over all body parts of the specified jointIds
-#define FOR_ALL_BODY_PARTS_OF_NC(itBp, jIds)   for (LocalIdList::iterator itBp=jIds.begin(); itBp!=jIds.end(); itBp++)
-    // iterate over all joints of the specified body part
-#define FOR_ALL_JOINTS(itBp, itJ)           for(vector<int>::const_iterator itJ=itBp->second.begin(); itJ!=itBp->second.end(); itJ++)
-    // as before, but it uses a nonconst iterator
-#define FOR_ALL_JOINTS_NC(itBp, itJ)        for(vector<int>::iterator itJ=itBp->second.begin(); itJ!=itBp->second.end(); itJ++)
-    // iterate over all joints of all body parts of the specified jointIds
-#define FOR_ALL_OF(itBp, itJ, jIds)         FOR_ALL_BODY_PARTS_OF(itBp, jIds) FOR_ALL_JOINTS(itBp, itJ)
-    // iterate over all joints of all body parts of the specified jointIds
-#define FOR_ALL_OF_NC(itBp, itJ, jIds)      FOR_ALL_BODY_PARTS_OF_NC(itBp, jIds) FOR_ALL_JOINTS_NC(itBp, itJ)
-
 #define EPSILON 1e-6        // tolerance used for zero detection
 
     /** @return The square of the specified value. */
@@ -66,93 +53,127 @@ namespace wbi
     inline double norm3d(const double v[3]){ return norm3d(v[0],v[1],v[2]); }
 
     /**
-     * Identifier composed by a body part identifier and a relative id that identifies the object locally (on the body part).
+     * Identifier used by wholeBodyInterface. It is the class used to identify uniquely
+     * joints, sensors, links and every other kind of entity in wholeBodyInterface .
+     *
      */
-    class LocalId
+    class wbiId
     {
+    private:
+        std::string id;
     public:
-        int         bodyPart;       ///< body part id
-        int         index;          ///< local id
-        std::string description;    ///< description
-        
-        // CONSTRUCTORS
-        LocalId(): bodyPart(0), index(0), description("") {}
-        LocalId(int _bp, unsigned int _j): bodyPart(_bp), index(_j), description("") {}
-        LocalId(int _bp, unsigned int _j, const std::string &_desc): bodyPart(_bp), index(_j), description(_desc) {}
+        wbiId();
 
-        // OPERATORS
-        bool operator==(const LocalId &other) const { return (bodyPart==other.bodyPart && index==other.index); }
-        bool operator> (const LocalId &o) const { return bodyPart>o.bodyPart || (bodyPart==o.bodyPart && index>o.index); }
-        bool operator< (const LocalId &o) const { return bodyPart<o.bodyPart || (bodyPart==o.bodyPart && index<o.index); }
+        wbiId(const std::string & new_id);
+
+        wbiId & operator=(const wbiId & id_copy);
+
+        /**
+         * Get the identifier string for the wbiId
+         */
+        const std::string & toString() const;
+
+        bool operator==(const wbiId & comparison_id) const;
     };
-    
-    
+
     /**
-     * List of identifiers, that is a map from body part identifiers to lists of numbers.
+     * List of wholeBodyInterface identifiers (wbiId).
+     * Used to represent lists of joints, sensors, links, ... .
      */
-    class LocalIdList : public std::map<int, std::vector<int> >
+    class wbiIdList
     {
+    private:
+        std::vector<wbiId> storage;
+
     protected:
         /** Add the specified id without checking its existance. */
-        void pushId(int bp, int i);
-        
+        void pushId(const wbiId & id);
+
     public:
-        LocalIdList();
-        LocalIdList(int bp, int j0);
-        /** Create an id list with the specified ids, all belonging to the same body part.
-         * @param bp Body part
-         * @param j0 First id
-         * @param j1 Second id */
-        LocalIdList(int bp, int j0, int j1);
-        LocalIdList(int bp, int j0, int j1, int j2);
-        LocalIdList(int bp, int j0, int j1, int j2, int j3);
-        LocalIdList(int bp, int j0, int j1, int j2, int j3, int j4);
-        LocalIdList(int bp, int j0, int j1, int j2, int j3, int j4, int j5);
-        LocalIdList(int bp, int j0, int j1, int j2, int j3, int j4, int j5, int j6);
+        wbiIdList();
+        wbiIdList(const wbiId &id0);
+        /**
+         * Create an id list with the specified ids.
+         * @param id0 First id
+         * @param id1 Second id
+         */
 
-        LocalIdList(const LocalIdList &lid1, const LocalIdList &lid2);
-        LocalIdList(const LocalIdList &lid1, const LocalIdList &lid2, const LocalIdList &lid3);
-        LocalIdList(const LocalIdList &lid1, const LocalIdList &lid2, const LocalIdList &lid3, const LocalIdList &lid4);
-        LocalIdList(const LocalIdList &lid1, const LocalIdList &lid2, const LocalIdList &lid3, const LocalIdList &lid4, const LocalIdList &lid5);
-        LocalIdList(const LocalIdList &lid1, const LocalIdList &lid2, const LocalIdList &lid3, const LocalIdList &lid4, const LocalIdList &lid5, const LocalIdList &lid6);
-        
-        virtual ~LocalIdList();
-        
-        /** Convert a local id to a global id */
-        virtual int localToGlobalId(const LocalId &i) const;
+        /** \note this helper function should be deprecated
+         *        as they facilitate putting wbiIdList in code
+         *        while they should be in configuration files.
+         */
+        wbiIdList(const wbiId &id0, const wbiId &id1);
+        wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2);
+        wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3);
+        wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3, const wbiId &id4);
+        wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3, const wbiId &id4, const wbiId& id5);
+        wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3, const wbiId &id4, const wbiId& id5, const wbiId & id6);
 
-        /** Convert a global id to a local id */
-        virtual LocalId globalToLocalId(int globalId) const;
-        
-        /** Remove the specified joint from the list */
-        virtual bool removeId(const LocalId &i);
-        
-        /** Add the specified id to the list.
-         * @param i id to add
+        wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2);
+        wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3);
+        wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3, const wbiIdList &lid4);
+        wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3, const wbiIdList &lid4, const wbiIdList &lid5);
+        wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3, const wbiIdList &lid4, const wbiIdList &lid5, const wbiIdList &lid6);
+
+        virtual ~wbiIdList();
+
+        /**
+         * Convert a wbiId to a numeric id.
+         * Return the numeric id (index) of the specified wbiId in this wbiIdList.
+         * @return true it the specified wbiId is found in the list, false otherwise.
+         */
+        virtual bool wbiIdToNumericId(const wbiId &wbi_id, int & numericId) const;
+
+        /**
+         * Convert a numeric id to a wbiId
+         * @return true it the specified wbiId is found in the list, false otherwise
+         */
+        virtual bool numericIdTowbiId(const int numeridId, wbiId & wbi_id) const;
+
+        /**
+         * Remove the specified id from the list
+         * @return true if the id was found and removed, false if it was not found
+         */
+        virtual bool removeId(const wbiId &id);
+
+        /**
+         * Add the specified id to the list.
+         * @param id id to add
          * @return true if the id has been added, false if it was already present
          */
-        virtual bool addId(const LocalId &i);
-        
-        /** Add the specified ids to the list.
-         * @param i id list to add
-         * @return the number of ids added to the list
-         */
-        virtual int addIdList(const LocalIdList &i);
-        
-        /** Get the number of ids in this list */
-        virtual unsigned int size() const;
-        
-        /* Check whether the specified body part is present in this list. */
-        virtual bool containsBodyPart(int bp) const{ return !(find(bp)==end()); }
-        
-        /* Check whether the specified id is present in this list. */        
-        virtual bool containsId(const LocalId &i) const;
+        virtual bool addId(const wbiId &id);
 
+        /**
+         * Add the specified ids to the list.
+         * @param appendedList id list to add
+         * @return the number of ids added to the list
+         *        (0 if all the elements in the appendedList were already in the list,
+         *         appendedList.size() if all the element in the appendedList were not in the list.
+         *
+         */
+        virtual int addIdList(const wbiIdList &appendedList);
+
+        /**
+         * Get the number of ids in this list
+         * @return the number of ids in the list
+         */
+        virtual unsigned int size() const;
+
+        /**
+         * Check whether the specified id is present in this list.
+         * @return true if the specified id is in the list, false otherwise.
+         */
+        virtual bool containsId(const wbiId &i) const;
+
+        /**
+         * Provide a human readable represent of the list
+         */
         virtual std::string toString() const;
     };
 
 
-    
+
+
     /**
       \brief A rotation in 3 dimensional space.
 
@@ -193,7 +214,7 @@ namespace wbi
         /************************************************************************************************/
         /***************************************** CONSTRUCTORS *****************************************/
         /************************************************************************************************/
-        
+
         /** Create an identity rotation matrix */
         inline Rotation() { *this = Rotation::identity(); }
 
@@ -219,7 +240,7 @@ namespace wbi
         inline Rotation(const double Xx,const double Yx,const double Zx,
                         const double Xy,const double Yy,const double Zy,
                         const double Xz,const double Yz,const double Zz);
-        
+
         // default copy constructor and assignment operator are sufficient (they perform deep copies)
 
         /************************************************************************************************/
@@ -301,7 +322,7 @@ namespace wbi
 
         void getAxisAngle(double &axisX, double &axisY, double &axisZ, double &angle) const;
         /** Returns the rotation angle around the equiv. axis.
-         * Taken from Wikipedia http://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation 
+         * Taken from Wikipedia http://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation
          * @param aa the rotation axis followed by the rotation angle (between [0..PI] )
          */
         void getAxisAngle(double aa[4]) const{ return getAxisAngle(aa[0], aa[1], aa[2], aa[3]); }
@@ -311,7 +332,7 @@ namespace wbi
          * From the following sources:
          * http://web.archive.org/web/20041029003853/http:/www.j3d.org/matrix_faq/matrfaq_latest.html
          * http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
-         * RobOOP::quaternion.cpp 
+         * RobOOP::quaternion.cpp
          */
         void getQuaternion(double& x, double& y, double& z, double& w) const;
         void getQuaternion(double q[4]) const { return getQuaternion(q[0], q[1], q[2], q[3]); }
@@ -333,8 +354,8 @@ namespace wbi
 	     - RPY(roll,pitch,yaw) == RPY( roll +/- PI, PI-pitch, yaw +/- PI )
 	     - angles + 2*k*PI
         **/
-        void getRPY(double& roll, double& pitch, double& yaw) const; 
-        void getRPY(double rpy[3]) const { return getRPY(rpy[0], rpy[1], rpy[2]); } 
+        void getRPY(double& roll, double& pitch, double& yaw) const;
+        void getRPY(double rpy[3]) const { return getRPY(rpy[0], rpy[1], rpy[2]); }
 
         /** Gives back the EulerZYZ convention description of the rotation matrix :
 	     First rotate around Z with alpha,
@@ -381,16 +402,16 @@ namespace wbi
         inline void getDcm(double R[9]) const;
 
         /** Access to the underlying unitvectors of the rotation matrix. */
-        inline void getUnitX(double x[3]) const { x[0]=data[0]; x[1]=data[3]; x[2]=data[6];}   
+        inline void getUnitX(double x[3]) const { x[0]=data[0]; x[1]=data[3]; x[2]=data[6];}
 
         /** Access to the underlying unitvectors of the rotation matrix. */
         inline void getUnitY(double y[3]) const { y[0]=data[1]; y[1]=data[4]; y[2]=data[7]; }
-     
+
         /** Access to the underlying unitvectors of the rotation matrix. */
         inline void getUnitZ(double z[3]) const { z[0]=data[2]; z[1]=data[5]; z[2]=data[8]; }
 
 
-        
+
 
         /************************************************************************************************/
         /********************************************** STATIC ******************************************/
@@ -405,7 +426,7 @@ namespace wbi
         inline static Rotation rotY(double angle);
         //! The Rot... static functions give the value of the appropriate rotation matrix back.
         inline static Rotation rotZ(double angle);
-        
+
         /** @return A rotation about the specified vector with angle equal to the vector norm. */
         static Rotation rotationVector(const double rotvec[3]);
 
@@ -419,7 +440,7 @@ namespace wbi
         static Rotation axisAngle2(const double aa[4]){ return axisAngle2(aa, aa[3]); }
 
         /* Set the value of this object to a rotation specified with RPY convention:
-         * first rotate around X with roll, then around the old Y with pitch, 
+         * first rotate around X with roll, then around the old Y with pitch,
          * then around old Z with yaw.
          *
          * Invariants:
@@ -463,7 +484,7 @@ namespace wbi
      * Frame.R contains columns that represent the axes of frame B wrt frame A
      * Frame.p contains the origin of frame B expressed in frame A.
     */
-    class Frame 
+    class Frame
     {
     public:
         double      p[3];       // Origin of the Frame
@@ -479,7 +500,7 @@ namespace wbi
         explicit inline Frame(const double _p[3]);
         /** The position matrix defaults to zero. */
         explicit inline Frame(const Rotation& _R);
-        
+
         /** Default copy constructor and assignment operator are enough (deep copy). */
 
         /**  Treats a frame as a 4x4 matrix and returns element i,j. It checks bounds when NDEBUG is not set. */
@@ -543,7 +564,7 @@ namespace wbi
 
 // include inline function definitions
 #include <wbi/wbiUtil.inl>
-    
+
 } // end namespace
 
 #endif
