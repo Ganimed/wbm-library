@@ -19,159 +19,154 @@
 #include <wbi/wbi.h>
 #include <sstream>
 
+#include <algorithm>
+
 using namespace std;
 using namespace wbi;
 
 const double PI         = 3.1415926535897932384626433832795;
-const double deg2rad    = 0.01745329251994329576923690768488;
+// const double deg2rad    = 0.01745329251994329576923690768488;
 const double rad2deg    = 57.2957795130823208767981548141052;
 const double epsilon          = 0.000001;
 
+wbiId::wbiId()
+{
+    id = "WBI_ID_DEFAULT_VALUE";
+}
+
+const std::string & wbiId::toString() const
+{
+    return id;
+}
+
+wbiId & wbiId::operator=(const wbiId & id_copy)
+{
+    this->id = id_copy.toString();
+    return *this;
+}
+
+bool wbiId::operator==(const wbiId & comparison_id) const
+{
+    return (comparison_id.toString() == this->id);
+}
 
 
-LocalIdList::LocalIdList()
+wbiIdList::wbiIdList()
 {}
-LocalIdList::LocalIdList(int bp, int j0)
-{ pushId(bp,j0); }
-LocalIdList::LocalIdList(int bp, int j0, int j1)
-{ pushId(bp,j0); pushId(bp,j1);}
-LocalIdList::LocalIdList(int bp, int j0, int j1, int j2)
-{ pushId(bp,j0); pushId(bp,j1); pushId(bp,j2); }
-LocalIdList::LocalIdList(int bp, int j0, int j1, int j2, int j3)
-{ pushId(bp,j0); pushId(bp,j1); pushId(bp,j2); pushId(bp,j3); }
-LocalIdList::LocalIdList(int bp, int j0, int j1, int j2, int j3, int j4)
-{ pushId(bp,j0); pushId(bp,j1); pushId(bp,j2); pushId(bp,j3); pushId(bp,j4); }
-LocalIdList::LocalIdList(int bp, int j0, int j1, int j2, int j3, int j4, int j5)
-{ pushId(bp,j0); pushId(bp,j1); pushId(bp,j2); pushId(bp,j3); pushId(bp,j4); pushId(bp,j5); }
-LocalIdList::LocalIdList(int bp, int j0, int j1, int j2, int j3, int j4, int j5, int j6)
-{ pushId(bp,j0); pushId(bp,j1); pushId(bp,j2); pushId(bp,j3); pushId(bp,j4); pushId(bp,j5); pushId(bp,j6); }
+wbiIdList::wbiIdList(const wbiId &id0)
+{ addId(id0); }
+wbiIdList::wbiIdList(const wbiId &id0, const wbiId &id1)
+{ addId(id0); addId(id1);}
+wbiIdList::wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2)
+{ addId(id0); addId(id1); addId(id2); }
+wbiIdList::wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3)
+{ addId(id0); addId(id1); addId(id2); addId(id3); }
+wbiIdList::wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3, const wbiId &id4)
+{ addId(id0); addId(id1); addId(id2); addId(id3); addId(id4); }
+wbiIdList::wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3, const wbiId &id4, const wbiId& id5)
+{ addId(id0); addId(id1); addId(id2); addId(id3); addId(id4); addId(id5); }
+wbiIdList::wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3, const wbiId &id4, const wbiId& id5, const wbiId & id6)
+{ addId(id0); addId(id1); addId(id2); addId(id3); addId(id4); addId(id5); addId(id6); }
 
-LocalIdList::LocalIdList(const LocalIdList &lid1, const LocalIdList &lid2)
+wbiIdList::wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2)
 { addIdList(lid1); addIdList(lid2); }
-LocalIdList::LocalIdList(const LocalIdList &lid1, const LocalIdList &lid2, const LocalIdList &lid3)
+wbiIdList::wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3)
 { addIdList(lid1); addIdList(lid2); addIdList(lid3); }
-LocalIdList::LocalIdList(const LocalIdList &lid1, const LocalIdList &lid2, const LocalIdList &lid3, const LocalIdList &lid4)
+wbiIdList::wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3, const wbiIdList &lid4)
 { addIdList(lid1); addIdList(lid2); addIdList(lid3); addIdList(lid4); }
-LocalIdList::LocalIdList(const LocalIdList &lid1, const LocalIdList &lid2, const LocalIdList &lid3, const LocalIdList &lid4, const LocalIdList &lid5)
+wbiIdList::wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3, const wbiIdList &lid4, const wbiIdList &lid5)
 { addIdList(lid1); addIdList(lid2); addIdList(lid3); addIdList(lid4); addIdList(lid5); }
-LocalIdList::LocalIdList(const LocalIdList &lid1, const LocalIdList &lid2, const LocalIdList &lid3, const LocalIdList &lid4, const LocalIdList &lid5, const LocalIdList &lid6)
+wbiIdList::wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3, const wbiIdList &lid4, const wbiIdList &lid5, const wbiIdList &lid6)
 { addIdList(lid1); addIdList(lid2); addIdList(lid3); addIdList(lid4); addIdList(lid5); addIdList(lid6); }
 
-LocalIdList::~LocalIdList() {}
+wbiIdList::~wbiIdList() {}
 
-void LocalIdList::pushId(int bp, int i)
+void wbiIdList::pushId(const wbiId &id)
 {
-    //If the bodypart is not part of the LocalIdList, create it
-    if( this->find(bp) == this->end() ) 
+    storage.push_back(id);
+}
+
+bool wbiIdList::wbiIdToNumericId(const wbiId &_wbiId, int & numericId) const
+{
+    wbiId wbi_id = _wbiId;
+    vector<wbiId>::const_iterator it = std::find(storage.begin(),storage.end(),wbi_id);
+    if( it == storage.end() )
     {
-        (*this)[bp] = std::vector<int>(0); 
-    }
-    (*this)[bp].push_back(i);
-}
-
-/** Convert a local id into a global id */
-int LocalIdList::localToGlobalId(const LocalId &i) const
-{
-    int gid = 0;
-    FOR_ALL_BODY_PARTS_OF(itBp, (*this))
-        if(itBp->first == i.bodyPart)
-        {
-            FOR_ALL_JOINTS(itBp, itJ)
-                if(i.index == *itJ)
-                    return gid;
-                else
-                    gid++;
-        }
-        else
-            gid += itBp->second.size();
-    return gid;
-}
-
-/** Convert a global id into a local id */
-LocalId LocalIdList::globalToLocalId(int globalId) const
-{
-    // iterate over list decreasing globalId for each id encountered
-    // when globalId==0 => we found the local id
-    FOR_ALL_BODY_PARTS_OF(itBp, (*this))
-        if(globalId > (int)itBp->second.size())  // if globalId greater than # of ids of current body part 
-            globalId -= itBp->second.size();
-        else
-        {
-            FOR_ALL_JOINTS(itBp, itJ)
-                if(globalId==0)
-                    return LocalId(itBp->first, *itJ);
-                else
-                    globalId--;
-        }
-    return LocalId();
-}
-
-//Remove an existing joint 
-bool LocalIdList::removeId(const LocalId &j)
-{
-    LocalIdList::iterator itBp = find(j.bodyPart);
-    if(itBp == end())
         return false;
-    FOR_ALL_JOINTS_NC(itBp, itJ)
-    {
-        if(j.index == *itJ)
-        {
-            itBp->second.erase(itJ);
-            return true;
-        }
     }
-    return false;
-}
-
-bool LocalIdList::addId(const LocalId &i)
-{
-    if(containsId(i))
-        return false;
-    pushId(i.bodyPart, i.index);
+    numericId = std::distance(storage.begin(),it);
     return true;
 }
 
-int LocalIdList::addIdList(const LocalIdList &jList)
+/** Convert a global id into a local id */
+bool wbiIdList::numericIdTowbiId(const int numeridId, wbiId & wbi_id) const
+{
+    if( numeridId < 0 && numeridId >= this->size() )
+    {
+        return false;
+    }
+    wbi_id = storage[numeridId];
+    return true;
+}
+
+//Remove an existing element
+bool wbiIdList::removeId(const wbiId &j)
+{
+    vector<wbiId>::iterator it = std::find(storage.begin(),storage.end(),j);
+    if( it == storage.end() )
+    {
+        return false;
+    }
+    storage.erase(it);
+    return true;
+}
+
+bool wbiIdList::addId(const wbiId &i)
+{
+    if(containsId(i))
+        return false;
+    pushId(i);
+    return true;
+}
+
+int wbiIdList::addIdList(const wbiIdList &addedList)
 {
     int count = 0;
-    FOR_ALL_OF(itBp, itJ, jList)
-        if(!containsId(LocalId(itBp->first,*itJ)))
+    wbiId added_id;
+    for(int i=0; i < addedList.size(); i++ )
+    {
+        addedList.numericIdTowbiId(i,added_id);
+        if(!containsId(added_id))
         {
-            pushId(itBp->first,*itJ);
+            pushId(added_id);
             count++;
         }
+    }
     return count;
 }
 
-bool LocalIdList::containsId(const LocalId &i) const
+bool wbiIdList::containsId(const wbiId &i) const
 {
-    const_iterator it = find(i.bodyPart);
-    if(it==end())
+    vector<wbiId>::const_iterator it = std::find(storage.begin(),storage.end(),i);
+    if(it==storage.end()) {
         return false;
-    for(unsigned int j=0; j<it->second.size(); j++)
-        if(it->second[j]==i.index)
-            return true;
-    return false;
+    } else {
+        return false;
+    }
 }
 
 // Get the number of ids in this list
-unsigned int LocalIdList::size() const
+unsigned int wbiIdList::size() const
 {
-    unsigned int s=0;
-    FOR_ALL_BODY_PARTS_OF(itBp, (*this))
-        s += itBp->second.size();
-    return s;
+    return storage.size();
 }
 
-string LocalIdList::toString() const
+string wbiIdList::toString() const
 {
     stringstream s;
-    FOR_ALL_BODY_PARTS_OF(itBp, (*this))
+    for(int i=0; i < storage.size(); i++ )
     {
-        s << "(Body part "<< itBp->first<< " Joints ";
-        FOR_ALL_JOINTS(itBp, itJ)
-            s<< *itJ<< " ";
-        s<< ") ";
+        s << storage[i].toString() << std::endl;
     }
     return s.str();
 }
@@ -208,8 +203,8 @@ void Rotation::getQuaternion(double& x, double& y, double& z, double& w) const
             x = 0.25 * s;
             y = ((*this)(0,1) + (*this)(1,0) ) / s;
             z = ((*this)(0,2) + (*this)(2,0) ) / s;
-        } 
-        else if ((*this)(1,1) > (*this)(2,2)) 
+        }
+        else if ((*this)(1,1) > (*this)(2,2))
         {
             double s = 2.0 * sqrt( 1.0 + (*this)(1,1) - (*this)(0,0) - (*this)(2,2));
             w = ((*this)(0,2) - (*this)(2,0) ) / s;
@@ -217,7 +212,7 @@ void Rotation::getQuaternion(double& x, double& y, double& z, double& w) const
             y = 0.25 * s;
             z = ((*this)(1,2) + (*this)(2,1) ) / s;
         }
-        else 
+        else
         {
             double s = 2.0 * sqrt( 1.0 + (*this)(2,2) - (*this)(0,0) - (*this)(1,1) );
             w = ((*this)(1,0) - (*this)(0,1) ) / s;
@@ -225,7 +220,7 @@ void Rotation::getQuaternion(double& x, double& y, double& z, double& w) const
             y = ((*this)(1,2) + (*this)(2,1) ) / s;
             z = 0.25 * s;
         }
-    }    
+    }
 }
 
 void Rotation::getRPY(double& roll,double& pitch,double& yaw) const
@@ -236,32 +231,32 @@ void Rotation::getRPY(double& roll,double& pitch,double& yaw) const
     {
         yaw = atan2(-data[1], data[4]);
         roll  = 0.0;
-    } 
-    else 
+    }
+    else
     {
         roll  = atan2(data[7], data[8]);
         yaw   = atan2(data[3], data[0]);
     }
 }
 
-void Rotation::getEulerZYZ(double& alpha,double& beta,double& gamma) const 
+void Rotation::getEulerZYZ(double& alpha,double& beta,double& gamma) const
 {
     double epsilon = 1E-12;
-    if (fabs(data[8]) > 1-epsilon  ) 
+    if (fabs(data[8]) > 1-epsilon  )
     {
         gamma=0.0;
-        if (data[8]>0) 
+        if (data[8]>0)
         {
             beta = 0.0;
             alpha= atan2(data[3],data[0]);
-        } 
-        else 
+        }
+        else
         {
             beta = PI;
             alpha= atan2(-data[3],-data[0]);
         }
-    } 
-    else 
+    }
+    else
     {
         alpha=atan2(data[5], data[2]);
         beta=atan2(sqrt( sqr(data[6]) + sqr(data[7]) ), data[8]);
@@ -282,7 +277,7 @@ void Rotation::getAxisAngle(double &axisX, double &axisY, double &axisZ, double 
 {
     double x,y,z,w;
     getQuaternion(x,y,z,w);
-    double norm = norm3d(x,y,z); //sqrt(x*x+y*y+z*z); 
+    double norm = norm3d(x,y,z); //sqrt(x*x+y*y+z*z);
     angle = 2*atan2(norm,w);
     if (norm>EPSILON){  axisX = x/norm;         axisY = y/norm;     axisZ = z/norm;   }
     else{               axisX = axisY = 0.0;    axisZ = 1.0;        angle = 0.0;      }
@@ -312,7 +307,7 @@ Rotation Rotation::RPY(double roll,double pitch,double yaw)
                     -sb1,     cb1*sc1,                 cb1*cc1);
 }
 
-Rotation Rotation::eulerZYZ(double Alfa,double Beta,double Gamma) 
+Rotation Rotation::eulerZYZ(double Alfa,double Beta,double Gamma)
 {
     double sa,ca,sb,cb,sg,cg;
     sa  = sin(Alfa);ca = cos(Alfa);
@@ -323,7 +318,7 @@ Rotation Rotation::eulerZYZ(double Alfa,double Beta,double Gamma)
                      -sb*cg ,                sb*sg,              cb );
 }
 
-Rotation Rotation::axisAngle(const double rotaxis[3], double angle) 
+Rotation Rotation::axisAngle(const double rotaxis[3], double angle)
 {
     // The formula is
     // V.(V.tr) + st*[V x] + ct*(I-V.(V.tr))
@@ -339,7 +334,7 @@ Rotation Rotation::axisAngle(const double rotaxis[3], double angle)
 	return Rotation::axisAngle2(v, angle);
 }
 
-Rotation Rotation::axisAngle2(const double rotvec[3], double angle) 
+Rotation Rotation::axisAngle2(const double rotvec[3], double angle)
 {
     // rotvec should be normalized!
     double ct = cos(angle);             double st = sin(angle);             double vt = 1-ct;
@@ -380,7 +375,7 @@ Rotation wbi::operator*(const Rotation& lhs,const Rotation& rhs) // Complexity :
                     lhs.data[6]*rhs.data[2]+lhs.data[7]*rhs.data[5]+lhs.data[8]*rhs.data[8] );
 }
 
-bool wbi::isEqual(const Rotation& a, const Rotation& b, double eps) 
+bool wbi::isEqual(const Rotation& a, const Rotation& b, double eps)
 {
     return (wbi::equal(a.data[0],b.data[0],eps) &&
             wbi::equal(a.data[1],b.data[1],eps) &&
@@ -399,7 +394,7 @@ bool wbi::isEqual(const Rotation& a, const Rotation& b, double eps)
 
 void Frame::get4x4Matrix(double d[16]) const
 {
-    for (int i=0;i<3;i++) 
+    for (int i=0;i<3;i++)
     {
         for (int j=0;j<3;j++)
             d[i*4+j]=R(i,j);
@@ -414,14 +409,14 @@ Frame wbi::operator *(const Frame& lhs,const Frame& rhs)
 {
     double v[3];
     lhs.R.rotate(rhs.p, v);
-    v[0]+=lhs.p[0]; v[1]+=lhs.p[1]; v[2]+=lhs.p[2]; 
+    v[0]+=lhs.p[0]; v[1]+=lhs.p[1]; v[2]+=lhs.p[2];
     return Frame(lhs.R*rhs.R, v);
 }
 
-bool wbi::isEqual(const Frame& a, const Frame& b, double eps) 
+bool wbi::isEqual(const Frame& a, const Frame& b, double eps)
 {
     return (wbi::isEqual(a.R, b.R, eps) &&
-            wbi::equal(a.p[0],b.p[0],eps) && 
-            wbi::equal(a.p[1],b.p[1],eps) && 
+            wbi::equal(a.p[0],b.p[0],eps) &&
+            wbi::equal(a.p[1],b.p[1],eps) &&
             wbi::equal(a.p[2],b.p[2],eps));
 }
