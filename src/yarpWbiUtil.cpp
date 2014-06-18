@@ -14,55 +14,109 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details
  */
- 
+
 #include <iostream>
 #include <algorithm>
 
-#include "wbiIcub/wbiIcubUtil.h"
+#include "yarpWholeBodyInterface/yarpWbiUtil.h"
 
 
-namespace wbiIcub
+namespace yarpWbi
 {
 
+bool loadControlledJointsFromConfig(yarp::os::Property & wbi_yarp_properties,
+                                    const wbi::wbiIdList & jointIdList,
+                                    std::vector<std::string> & controlBoardNames,
+                                    std::vector< std::pair<int,int> > & controlBoardAxisList)
+{
+    yarp::os::Bottle & joints_config = wbi_yarp_properties.findGroup("WBI_YARP_JOINTS");
+
+    //First check that all the joint in the jointIdList an appropriate controlboard mapping is defined
+    std::map<std::string,int> controlBoardIds;
+    for(int jnt=0; jnt < jointIdList.size(); jnt++ )
+    {
+        wbi::wbiId jnt_name;
+        jointIdList.numericIdTowbiId(jnt,jnt_name);
+
+        if( !joints_config.check(jnt_name.toString().c_str()) )
+        {
+            std::cout << "wholeBodyActuactors error: joint " << jnt_name.toString() <<
+                         " not found in WBI_YARP_JOINTS section of configuration file " << std::endl;
+            controlBoardNames.resize(0);
+            return false;
+        }
+
+        yarp::os::Bottle * ctrlBoard_mapping = joints_config.find(jnt_name.toString().c_str()).asList();
+        if( !ctrlBoard_mapping || ctrlBoard_mapping->size() != 2 )
+        {
+            std::cout << "wholeBodyActuactors error: joint " << jnt_name.toString() <<
+                         " found in WBI_YARP_JOINTS but is not in the canonical form (controlBoardName,axis)" << std::endl;
+            controlBoardNames.resize(0);
+            return false;
+        }
+
+
+        std::string controlboard_name = ctrlBoard_mapping->get(0).asString().c_str();
+        if (std::find(controlBoardNames.begin(), controlBoardNames.end(), controlboard_name) == controlBoardNames.end())
+        {
+            controlBoardIds[controlboard_name] = controlBoardNames.size();
+            controlBoardNames.push_back(controlboard_name);
+        }
+    }
+
+    //Resizing structures
+    controlBoardAxisList.resize(jointIdList.size());
+    //totalControlledJointsInControlBoard.resize(controlBoardNames.size(),0);
+
+    //All elements in the jointIdList have a mapping to an axis of a controlboard, we have to save this mapping
+    for(int wbi_jnt=0; wbi_jnt < jointIdList.size(); wbi_jnt++ )
+    {
+        wbi::wbiId wbi_jnt_name;
+        jointIdList.numericIdTowbiId(wbi_jnt,wbi_jnt_name);
+
+        yarp::os::Bottle * ctrlBoard_mapping = joints_config.find(wbi_jnt_name.toString().c_str()).asList();
+
+        std::string controlboard_name = ctrlBoard_mapping->get(0).asString().c_str();
+        int controlboard_jnt_axis = ctrlBoard_mapping->get(1).asInt();
+        int controlboard_wbi_id   = controlBoardIds[controlboard_name];
+
+        //totalControlledJointsInControlBoard[controlboard_wbi_id]++;
+        controlBoardAxisList[wbi_jnt] = std::pair<int,int>(controlboard_wbi_id,controlboard_jnt_axis);
+    }
+
+    return true;
+}
+
+/*
 bool loadBodyPartsFromConfig(yarp::os::Property & wbi_yarp_properties, std::vector<std::string> & body_parts_vector)
 {
-        std::cout << "wbiIcub::loadBodyPartsFromConfig : config passed " << wbi_yarp_properties.toString() << std::endl;
+        std::cout << "yarpWbi::loadBodyPartsFromConfig : config passed " << wbi_yarp_properties.toString() << std::endl;
         yarp::os::Bottle parts_config = wbi_yarp_properties.findGroup("WBI_YARP_BODY_PARTS");
         const std::string numBodyPartsOption = "numBodyParts";
         if( !parts_config.check(numBodyPartsOption) ) {
-            std::cout << "wbiIcub::loadBodyPartsFromConfig error: " << numBodyPartsOption << " option not found" << std::endl;
+            std::cout << "yarpWbi::loadBodyPartsFromConfig error: " << numBodyPartsOption << " option not found" << std::endl;
             return false;
         }
         int numBodyParts = parts_config.find(numBodyPartsOption).asInt();
-        std::cout << "wbiIcub::loadBodyPartsFromConfig : Loading body parts: expecting " << numBodyParts << " parts " << std::endl;
+        std::cout << "yarpWbi::loadBodyPartsFromConfig : Loading body parts: expecting " << numBodyParts << " parts " << std::endl;
         body_parts_vector.resize(numBodyParts);
         for(int bp=0; bp < numBodyParts; bp++ ) {
             std::ostringstream bodyPart_strm;
             bodyPart_strm<<"bodyPart"<<bp;
             std::string bodyPart = bodyPart_strm.str();
             if( ! parts_config.check(bodyPart) ) {
-                std::cout << "wbiIcub::loadBodyPartsFromConfig error: " << bodyPart << " name not found" << std::endl;
+                std::cout << "yarpWbi::loadBodyPartsFromConfig error: " << bodyPart << " name not found" << std::endl;
                 return false;
             }
             body_parts_vector[bp] = parts_config.find(bodyPart).asString().c_str();
-        }   
-        std::cout << "wbiIcub::loadBodyPartsFromConfig: Loaded body parts: ";
+        }
+        std::cout << "yarpWbi::loadBodyPartsFromConfig: Loaded body parts: ";
         for(int i=0; i < body_parts_vector.size(); i++ ) { std::cout << " " << body_parts_vector[i] << std::endl; }
         std::cout << std::endl;
         return true;
 }
 
-bool loadReverseTorsoJointsFromConfig(yarp::os::Property & wbi_yarp_properties, bool & reverse_torso_joints)
-{
-    if(  wbi_yarp_properties.findGroup("WBI_YARP_BODY_PARTS_REMAPPING").check("reverse_torso_joints") ) {
-        reverse_torso_joints = true;
-    } else {
-        reverse_torso_joints = false;
-    }
-    return true;
-}
-
-bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties, 
+bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
                                const std::vector<std::string> & body_parts_vector,
                                std::vector<id_2_PortName> &ports,
                                const std::string group_name)
@@ -76,7 +130,7 @@ bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
     for(int port_id = 0; port_id < ports_list.size(); port_id++ ) {
         yarp::os::Bottle * port = ports_list.get(port_id).asList();
         if( port == NULL || port->size() != 3 ) {
-            std::cout << "wbiIcub::loadSensorPortsFromConfig error: " << ports_list.toString() << " has an element malformed element" << std::endl;
+            std::cout << "yarpWbi::loadSensorPortsFromConfig error: " << ports_list.toString() << " has an element malformed element" << std::endl;
             return false;
         }
         std::string bodyPart = port->get(0).asString().c_str();
@@ -84,7 +138,7 @@ bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
         std::string port_name = port->get(2).asString().c_str();
         int body_part_index = std::find(body_parts_vector.begin(), body_parts_vector.end(), bodyPart) - body_parts_vector.begin();
         if( body_part_index >= (int)body_parts_vector.size() || body_part_index < 0 ) {
-            std::cout << "wbiIcub::loadSensorPortsFromConfig error: bodyPart in " << port->toString() << " not recognized." << std::endl;
+            std::cout << "yarpWbi::loadSensorPortsFromConfig error: bodyPart in " << port->toString() << " not recognized." << std::endl;
             return false;
         }
         id_2_PortName id_port_map;
@@ -95,19 +149,23 @@ bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
     return true;
 }
 
-bool loadFTSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties, 
+bool loadFTSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
                                  const std::vector<std::string> & body_parts_vector,
                                  std::vector<id_2_PortName> &ft_ports)
 {
     return loadSensorPortsFromConfig(wbi_yarp_properties,body_parts_vector,ft_ports,"WBI_YARP_FT_PORTS");
 }
 
-bool loadIMUSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties, 
-                                      const std::vector<std::string> & body_parts_vector, 
+bool loadIMUSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
+                                      const std::vector<std::string> & body_parts_vector,
                                       std::vector<id_2_PortName> &imu_ports)
 {
-    return loadSensorPortsFromConfig(wbi_yarp_properties,body_parts_vector,imu_ports,"WBI_YARP_IMU_PORTS");
+    return loadSensorPortsFromConfig(wbi_yarp_properties,
+                                     body_parts_vector,
+                                     imu_ports,
+                                     "WBI_YARP_IMU_PORTS");
 }
+*/
 
 bool loadTreeSerializationFromConfig(yarp::os::Property & wbi_yarp_properties,
                                      KDL::Tree& tree,
@@ -118,31 +176,31 @@ bool loadTreeSerializationFromConfig(yarp::os::Property & wbi_yarp_properties,
 
     if( !wbi_yarp_properties.check(dofSerializationParamName) ) { return false; }
     if( !wbi_yarp_properties.check(linkSerializationParamName) ) { return false; }
-        
+
     yarp::os::Bottle * dofs_bot = wbi_yarp_properties.find(dofSerializationParamName).asList();
     yarp::os::Bottle * links_bot = wbi_yarp_properties.find(linkSerializationParamName).asList();
 
     if( !dofs_bot || !links_bot ) { return false; }
-    
+
     int serializationDOFs = dofs_bot->size()-1;
     int serializationLinks = links_bot->size()-1;
-    
+
     std::vector<std::string> links;
     links.resize(serializationLinks);
-    
+
     std::vector<std::string> dofs;
     dofs.resize(serializationDOFs);
-    
+
     for(int link=0; link < serializationLinks; link++) {
         links[link] = links_bot[link+1].toString().c_str();
     }
-    
+
     for(int dof=0; dof < serializationDOFs; dof++) {
         dofs[dof] = dofs_bot[dof+1].toString().c_str();
     }
-    
+
     serialization = KDL::CoDyCo::TreeSerialization(tree,links,dofs);
-    
+
     return serialization.is_consistent(tree);
 }
 

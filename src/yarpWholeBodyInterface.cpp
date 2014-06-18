@@ -15,7 +15,7 @@
  * Public License for more details
  */
 
-#include "wbiIcub/yarpWholeBodyInterface.h"
+#include "yarpWholeBodyInterface/yarpWholeBodyInterface.h"
 #include <iCub/skinDynLib/common.h>
 #include <yarp/os/Os.h>
 #include <string>
@@ -42,14 +42,14 @@ using namespace iCub::skinDynLib;
 //                                          ICUB WHOLE BODY INTERFACE
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-yarpWholeBodyInterface::yarpWholeBodyInterface(const char* _name, 
-                                               const char* _robotName, 
+yarpWholeBodyInterface::yarpWholeBodyInterface(const char* _name,
+                                               const char* _robotName,
                                                const char* _urdfFile,
                                                yarp::os::Property & _yarp_wbi_properties)
 {
-    actuatorInt = new icubWholeBodyActuators((_name+string("actuator")).c_str(), _robotName,_yarp_wbi_properties);
+    actuatorInt = new yarpWholeBodyActuators((_name+string("actuator")).c_str(), _robotName,_yarp_wbi_properties);
     //stateInt = new icubWholeBodyStates((_name+string("state")).c_str(), _robotName, 0.0);
-    modelInt = new icubWholeBodyModel((_name+string("model")).c_str(), _robotName, _urdfFile, _yarp_wbi_properties);
+    modelInt = new yarpWholeBodyModel((_name+string("model")).c_str(), _robotName, _urdfFile, _yarp_wbi_properties);
 }
 
 bool yarpWholeBodyInterface::init()

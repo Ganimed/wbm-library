@@ -15,7 +15,7 @@
  * Public License for more details
  */
 
-#include "wbiIcub/wholeBodyInterfaceIcub.h"
+#include "yarpWholeBodyInterface/yarpWholeBodyInterface.h"
 #include <string>
 
 #include <cmath>
@@ -346,7 +346,7 @@ int icubWholeBodyModel::bodyPartJointMapping(int bodypart_id, int local_id)
 
 bool icubWholeBodyModel::getJointLimits(double *qMin, double *qMax, int joint)
 {
-    if( !this->initDriversDone ) return false; 
+    if( !this->initDriversDone ) return false;
     if( (joint < 0 || joint >= (int)jointIdList.size()) && joint != -1 ) { return false; }
 
     if(joint>=0)

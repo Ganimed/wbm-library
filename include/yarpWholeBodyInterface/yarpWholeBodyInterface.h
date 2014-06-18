@@ -19,6 +19,8 @@
 #ifndef WBI_YARP_H
 #define WBI_YARP_H
 
+#include <yarpWholeBodyInterface/yarpWbiUtil.h>
+
 #include <yarp/dev/ControlBoardInterfaces.h>
 #include <yarp/dev/IVelocityControl2.h>
 #include <yarp/os/RateThread.h>
@@ -28,7 +30,6 @@
 #include <iCub/ctrl/filters.h>
 #include <iCub/iDynTree/iCubTree.h>
 #include <iCub/skinDynLib/skinContactList.h>
-#include <wbiIcub/wbiIcubUtil.h>
 #include <map>
 
 #define INITIAL_TIMESTAMP -1000.0
@@ -40,7 +41,7 @@
 /* CODE UNDER DEVELOPMENT */
 
 namespace wbiIcub
-{ 
+{
 
     /*
     const int JOINT_ESTIMATE_TYPES_SIZE = 3;
@@ -55,7 +56,7 @@ namespace wbiIcub
         //wbi::ESTIMATE_MOTOR_TORQUE,      // motor torque
         wbi::ESTIMATE_MOTOR_PWM,         // motor PWM (proportional to motor voltage)
     };*/
-    
+
     /**
      * Class to communicate with iCub.
      */
@@ -64,24 +65,24 @@ namespace wbiIcub
     protected:
         icubWholeBodyActuators  *actuatorInt;
         icubWholeBodyModel      *modelInt;
-        
+
         wbi::LocalIdList empty_id_list;
-       
+
     public:
         // *** CONSTRUCTORS ***
-        yarpWholeBodyInterface(const char* _interfaceName, 
+        yarpWholeBodyInterface(const char* _interfaceName,
                                const char* _robotName,
                                const char* _urdfFile,
                                yarp::os::Property & _yarp_wbi_properties);
 
-        
+
         inline virtual ~yarpWholeBodyInterface(){ close(); }
         virtual bool init();
         virtual bool close();
         virtual bool removeJoint(const wbi::LocalId &j);
         virtual bool addJoint(const wbi::LocalId &j);
         virtual int addJoints(const wbi::LocalIdList &j);
-   
+
         // ACTUATORS
         virtual int getActuatorNumber(){                        return actuatorInt->getActuatorNumber(); }
         virtual bool removeActuator(const wbi::LocalId &j){     return actuatorInt->removeActuator(j); }
@@ -107,7 +108,7 @@ namespace wbiIcub
         { return false; }
         virtual bool setEstimationParameter(const wbi::EstimateType et, const wbi::EstimationParameter ep, const void *value)
         { return false; }
-        
+
         // MODEL
         virtual int getDoFs(){ return modelInt->getDoFs(); }
         virtual const wbi::LocalIdList& getJointList(){ return modelInt->getJointList(); }
@@ -131,9 +132,9 @@ namespace wbiIcub
         { return modelInt->computeGeneralizedBiasForces(q, xB, dq, dxB, g, h); }
          virtual bool computeCentroidalMomentum(double *q, const wbi::Frame &xB, double *dq, double *dxB, double *h)
         { return modelInt->computeCentroidalMomentum(q, xB, dq, dxB, h); }
-   
+
     };
-    
+
 } // end namespace wbiIcub
 
 #endif

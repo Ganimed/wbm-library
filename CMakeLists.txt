@@ -10,8 +10,8 @@ set(VARS_PREFIX ${PROJECT_NAME})
 set(INCLUDE_DIRS wbiIcub)
 
 set(${VARS_PREFIX}_MAJOR_VERSION 0)
-set(${VARS_PREFIX}_MINOR_VERSION 0)
-set(${VARS_PREFIX}_PATCH_VERSION 1)
+set(${VARS_PREFIX}_MINOR_VERSION 2)
+set(${VARS_PREFIX}_PATCH_VERSION 0)
 set(${VARS_PREFIX}_VERSION ${${VARS_PREFIX}_MAJOR_VERSION}.${${VARS_PREFIX}_MINOR_VERSION}.${${VARS_PREFIX}_PATCH_VERSION})
 
 find_package(YCM REQUIRED)
@@ -26,22 +26,22 @@ option(COMPILE_AS_SHARED_LIBRARY "Compile ${PROJECT_NAME} as a shared library" T
 find_package(YARP REQUIRED)
 find_package(ICUB REQUIRED)
 find_package(iDynTree REQUIRED)
-find_package(wholeBodyInterface REQUIRED)
+find_package(wholeBodyInterface 0.2.0 REQUIRED)
 
-SET(folder_source src/wbiIcubUtil.cpp
-                  src/icubWholeBodyInterface.cpp
-                  src/icubWholeBodyModel.cpp
-                  src/icubWholeBodyStates.cpp
-                  src/icubWholeBodyStatesLocal.cpp
-                  src/icubWholeBodyActuators.cpp
-                  src/icubWholeBodySensors.cpp)
-SET(folder_header include/wbiIcub/wholeBodyInterfaceIcub.h
-                  include/wbiIcub/icubWholeBodyModel.h
-                  include/wbiIcub/icubWholeBodyStates.h
-                  include/wbiIcub/icubWholeBodyStatesLocal.h
-                  include/wbiIcub/icubWholeBodyActuators.h
-                  include/wbiIcub/icubWholeBodySensors.h
-                  include/wbiIcub/wbiIcubUtil.h)
+SET(folder_source src/yarpWbiUtil.cpp
+                  src/yarpWholeBodyInterface.cpp
+                  src/yarpWholeBodyModel.cpp
+                  src/yarpWholeBodyStates.cpp
+                  #src/icubWholeBodyStatesLocal.cpp
+                  src/yarpWholeBodyActuators.cpp
+                  src/yarpWholeBodySensors.cpp)
+SET(folder_header include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
+                  include/yarpWholeBodyInterface/yarpWholeBodyModel.h
+                  include/yarpWholeBodyInterface/yarpWholeBodyStates.h
+                  #include/yarpWholeBodyInterface/icubWholeBodyStatesLocal.h
+                  include/yarpWholeBodyInterface/yarpWholeBodyActuators.h
+                  include/yarpWholeBodyInterface/yarpWholeBodySensors.h
+                  include/yarpWholeBodyInterface/yarpWbiUtil.h)
 
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})
@@ -49,10 +49,6 @@ SOURCE_GROUP("Header Files" FILES ${folder_header})
 OPTION(ICUBWBI_USE_EXTERNAL_TORQUE_CONTROL "Set if iCub WBI implementation uses external torque control. False to use YARP Torque Control." FALSE)
 
 if(CODYCO_USES_URDFDOM)
-    SET(folder_source ${folder_source}
-                      src/yarpWholeBodyInterface.cpp)
-    SET(folder_header ${folder_header}
-                      include/wbiIcub/yarpWholeBodyInterface.h)
     add_definitions(-DCODYCO_USES_URDFDOM)
 endif()
 
