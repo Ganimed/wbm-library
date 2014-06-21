@@ -22,6 +22,7 @@ option(CODYCO_USES_URDFDOM "Compile yarpWholeBodyInterface with URDF support" TR
 option(ICUBWBI_USE_EXTERNAL_TORQUE_CONTROL "Compile yarpwholebodyinterface to use JTC external torque control" FALSE)
 option(COMPILE_AS_SHARED_LIBRARY "Compile ${PROJECT_NAME} as a shared library" TRUE)
 
+add_definitions(-DIDYNTREE_USES_ICUB)
 
 find_package(YARP REQUIRED)
 find_package(ICUB REQUIRED)
