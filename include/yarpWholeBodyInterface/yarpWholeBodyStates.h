@@ -37,10 +37,10 @@ namespace wbiIcub
     /**
      * Thread that estimates the state of the iCub robot.
      */
-    class icubWholeBodyEstimator: public yarp::os::RateThread
+    class yarpWholeBodyEstimator: public yarp::os::RateThread
     {
     protected:
-        icubWholeBodySensors        *sensors;
+        yarpWholeBodySensors        *sensors;
         //double                      estWind;        // time window for the estimation
 
         iCub::ctrl::AWLinEstimator  *dqFilt;        // joint velocity filter
@@ -83,8 +83,8 @@ namespace wbiIcub
         bool setPwmCutFrequency(double fc);
 
 
-        std::map<wbi::LocalId, yarp::os::BufferedPort<yarp::sig::Vector>*>  portsEEWrenches;
-        std::map<wbi::LocalId, yarp::sig::Vector>  lastEEWrenches;
+        std::map<wbi::wbiId, yarp::os::BufferedPort<yarp::sig::Vector>*>  portsEEWrenches;
+        std::map<wbi::wbiId, yarp::sig::Vector>  lastEEWrenches;
 
         bool openEEWrenchPorts(const wbi::LocalId & local_id);
         void readEEWrenches(const wbi::LocalId & local_id,yarp::sig::Vector & vec);
@@ -103,10 +103,10 @@ namespace wbiIcub
         yarp::sig::Vector RLExtWrench;
         yarp::sig::Vector LLExtWrench;
 
-        wbi::LocalId right_gripper_local_id;
-        wbi::LocalId left_gripper_local_id;
-        wbi::LocalId left_sole_local_id;
-        wbi::LocalId right_sole_local_id;
+        wbi::wbiId right_gripper_local_id;
+        wbi::wbiId left_gripper_local_id;
+        wbi::wbiId left_sole_local_id;
+        wbi::wbiId right_sole_local_id;
 
         yarp::os::Semaphore         mutex;          // mutex for access to class global variables
 
@@ -127,9 +127,11 @@ namespace wbiIcub
 
         /** Constructor.
          */
-        icubWholeBodyEstimator(int _period, icubWholeBodySensors *_sensors);
+        yarpWholeBodyEstimator(int _period, yarpWholeBodySensors *_sensors);
 
-        bool lockAndSetEstimationParameter(const wbi::EstimateType et, const wbi::EstimationParameter ep, const void *value);
+        bool lockAndSetEstimationParameter(const wbi::EstimateType et,
+                                           const wbi::EstimationParameter ep,
+                                           const void *value);
 
         bool threadInit();
         void run();
@@ -183,21 +185,21 @@ namespace wbiIcub
          * @param sid Id of the estimate.
          * @return True if the estimate has been added, false otherwise (e.g. the estimate has been already added).
          */
-        virtual bool addEstimate(const wbi::EstimateType st, const wbi::LocalId &sid);
+        virtual bool addEstimate(const wbi::EstimateType st, const wbi::wbiId &sid);
 
         /** Add the specified estimates so that they can be read.
          * @param st Type of estimates.
          * @param sids Ids of the estimates.
          * @return True if the estimate has been added, false otherwise (e.g. the estimate has been already added).
          */
-        virtual int addEstimates(const wbi::EstimateType st, const wbi::LocalIdList &sids);
+        virtual int addEstimates(const wbi::EstimateType st, const wbi::wbiIdList &sids);
 
         /** Remove the specified estimate.
          * @param st Type of the estimate to remove.
          * @param j Id of the estimate to remove.
          * @return True if the estimate has been removed, false otherwise.
          */
-        virtual bool removeEstimate(const wbi::EstimateType st, const wbi::LocalId &sid);
+        virtual bool removeEstimate(const wbi::EstimateType st, const wbi::wbiId &sid);
 
         /** Get a copy of the estimate list of the specified estimate type.
          * @param st Type of estimate.
@@ -216,7 +218,7 @@ namespace wbiIcub
          * @param blocking If true, perform a blocking read before estimating, otherwise the estimate is based on the last reading.
          * @return True if all the estimate succeeded, false otherwise.
          */
-        virtual bool getEstimate(const wbi::EstimateType et, const wbi::LocalId &sid, double *data, double time=-1.0, bool blocking=true);
+        virtual bool getEstimate(const wbi::EstimateType et, const int estimate, double *data, double time=-1.0, bool blocking=true);
 
         /** Get all the estimates of the specified estimate type at the specified time.
          * @param et Type of estimate to get.

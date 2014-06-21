@@ -37,16 +37,13 @@ namespace wbiIcub
   /**
      * Interface to the kinematic/dynamic model of iCub.
      */
-    class icubWholeBodyModel: public wbi::iWholeBodyModel
+    class yarpWholeBodyModel: public wbi::iWholeBodyModel
     {
     protected:
-        wbi::LocalIdList jointIdList;
+        wbi::wbiIdList jointIdList;
         int dof;
 
         iCub::iDynTree::DynTree * p_model;
-
-        iCub::iDynTree::iCubTree * p_icub_model;
-
 
         iCub::iDynTree::iCubTree_version_tag version;
 
@@ -77,8 +74,8 @@ namespace wbiIcub
         std::string                                 robot;          // name of the robot
         std::vector<int>                            bodyParts;      // list of the body parts
         std::vector<std::string>                    bodyPartNames;  // names of the body parts
-        std::map<int, yarp::dev::PolyDriver*>       dd;
-        std::map<int, yarp::dev::IControlLimits*>   ilim;
+        std::vector<yarp::dev::PolyDriver*>       dd;
+        std::vector<yarp::dev::IControlLimits*>   ilim;
 
         bool reverse_torso_joints;
 
@@ -111,7 +108,7 @@ namespace wbiIcub
           * @param initial_q the initial value for all the 32 joint angles (default: all 0)
           * @param _bodyPartNames Vector of names of the body part (used when opening the polydrivers)
           */
-        icubWholeBodyModel(const char* _name,
+        yarpWholeBodyModel(const char* _name,
                            const char* _robotName,
                            const iCub::iDynTree::iCubTree_version_tag icub_version,
                            double* initial_q=0,
@@ -127,7 +124,7 @@ namespace wbiIcub
           * @param initial_q the initial value for all the 32 joint angles (default: all 0)
           * @param _bodyPartNames Vector of names of the body part (used when opening the polydrivers)
           */
-        icubWholeBodyModel(const char* _name,
+         yarpWholeBodyModel(const char* _name,
                            const char* _robotName,
                            const iCub::iDynTree::iCubTree_version_tag icub_version,
                            const std::string urdf_file,
@@ -144,14 +141,14 @@ namespace wbiIcub
           * @param wbi_yarp_conf the yarp::os::Property containg the options for wbi
           * @param _bodyPartNames Vector of names of the body part (used when opening the polydrivers)
           */
-        icubWholeBodyModel(const char* _name,
+        yarpWholeBodyModel(const char* _name,
                            const char* _robotName,
                            const char* _urdf_file,
                            yarp::os::Property & wbi_yarp_conf,
                            double* initial_q=0);
         #endif
 
-        inline virtual ~icubWholeBodyModel(){ close(); }
+        virtual ~yarpWholeBodyModel(){ close(); }
         virtual bool init();
         virtual bool close();
 
@@ -162,10 +159,10 @@ namespace wbiIcub
           * iWholeBodyModel is called). If no previous value of the joint angle is known, zero is assumed.
           * @param j Id of the joint to remove
           * @return True if the joint was found and removed, false otherwise. */
-        virtual bool removeJoint(const wbi::LocalId &j);
-        virtual bool addJoint(const wbi::LocalId &j);
-        virtual int addJoints(const wbi::LocalIdList &j);
-        virtual const wbi::LocalIdList& getJointList(){    return jointIdList; }
+        virtual bool removeJoint(const wbi::wbiId &j);
+        virtual bool addJoint(const wbi::wbiId &j);
+        virtual int addJoints(const wbi::wbiIdList &j);
+        virtual const wbi::wbiIdList& getJointList(){    return jointIdList; }
 
         virtual bool getJointLimits(double *qMin, double *qMax, int joint=-1);
 

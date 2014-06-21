@@ -105,8 +105,8 @@ namespace yarpWbi
         wbi::wbiIdList                     jointIdList;
         // list of names of the control boards used in the interface
         std::vector<std::string>           controlBoardNames;
-        // list of bodyPart/Axis pair for each joint
-        std::vector< std::pair<int,int> >  bodyPartAxisList;
+        // list of controlBoard/Axis pair for each joint
+        std::vector< std::pair<int,int> >  controlBoardAxisList;
         // number of joints controlled by wbi for each body part (size as controlBoardNames)
         //std::vector< int >                 controlledJointsInControlBoard;
         // total number of joint in each controlBoard (size as controlBoardNames)

@@ -45,18 +45,28 @@ namespace wbiIcub
         std::string                 name;           // name used as root for the local ports
         std::string                 robot;          // name of the robot
 
+        yarp::os::Property          configurationOptions; //configuration options
+
         //std::vector<int>            bodyParts;      // list of the body parts
         std::vector<std::string>    controlBoardNames;  // names of the body parts
-        std::vector<id_2_PortName>  ftSens_2_port;  // list containing the port name for each force/torque sensor
-        std::vector<id_2_PortName>  imu_2_port;     // list containing the port name for each IMU
-        std::map<int,unsigned int>  bodyPartAxes;   // number of axes for each body part
+        std::vector<unsigned int>   controlBoardAxes;   // number of axes for each body part
 
+
+        //List of controlboard related sensors
         wbi::wbiIdList            emptyList;      ///< empty list of IDs to return in case of error
         wbi::wbiIdList            encoderIdList;  // list of the joint encoder ids
+        std::vector<int>          encoderControlBoardList;
+        std::vector< std::pair<int,int> >  encoderControlBoardAxisList;
         wbi::wbiIdList            pwmSensIdList;  // list of the motor PWM sensor ids
+        std::vector<int>          pwmControlBoardList;
+        std::vector< std::pair<int,int> > pwmControlBoardAxisList;
+        wbi::wbiIdList            torqueSensorIdList; //list of the torque sensor ids
+        std::vector<int>          torqueControlBoardList;
+        std::vector< std::pair<int,int> > torqueControlBoardAxisList;
+
+        //List of sensors that have their own device
         wbi::wbiIdList            imuIdList;      // list of the IMU ids
         wbi::wbiIdList            ftSensIdList;   // list of the force/torque sensor ids
-        wbi::wbiIdList            torqueSensorIdList; //list of the torque sensor ids
 
         // LAST READING DATA (map body parts to data)
         std::map<int, yarp::sig::Vector>            qLastRead;
@@ -66,9 +76,9 @@ namespace wbiIcub
 
         // the "key" of these vectors is the wbi numeric id
         std::vector<yarp::sig::Vector>  imuLastRead;
-        std::map<wbi::wbiId, yarp::sig::Vector>  ftSensLastRead;
-        std::map<wbi::wbiId, double>  imuStampLastRead;
-        std::map<wbi::wbiId, double>  ftStampSensLastRead;
+        std::vector<yarp::sig::Vector>  ftSensLastRead;
+        std::vector<double>  imuStampLastRead;
+        std::vector<double>  ftStampSensLastRead;
 
         // yarp interfaces (the "key" of these vector is wbi numeric controlboard id
         std::vector<yarp::dev::IEncodersTimed*>       ienc;   // interface to read encoders
@@ -176,7 +186,7 @@ namespace wbiIcub
          * @param blocking If true, the reading is blocking, otherwise it is not.
          * @return True if all the readings succeeded, false otherwise.
          */
-        virtual bool readSensor(const wbi::SensorType st, const wbi::wbiId &sid,
+        virtual bool readSensor(const wbi::SensorType st, const int sensor,
                                 double *data, double *stamps=0, bool blocking=true);
 
         /**
