@@ -34,6 +34,12 @@ wbiId::wbiId()
     id = "WBI_ID_DEFAULT_VALUE";
 }
 
+wbiId::wbiId(const std::string & _id)
+{
+    id = _id;
+}
+
+
 const std::string & wbiId::toString() const
 {
     return id;
@@ -99,7 +105,7 @@ bool wbiIdList::wbiIdToNumericId(const wbiId &_wbiId, int & numericId) const
 }
 
 /** Convert a global id into a local id */
-bool wbiIdList::numericIdTowbiId(const int numeridId, wbiId & wbi_id) const
+bool wbiIdList::numericIdToWbiId(const int numeridId, wbiId & wbi_id) const
 {
     if( numeridId < 0 && numeridId >= this->size() )
     {
@@ -135,7 +141,7 @@ int wbiIdList::addIdList(const wbiIdList &addedList)
     wbiId added_id;
     for(int i=0; i < addedList.size(); i++ )
     {
-        addedList.numericIdTowbiId(i,added_id);
+        addedList.numericIdToWbiId(i,added_id);
         if(!containsId(added_id))
         {
             pushId(added_id);
