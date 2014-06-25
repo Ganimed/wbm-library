@@ -85,7 +85,7 @@ bool yarpWholeBodyModel::init()
     std::string kinematic_base_link_name = "";
     std::vector<std::string> joint_names;
     joint_names.resize(0,"");
-    assert(jointIdList.size() == dof);
+    assert((int)jointIdList.size() == dof);
     p_model = new iCub::iDynTree::DynTree(std::string(urdf_file),joint_names,kinematic_base_link_name);
     all_q.resize(p_model->getNrOfDOFs(),0.0);
     all_q_min = all_q_max = all_ddq = all_dq = all_q;
@@ -118,7 +118,7 @@ bool yarpWholeBodyModel::init()
     ilim.resize(controlBoardNames.size());
 
     this->initDone = true;
-    for(int bp=0; bp < controlBoardNames.size(); bp++ )
+    for(int bp=0; bp < (int)controlBoardNames.size(); bp++ )
     {
         initDone = initDone && openDrivers(bp);
     }
@@ -130,7 +130,7 @@ bool yarpWholeBodyModel::init()
 
     //Build the map between wbi id and iDynTree id
     wbiToiDynTreeJointId.resize(jointIdList.size());
-    for(int wbi_numeric_id =0;  wbi_numeric_id < jointIdList.size(); wbi_numeric_id++ )
+    for(int wbi_numeric_id =0;  wbi_numeric_id < (int)jointIdList.size(); wbi_numeric_id++ )
     {
         wbi::wbiId joint_id;
         jointIdList.numericIdToWbiId(wbi_numeric_id,joint_id);
@@ -164,7 +164,7 @@ bool yarpWholeBodyModel::openDrivers(int bp)
 bool yarpWholeBodyModel::close()
 {
     bool ok = true;
-    for(int bp=0; bp < controlBoardNames.size(); bp++ )
+    for(int bp=0; bp < (int)controlBoardNames.size(); bp++ )
     {
         if( dd[bp] != 0 ) {
             ok = ok && dd[bp]->close();
@@ -286,7 +286,6 @@ bool yarpWholeBodyModel::convertQ(const yarp::sig::Vector & q_complete_input, do
 {
     for(int wbi_joint_numeric_id=0; wbi_joint_numeric_id < this->dof; wbi_joint_numeric_id++ )
     {
-        double tmp;
         assert(wbiToiDynTreeJointId[wbi_joint_numeric_id] >= 0);
         assert(wbiToiDynTreeJointId[wbi_joint_numeric_id] < (int)q_complete_input.size());
         _q_output[wbi_joint_numeric_id] = q_complete_input[wbiToiDynTreeJointId[wbi_joint_numeric_id]];
@@ -639,9 +638,6 @@ bool yarpWholeBodyModel::computeMassMatrix(double *q, const Frame &xBase, double
     mapped_reduced_mm.block<6,6>(0,0) = mapped_complete_mm.block<6,6>(0,0);
 
     //Rest of the matrix
-    int reduced_dof_row=0;
-    int reduced_dof_column = 0;
-
     for(int reduced_dof_row=0; reduced_dof_row < this->dof; reduced_dof_row++ )
     {
             int complete_dof_row = wbiToiDynTreeJointId[reduced_dof_row];
@@ -652,7 +648,6 @@ bool yarpWholeBodyModel::computeMassMatrix(double *q, const Frame &xBase, double
             ///Right top submatrix (using the row loop to avoid doing another loop)
             mapped_reduced_mm.block<6,1>(0,6+reduced_dof_row) =  mapped_reduced_mm.block<1,6>(6+reduced_dof_row,0).transpose();
 
-            reduced_dof_column=0;
             for(int reduced_dof_column=0; reduced_dof_column < this->dof; reduced_dof_column++ )
             {
                     int complete_dof_column = wbiToiDynTreeJointId[reduced_dof_column];

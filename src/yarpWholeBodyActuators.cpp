@@ -144,11 +144,30 @@ bool yarpWholeBodyActuators::init()
     if(!ok) return false;
 
     //Update internal structure reference the controlled joints for each controlboard
+    currentCtrlModes.resize(jointIdList.size(),wbi::CTRL_MODE_POS);
+
+    totalAxesInControlBoard.resize(controlBoardNames.size(),0);
+    for(int wbi_jnt=0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++ )
+    {
+        std::cout << "-------------wbi_jnt " << wbi_jnt << " " << controlBoardAxisList[wbi_jnt].first  << " " << controlBoardAxisList[wbi_jnt].second << std::endl;
+        totalAxesInControlBoard[ controlBoardAxisList[wbi_jnt].first ]++;
+    }
+
     updateControlledJointsForEachControlBoard();
+
+    //Resize everything that depends on the number of controlboards
+    itrq.resize(controlBoardNames.size());
+    iimp.resize(controlBoardNames.size());
+    icmd.resize(controlBoardNames.size());
+    ivel.resize(controlBoardNames.size());
+    ipos.resize(controlBoardNames.size());
+    iopl.resize(controlBoardNames.size());
+    positionDirectInterface.resize(controlBoardNames.size());
+    dd.resize(controlBoardNames.size());
 
     //Open necessary yarp controlboard drivers
     //iterate all used body parts
-    for(int bp=0; bp < controlBoardNames.size(); bp++ )
+    for(int bp=0; bp < (int)controlBoardNames.size(); bp++ )
     {
         ok = openControlBoardDrivers(bp);
         if(!ok)
@@ -169,8 +188,7 @@ bool yarpWholeBodyActuators::init()
     }
 
     //All drivers opened without errors, save the dimension of all used controlboards
-    totalAxesInControlBoard.resize(controlBoardNames.size());
-    for(int ctrlBrd = 0; ctrlBrd < controlBoardNames.size(); ctrlBrd++ )
+    for(int ctrlBrd = 0; ctrlBrd < (int)controlBoardNames.size(); ctrlBrd++ )
     {
         ok = ipos[ctrlBrd]->getAxes(&totalAxesInControlBoard[ctrlBrd]);
         if( !ok )
@@ -246,6 +264,7 @@ bool yarpWholeBodyActuatorsControlledJoints::reset(const int nrOfControlBoards)
     torqueControlledJoints.resize(nrOfControlBoards);
     pwmControlledJoints.clear();
     pwmControlledJoints.resize(nrOfControlBoards);
+    return true;
 }
 
 
@@ -253,7 +272,7 @@ bool yarpWholeBodyActuators::updateControlledJointsForEachControlBoard()
 {
     controlledJointsForControlBoard.reset(controlBoardNames.size());
 
-    for(int wbi_jnt = 0; wbi_jnt++; wbi_jnt < jointIdList.size() )
+    for(int wbi_jnt = 0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++ )
     {
         wbi::ControlMode wbi_jnt_ctrl_mode = currentCtrlModes[wbi_jnt];
 
@@ -283,10 +302,25 @@ bool yarpWholeBodyActuators::updateControlledJointsForEachControlBoard()
                 controlledJointsForControlBoard.pwmControlledJoints[wbi_jnt_controlboard_id].push_back(wbi_yarp_jnt);
             break;
             default:
+                assert(false);
                 return false;
             break;
         }
     }
+
+    //#ifndef NDEBUG
+    for(int wbi_ctrlBoard = 0; wbi_ctrlBoard < (int)controlBoardNames.size(); wbi_ctrlBoard++ )
+    {
+        int controlled_joints = 0;
+        controlled_joints +=  controlledJointsForControlBoard.positionControlledJoints[wbi_ctrlBoard].size();
+        controlled_joints +=  controlledJointsForControlBoard.positionDirectedControlledJoints[wbi_ctrlBoard].size();
+        controlled_joints +=  controlledJointsForControlBoard.velocityControlledJoints[wbi_ctrlBoard].size();
+        controlled_joints +=  controlledJointsForControlBoard.torqueControlledJoints[wbi_ctrlBoard].size();
+        controlled_joints +=  controlledJointsForControlBoard.pwmControlledJoints[wbi_ctrlBoard].size();
+        assert(controlled_joints == totalAxesInControlBoard[wbi_ctrlBoard]);
+    }
+    //#endif
+
     return true;
 }
 
@@ -294,7 +328,7 @@ bool yarpWholeBodyActuators::updateControlledJointsForEachControlBoard()
 bool yarpWholeBodyActuators::close()
 {
     bool ok = true;
-    for(int ctrlBrd=0; ctrlBrd < controlBoardNames.size(); ctrlBrd++ )
+    for(int ctrlBrd=0; ctrlBrd < (int)controlBoardNames.size(); ctrlBrd++ )
     {
         if( dd[ctrlBrd]!= 0 ) {
             ok = dd[ctrlBrd]->close();
@@ -376,7 +410,7 @@ int yarpWholeBodyActuators::addActuators(const wbiIdList &jList)
 
 bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref, int joint)
 {
-    if(joint>=jointIdList.size())
+    if(joint>=(int)jointIdList.size())
     {
         return false;
     }
@@ -391,17 +425,22 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
         {
             case CTRL_MODE_POS:
             case CTRL_MODE_DIRECT_POSITION:
-                for(int j=0; j < jointIdList.size(); j++ )
+                for(int j=0; j < (int)jointIdList.size(); j++ )
                 {
                     //Set only the joints that are not in the desired control mode
                     if(currentCtrlModes[j] != controlMode) {
                         ok = ok && icmd[controlBoardAxisList[j].first]->setPositionMode(controlBoardAxisList[j].second);
+                        if( !ok )
+                        {
+                            std::cerr << "yarpWholeBodyActuators::setControlMode error: setPositionMode on axis " <<
+                                         controlBoardAxisList[j].second << " of controlBoard " << controlBoardNames[controlBoardAxisList[j].first] << std::endl;
+                        }
                     }
                 }
                 break;
 
             case CTRL_MODE_VEL:
-                for(int j=0; j < jointIdList.size(); j++ )
+                for(int j=0; j < (int)jointIdList.size(); j++ )
                 {
                     if(currentCtrlModes[j] != controlMode)
                     {
@@ -411,7 +450,7 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
                 break;
 
             case CTRL_MODE_TORQUE:
-                for(int j=0; j < jointIdList.size(); j++ )
+                for(int j=0; j < (int)jointIdList.size(); j++ )
                 {
                     if(currentCtrlModes[j]!=controlMode)
                     {
@@ -433,7 +472,7 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
             case CTRL_MODE_MOTOR_PWM:
                 if(!isICubSimulator(robot)) ///< iCub simulator does not implement PWM motor control
                 {
-                    for(int j=0; j < jointIdList.size(); j++ )
+                    for(int j=0; j < (int)jointIdList.size(); j++ )
                     {
                         if(currentCtrlModes[j] != controlMode)
                         {
@@ -448,15 +487,19 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
         }
 
         //Update internal structure
-        this->updateControlledJointsForEachControlBoard();
+        ok = ok && this->updateControlledJointsForEachControlBoard();
 
         if(ok)
         {
-            for(int j=0; j < jointIdList.size(); j++ )
+            for(int j=0; j < (int)jointIdList.size(); j++ )
             {
                 currentCtrlModes[j] = controlMode;
                 if(ref!=0)
                     ok = ok && setControlReference(ref);
+                    if( !ok )
+                    {
+                        std::cerr << "yarpWholeBodyActuators::setControlMode error: setControlReference on jnt " << j << " failed " << std::endl;
+                    }
             }
         }
 #ifdef WBI_ICUB_COMPILE_PARAM_HELP
@@ -509,6 +552,7 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
 
 bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
 {
+                    std::cout << "~~~~~~~~~~~~ setControlReference called " << std::endl;
     if(joint> (int)jointIdList.size())
         return false;
 
@@ -521,6 +565,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
         switch(currentCtrlModes[joint])
         {
             case CTRL_MODE_POS:
+                std::cout << "~~~~~~~~~~~~ Setting control position reference " << std::endl;
                 return ipos[bodyPart]->positionMove(controlBoardAxis, CTRL_RAD2DEG*(*ref));
             case CTRL_MODE_DIRECT_POSITION:
                 return positionDirectInterface[bodyPart]->setPosition(controlBoardAxis, CTRL_RAD2DEG*(*ref));
@@ -560,15 +605,16 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
     int buf_controlledJoints[MAX_NJ];
 
     // set control references for all joints
-    for(int wbi_controlboard_id=0; wbi_controlboard_id < controlBoardNames.size(); wbi_controlboard_id++ )
+    for(int wbi_controlboard_id=0; wbi_controlboard_id < (int)controlBoardNames.size(); wbi_controlboard_id++ )
     {
         ///////////////////////////////////////////////////
         //Sending references for position controlled joints
         ///////////////////////////////////////////////////
         int nrOfPosControlledJointsInControlBoard = controlledJointsForControlBoard.positionControlledJoints[wbi_controlboard_id].size();
+        std::cerr << nrOfPosControlledJointsInControlBoard << std::endl;
         if( nrOfPosControlledJointsInControlBoard > 0 )
         {
-            if( nrOfPosControlledJointsInControlBoard == totalAxesInControlBoard[wbi_controlboard_id] )
+             if( nrOfPosControlledJointsInControlBoard == totalAxesInControlBoard[wbi_controlboard_id] )
             {
                 //If the wbi controls all the joint in the control board, use the usual interface setPositions
                 for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfPosControlledJointsInControlBoard; controlBoard_jnt++ )
@@ -577,6 +623,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                      int yarp_controlboard_axis =  controlledJointsForControlBoard.positionControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
                      buf_references[yarp_controlboard_axis] = CTRL_RAD2DEG*ref[wbi_id];
                 }
+                std::cout << "~~~~~~~~~~~~ Setting control position reference " << std::endl;
                 ok = ipos[wbi_controlboard_id]->positionMove(buf_references);
                 if(!ok)
                 {
@@ -797,7 +844,7 @@ bool yarpWholeBodyActuators::setControlParam(ControlParam paramId, const void *v
 
 bool yarpWholeBodyActuators::setReferenceSpeed(double *rspd, int joint)
 {
-    if(joint>=jointIdList.size())
+    if(joint>=(int)jointIdList.size())
     {
         return false;
     }
@@ -810,7 +857,7 @@ bool yarpWholeBodyActuators::setReferenceSpeed(double *rspd, int joint)
     }
 
     bool ok = true;
-    for(int jnt=0; jnt < jointIdList.size(); jnt++ )
+    for(int jnt=0; jnt < (int)jointIdList.size(); jnt++ )
     {
         int bodyPart = controlBoardAxisList[jnt].first;
         int controlBoardJointAxis = controlBoardAxisList[jnt].second;

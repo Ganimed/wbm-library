@@ -46,6 +46,8 @@ SET(folder_header #include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})
 
+add_definitions(-Wall)
+
 OPTION(ICUBWBI_USE_EXTERNAL_TORQUE_CONTROL "Set if iCub WBI implementation uses external torque control. False to use YARP Torque Control." FALSE)
 
 if(CODYCO_USES_URDFDOM)
@@ -105,5 +107,5 @@ if(ENABLE_TESTS)
 #enable testing
 include(CTest)
 enable_testing()
-add_subdirectory(unitTests)
+add_subdirectory(tests)
 endif()

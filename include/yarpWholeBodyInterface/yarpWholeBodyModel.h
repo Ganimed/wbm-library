@@ -143,11 +143,13 @@ namespace yarpWbi
 
         virtual bool getJointLimits(double *qMin, double *qMax, int joint=-1);
 
-        /** Get the id of the link with the specified name.
-          * @param linkName Name of the link.
-          * @param linkId Id of the link (if found).
-          * @return True if the link name was found, false otherwise. */
-        virtual bool getLinkId(const char *linkName, int &linkId);
+        /**
+         * Get the id of the link with the specified name.
+         * @param linkName Name of the link.
+         * @param linkId Id of the link (if found).
+         * @return True if the link name was found, false otherwise.
+         */
+        virtual bool getLinkId(const char *linkName, int &linkNumericId);
 
         /** Compute rototranslation matrix from root reference frame to reference frame associated to the specified link.
           * @param q Joint angles

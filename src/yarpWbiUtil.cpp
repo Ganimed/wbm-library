@@ -35,7 +35,7 @@ bool appendNewControlBoardsToVector(yarp::os::Bottle & joints_config,
                                     const wbi::wbiIdList & jointIdList,
                                     std::vector<std::string> & controlBoardNames)
 {
-    for(int jnt=0; jnt < jointIdList.size(); jnt++ )
+    for(int jnt=0; jnt < (int)jointIdList.size(); jnt++ )
     {
         wbi::wbiId jnt_name;
         jointIdList.numericIdToWbiId(jnt,jnt_name);
@@ -64,15 +64,47 @@ bool appendNewControlBoardsToVector(yarp::os::Bottle & joints_config,
     return true;
 }
 
-std::vector< std::pair<int,int> > getControlBoardAxisList(yarp::os::Bottle & joints_config,
+bool getControlBoardAxisList(yarp::os::Bottle & joints_config,
                                                           const wbi::wbiIdList &jointIdList,
-                                                          const std::vector<std::string>& controlBoardNames)
+                                                          const std::vector<std::string>& controlBoardNames,
+                                                          std::vector< std::pair<int,int> > & controlBoardAxisList)
 {
     std::map<std::string,int> controlBoardIds = getControlBoardIdsMap(controlBoardNames);
 
-    std::vector< std::pair<int,int> > controlBoardAxisList;
+    assert(controlBoardIds.size() == controlBoardNames.size());
+
+    //Error check loop
+    for(int wbi_jnt=0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++ )
+    {
+        wbi::wbiId wbi_jnt_name;
+        jointIdList.numericIdToWbiId(wbi_jnt,wbi_jnt_name);
+
+        std::cout << joints_config.toString() << std::endl;
+
+        if( joints_config.find(wbi_jnt_name.toString().c_str()).isNull() )
+        {
+            std::cerr << "yarpWbiUtil error: joint " << wbi_jnt_name.toString() << " not found in WBI_YARP_JOINTS section " << std::endl;
+            return false;
+        }
+
+        yarp::os::Bottle * ctrlBoard_mapping = joints_config.find(wbi_jnt_name.toString().c_str()).asList();
+
+        if( ctrlBoard_mapping->size() != 2 )
+        {
+            std::cerr << "yarpWbiUtil error: joint " << wbi_jnt_name.toString() << " found in WBI_YARP_JOINTS section, but with wrong format " << std::endl;
+            return false;
+        }
+
+        std::string controlboard_name = ctrlBoard_mapping->get(0).asString().c_str();
+        if( controlBoardIds.find(controlboard_name) == controlBoardIds.end() )
+        {
+            std::cerr << "yarpWbiUtil :: getControlBoardAxisList error in configuration files with joint " << wbi_jnt_name.toString() << std::endl;
+            return false;
+        }
+    }
+
     controlBoardAxisList.resize(jointIdList.size());
-    for(int wbi_jnt=0; wbi_jnt < jointIdList.size(); wbi_jnt++ )
+    for(int wbi_jnt=0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++ )
     {
         wbi::wbiId wbi_jnt_name;
         jointIdList.numericIdToWbiId(wbi_jnt,wbi_jnt_name);
@@ -80,20 +112,21 @@ std::vector< std::pair<int,int> > getControlBoardAxisList(yarp::os::Bottle & joi
         yarp::os::Bottle * ctrlBoard_mapping = joints_config.find(wbi_jnt_name.toString().c_str()).asList();
 
         std::string controlboard_name = ctrlBoard_mapping->get(0).asString().c_str();
+
+
         int controlboard_jnt_axis = ctrlBoard_mapping->get(1).asInt();
         int controlboard_wbi_id   = controlBoardIds[controlboard_name];
 
         //totalControlledJointsInControlBoard[controlboard_wbi_id]++;
         controlBoardAxisList[wbi_jnt] = std::pair<int,int>(controlboard_wbi_id,controlboard_jnt_axis);
     }
-    return controlBoardAxisList;
-
+    return true;
 }
 
 std::vector< int > getControlBoardList(const std::vector< std::pair<int,int> > & controlBoardAxisList)
 {
     std::vector< int > controlBoardList;
-    for(int jnt=0; jnt < controlBoardAxisList.size(); jnt++ )
+    for(int jnt=0; jnt < (int)controlBoardAxisList.size(); jnt++ )
     {
         int wbi_ctrlBoard_numericId = controlBoardAxisList[jnt].first;
         if( std::find(controlBoardList.begin(), controlBoardList.end(), wbi_ctrlBoard_numericId) == controlBoardList.end() )
@@ -107,10 +140,11 @@ std::vector< int > getControlBoardList(const std::vector< std::pair<int,int> > &
 std::map<std::string,int> getControlBoardIdsMap(const std::vector<std::string> & controlBoardNames)
 {
     std::map<std::string,int> controlBoardIds;
-    for(int ctrlBoard=0; ctrlBoard < controlBoardNames.size(); ctrlBoard++)
+    for(int ctrlBoard=0; ctrlBoard < (int)controlBoardNames.size(); ctrlBoard++)
     {
         controlBoardIds[controlBoardNames[ctrlBoard]] = ctrlBoard;
     }
+    return controlBoardIds;
 }
 
 bool loadJointsControlBoardFromConfig(yarp::os::Property & wbi_yarp_properties,
@@ -133,12 +167,12 @@ bool loadJointsControlBoardFromConfig(yarp::os::Property & wbi_yarp_properties,
     //Resizing structures
     controlBoardAxisList.resize(jointIdList.size());
     //totalControlledJointsInControlBoard.resize(controlBoardNames.size(),0);
-    controlBoardAxisList = getControlBoardAxisList(joints_config,jointIdList,controlBoardNames);
+    getControlBoardAxisList(joints_config,jointIdList,controlBoardNames,controlBoardAxisList);
 
 
     //All elements in the jointIdList have a mapping to an axis of a controlboard
     //we have to save this mapping
-    for(int wbi_jnt=0; wbi_jnt < jointIdList.size(); wbi_jnt++ )
+    for(int wbi_jnt=0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++ )
     {
         wbi::wbiId wbi_jnt_name;
         jointIdList.numericIdToWbiId(wbi_jnt,wbi_jnt_name);

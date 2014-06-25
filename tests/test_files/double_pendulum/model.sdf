@@ -50,6 +50,7 @@
     </link>
     <!-- upper link, length 1, IC -90 degrees -->
     <link name="upper_link">
+      <!--
       <sensor name="imu_sensor" type="imu">
                 <always_on>1</always_on>
                 <update_rate>100</update_rate>
@@ -59,7 +60,8 @@
                     <yarpConfigurationFile>model://icub/conf/gazebo_icub_inertial.ini</yarpConfigurationFile>
                 </plugin>
                 <pose>0.0185 -0.1108 0.0066 1.5708 -0 0</pose>
-            </sensor>
+      </sensor>
+        -->
       <pose>0 0 2.1  -1.5708 0 0</pose>
       <self_collide>0</self_collide>
       <inertial>
@@ -204,6 +206,7 @@
     </joint>
     <!-- pin joint for lower link, at origin of child link -->
     <joint name="lower_joint" type="revolute">
+    <!--
 <sensor name="right_arm_ft" type="force_torque">
                 <always_on>true</always_on>
                 <visualize>true</visualize>
@@ -213,17 +216,18 @@
                     <yarpConfigurationFile>model://icub/conf/FT/gazebo_icub_right_arm_ft.ini</yarpConfigurationFile>
                 </plugin>
             </sensor>
+        -->
       <parent>upper_link</parent>
       <child>lower_link</child>
       <axis>
         <xyz>1.0 0 0</xyz>
       </axis>
     </joint>
-    
+
     <plugin name="controlboard" filename="libgazebo_yarp_controlboard.so">
         <yarpConfigurationFile>model://double_pendulum/conf/gazebo_controlboard.ini</yarpConfigurationFile>
         <initialConfiguration>0.0 0.0</initialConfiguration>
     </plugin>
-    
+
   </model>
 </sdf>

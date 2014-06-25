@@ -34,15 +34,30 @@ class yarpWbiActuatorsUnitTest : public GazeboYarpServerFixture
 };
 
 /////////////////////////////////////////////////
-TEST_F(yarpWbiActuatorsUnitTest, basicLoadingTest)
+/*
+TEST_F(yarpWbiActuatorsUnitTest, basicGazeboYarpLoadingTest)
 {
   Load("double_pendulum.world", true);
+
+
+  gazebo::physics::WorldPtr world = gazebo::physics::get_world("default");
+  ASSERT_TRUE(world != NULL);
+}
+*/
+
+/////////////////////////////////////////////////
+TEST_F(yarpWbiActuatorsUnitTest, basicWbiLoadingTest)
+{
+  Load("double_pendulum.world", false);
+
 
   gazebo::physics::WorldPtr world = gazebo::physics::get_world("default");
   ASSERT_TRUE(world != NULL);
 
+
   bool is_yarp_network_active = yarp::os::NetworkBase::checkNetwork(1.0);
   ASSERT_TRUE(is_yarp_network_active);
+
 
   yarpWbi::yarpWholeBodyActuators doublePendulumActuactors("test_actuactors");
   yarpWbi::yarpWholeBodySensors    doublePendulumSensors("test_sensors");
@@ -65,6 +80,46 @@ TEST_F(yarpWbiActuatorsUnitTest, basicLoadingTest)
   ASSERT_TRUE(doublePendulumActuactors.init());
   //std::cout << "doublePendulumSensors.init()" << std::endl;
   ASSERT_TRUE(doublePendulumSensors.init());
+
+  yarp::sig::Vector real_q(doublePendulumSensors.getSensorNumber(wbi::SENSOR_ENCODER),-10);
+  yarp::sig::Vector desired_q(doublePendulumActuactors.getActuatorList().size());
+  yarp::sig::Vector ref_dq(doublePendulumActuactors.getActuatorList().size(),40.0*M_PI/180.0);
+
+
+  ASSERT_TRUE(doublePendulumSensors.readSensors(wbi::SENSOR_ENCODER,real_q.data(),0,true));
+
+  std::cout << "Read position " << real_q[0] << " " << real_q[1] << std::endl;
+
+  desired_q[0] = real_q[0] + M_PI/2;
+  desired_q[1] = real_q[1] + M_PI/2;
+
+  ASSERT_TRUE(doublePendulumActuactors.setControlMode(wbi::CTRL_MODE_POS));
+  ASSERT_TRUE(doublePendulumActuactors.setControlParam(wbi::CTRL_PARAM_REF_VEL, ref_dq.data()));
+  ASSERT_TRUE(doublePendulumActuactors.setControlReference(desired_q.data()));
+
+  //Wait to reach the desired position
+  yarp::os::Time::delay(5.0);
+
+  ASSERT_TRUE(doublePendulumSensors.readSensors(wbi::SENSOR_ENCODER,real_q.data(),0,true));
+
+  double tol = 0.1;
+
+  EXPECT_NEAR(desired_q[0],real_q[0],tol);
+  EXPECT_NEAR(desired_q[1],real_q[1],tol);
+
+  desired_q[0] = real_q[0] - M_PI;
+  desired_q[1] = real_q[1] - M_PI;
+
+  ASSERT_TRUE(doublePendulumActuactors.setControlMode(wbi::CTRL_MODE_POS));
+  ASSERT_TRUE(doublePendulumActuactors.setControlReference(desired_q.data()));
+
+  //Wait to reach the desired position
+  yarp::os::Time::delay(5.0);
+
+  ASSERT_TRUE(doublePendulumSensors.readSensors(wbi::SENSOR_ENCODER,real_q.data()));
+
+  EXPECT_NEAR(desired_q[0],real_q[0],tol);
+  EXPECT_NEAR(desired_q[1],real_q[1],tol);
 
   ASSERT_TRUE(doublePendulumSensors.close());
   ASSERT_TRUE(doublePendulumActuactors.close());

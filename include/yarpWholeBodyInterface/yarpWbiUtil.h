@@ -104,9 +104,10 @@ namespace yarpWbi
                                     const wbi::wbiIdList & jointIdList,
                                     std::vector<std::string> & controlBoardNames);
 
-    std::vector< std::pair<int,int> > getControlBoardAxisList(yarp::os::Bottle & joints_config,
+    bool getControlBoardAxisList(yarp::os::Bottle & joints_config,
                                                           const wbi::wbiIdList &jointIdList,
-                                                          const std::vector<std::string>& controlBoardNames);
+                                                          const std::vector<std::string>& controlBoardNames,
+                                                          std::vector< std::pair<int,int> > & controlBoardAxisList);
 
     std::vector< int > getControlBoardList(const std::vector< std::pair<int,int> > & controlBoardAxisList);
 
