@@ -118,7 +118,7 @@ namespace yarpWbi
         std::vector<wbi::ControlMode>        currentCtrlModes;
 
         // Map containing parameters to be read at initialization time
-        yarp::os::Property configurationParameters;
+        yarp::os::Property wbi_yarp_properties;
 
          // yarp drivers vector whose index is given by relative index of the bodyPartNames vector
         std::vector<yarp::dev::IPositionControl*>     ipos;
@@ -179,8 +179,7 @@ namespace yarpWbi
          * \todo document format of yarp_wbi_properties
          */
         yarpWholeBodyActuators(const char* _name,
-                               const char* _robot,
-                               const yarp::os::Property & yarp_wbi_properties);
+                               const yarp::os::Property & yarp_wbi_properties=yarp::os::Property());
 
 
         virtual ~yarpWholeBodyActuators();
@@ -251,3 +250,4 @@ namespace yarpWbi
 }
 
 #endif
+

@@ -16,8 +16,8 @@
  * Public License for more details
  */
 
-#ifndef WBSTATES_ICUB_H
-#define WBSTATES_ICUB_H
+#ifndef WBSTATES_YARP_H
+#define WBSTATES_YARP_H
 
 #include <yarp/dev/ControlBoardInterfaces.h>
 #include <yarp/dev/IVelocityControl2.h>
@@ -179,6 +179,20 @@ namespace wbiIcub
 
         virtual bool init();
         virtual bool close();
+
+        /**
+         * Set the properties of the yarpWbiActuactors interface
+         * Note: this function must be called before init, otherwise it takes no effect
+         * @param yarp_wbi_properties the properties of the yarpWholeBodyActuators object
+         */
+        virtual bool setYarpWbiProperties(const yarp::os::Property & yarp_wbi_properties);
+
+        /**
+         * Get the properties of the yarpWbiActuactors interface
+         * @param yarp_wbi_properties the properties of the yarpWholeBodyActuators object
+         */
+        virtual bool getYarpWbiProperties(yarp::os::Property & yarp_wbi_properties);
+
 
         /** Add the specified estimate so that it can be read.
          * @param st Type of estimate.

@@ -79,21 +79,50 @@ namespace yarpWbi
 
     bool loadReverseTorsoJointsFromConfig(yarp::os::Property & wbi_yarp_properties,
                                           bool &reverse_torso_joints);
-
-    bool loadFTSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
-                                     const std::vector<std::string> & body_parts_vector,
-                                     std::vector<id_2_PortName> &imu_ports);
-
-    bool loadIMUSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
-                                      const std::vector<std::string> & body_parts_vector,
-                                      std::vector<id_2_PortName> &imu_ports);
     */
-    
+
+
+
+
     bool loadTreeSerializationFromConfig(yarp::os::Property & wbi_yarp_properties,
                                          KDL::CoDyCo::TreeSerialization& serialization);
 
     bool loadTreePartitionFromConfig(yarp::os::Property & wbi_yarp_properties,
                                      KDL::CoDyCo::TreePartition& serialization);
+
+
+    bool loadJointsControlBoardFromConfig(yarp::os::Property & wbi_yarp_properties,
+                                          const wbi::wbiIdList & jointIdList,
+                                          std::vector<std::string> & controlBoardNames,
+                                          std::vector< std::pair<int,int> > & controlBoardAxisList);
+
+    std::map<std::string,int> getControlBoardIdsMap(const std::vector<std::string> & controlBoardNames);
+
+    yarp::os::Bottle & getWBIYarpJointsOptions(yarp::os::Property & wbi_yarp_properties);
+
+    bool appendNewControlBoardsToVector(yarp::os::Bottle & joints_config,
+                                    const wbi::wbiIdList & jointIdList,
+                                    std::vector<std::string> & controlBoardNames);
+
+    std::vector< std::pair<int,int> > getControlBoardAxisList(yarp::os::Bottle & joints_config,
+                                                          const wbi::wbiIdList &jointIdList,
+                                                          const std::vector<std::string>& controlBoardNames);
+
+    std::vector< int > getControlBoardList(const std::vector< std::pair<int,int> > & controlBoardAxisList);
+
+    bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
+                               wbi::wbiIdList & sensorIdList,
+                               std::vector<std::string> & ports,
+                               const std::string group_name);
+
+    bool loadFTSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
+                                 wbi::wbiIdList & sensorIdList,
+                                 std::vector<std::string> & ports);
+
+    bool loadIMUSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
+                                 wbi::wbiIdList & sensorIdList,
+                                 std::vector<std::string> & ports);
+
 
 
 } // end namespace wbiIcub

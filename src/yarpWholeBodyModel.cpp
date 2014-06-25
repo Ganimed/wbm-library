@@ -15,7 +15,8 @@
  * Public License for more details
  */
 
-#include "yarpWholeBodyInterface/yarpWholeBodyInterface.h"
+#include "yarpWholeBodyInterface/yarpWholeBodyModel.h"
+#include "yarpWholeBodyInterface/yarpWbiUtil.h"
 #include <string>
 
 #include <cmath>
@@ -30,17 +31,13 @@
 
 using namespace std;
 using namespace wbi;
-using namespace wbiIcub;
+using namespace yarpWbi;
 using namespace yarp::os;
 using namespace yarp::dev;
 using namespace yarp::sig;
 using namespace yarp::math;
 using namespace iCub::skinDynLib;
 
-// iterate over all body parts
-#define FOR_ALL_BODY_PARTS(itBp)            FOR_ALL_BODY_PARTS_OF(itBp, jointIdList)
-// iterate over all joints of all body parts
-#define FOR_ALL(itBp, itJ)                  FOR_ALL_OF(itBp, itJ, jointIdList)
 // print the floating point vector pointed by data of size size and name name
 #define PRINT_VECTOR(name, size, data)  printf("%s: ",name); for(int i=0;i<size;i++) printf("%.1lf ",data[i]); printf("\n");
 // print the floating point matrix pointed by data of name "name"
@@ -48,83 +45,48 @@ using namespace iCub::skinDynLib;
 
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-//                                          ICUB WHOLE BODY MODEL
+//                                          YARP WHOLE BODY MODEL
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-icubWholeBodyModel::icubWholeBodyModel(const char* _name, const char* _robotName, const iCub::iDynTree::iCubTree_version_tag version,
-    double* initial_q, const std::vector<std::string> &_bodyPartNames)
-    : dof(0), six_elem_buffer(6,0.0), three_elem_buffer(3,0.0), name(_name), robot(_robotName), bodyPartNames(_bodyPartNames), initDriversDone(false)
+yarpWholeBodyModel::yarpWholeBodyModel(const char* _name,
+                                       yarp::os::Property & _wbi_yarp_conf)
+    : dof(0),
+      six_elem_buffer(6,0.0),
+      three_elem_buffer(3,0.0),
+      initDone(false),
+      wbi_yarp_properties(_wbi_yarp_conf)
 {
-    reverse_torso_joints = true;
-
-    std::string kinematic_base_link_name = "root_link";
-    p_icub_model = new iCub::iDynTree::iCubTree(version,kinematic_base_link_name,iCub::iDynTree::SKINDYNLIB_SERIALIZATION,0);
-    p_model = (iCub::iDynTree::DynTree *) p_icub_model;
-    all_q.resize(p_model->getNrOfDOFs(),0.0);
-    all_q_min = all_q_max = all_ddq = all_dq = all_q;
-    floating_base_mass_matrix.resize(p_model->getNrOfDOFs(),p_model->getNrOfDOFs());
-    floating_base_mass_matrix.zero();
-
-    world_base_transformation.resize(4,4);
-    world_base_transformation.eye();
-
-    v_base.resize(3,0.0);
-
-    a_base = omega_base = domega_base = v_base;
-
-    v_six_elems_base.resize(3,0.0);
-    a_six_elems_base.resize(6,0.0);
-
-    if( initial_q != 0 ) {
-        memcpy(all_q.data(),initial_q,all_q.size()*sizeof(double));
-    }
 }
 
-#ifdef CODYCO_USES_URDFDOM
-icubWholeBodyModel::icubWholeBodyModel(const char* _name, const char* _robotName, const iCub::iDynTree::iCubTree_version_tag version,
-    const std::string urdf_file,
-    double* initial_q, const std::vector<std::string> &_bodyPartNames)
-    : dof(0), six_elem_buffer(6,0.0), three_elem_buffer(3,0.0), name(_name), robot(_robotName), bodyPartNames(_bodyPartNames), initDriversDone(false)
+yarpWholeBodyModel::~yarpWholeBodyModel()
 {
-    reverse_torso_joints = true;
-
-    std::string kinematic_base_link_name = "root_link";
-    p_icub_model = new iCub::iDynTree::iCubTree(urdf_file,version,kinematic_base_link_name,iCub::iDynTree::SKINDYNLIB_SERIALIZATION,0);
-    p_model = (iCub::iDynTree::DynTree *) p_icub_model;
-    all_q.resize(p_model->getNrOfDOFs(),0.0);
-    all_q_min = all_q_max = all_ddq = all_dq = all_q;
-    floating_base_mass_matrix.resize(p_model->getNrOfDOFs(),p_model->getNrOfDOFs());
-    floating_base_mass_matrix.zero();
-
-    world_base_transformation.resize(4,4);
-    world_base_transformation.eye();
-
-    v_base.resize(3,0.0);
-
-    a_base = omega_base = domega_base = v_base;
-
-    v_six_elems_base.resize(3,0.0);
-    a_six_elems_base.resize(6,0.0);
-
-    if( initial_q != 0 ) {
-        memcpy(all_q.data(),initial_q,all_q.size()*sizeof(double));
-    }
+    delete p_model;
 }
 
-
-
-icubWholeBodyModel::icubWholeBodyModel(const char* _name,
-                                       const char* _robotName,
-                                       const char* urdf_file,
-                                       yarp::os::Property & wbi_yarp_conf,
-                                       double* initial_q)
-    : dof(0), six_elem_buffer(6,0.0), three_elem_buffer(3,0.0), name(_name), robot(_robotName), initDriversDone(false)
+bool yarpWholeBodyModel::init()
 {
-    std::string kinematic_base_link_name = ""; //Default value interpreted by DynTree constructor as "the base of the urdf file"
+    //Load configuration
+    if( !wbi_yarp_properties.check("robotName") )
+    {
+        std::cerr << "yarpWholeBodyModel error: robotName not found in configuration files" << std::endl;
+        return false;
+    }
+
+    robot = wbi_yarp_properties.find("robotName").asString().c_str();
+
+    if( !wbi_yarp_properties.check("urdf_file") )
+    {
+        std::cerr << "yarpWholeBodyModel error: urdf_file not found in configuration files" << std::endl;
+        return false;
+    }
+
+    std::string urdf_file = wbi_yarp_properties.find("urdf_file").asString().c_str();
+
+    std::string kinematic_base_link_name = "";
     std::vector<std::string> joint_names;
     joint_names.resize(0,"");
+    assert(jointIdList.size() == dof);
     p_model = new iCub::iDynTree::DynTree(std::string(urdf_file),joint_names,kinematic_base_link_name);
-    p_icub_model = 0;
     all_q.resize(p_model->getNrOfDOFs(),0.0);
     all_q_min = all_q_max = all_ddq = all_dq = all_q;
     floating_base_mass_matrix.resize(p_model->getNrOfDOFs(),p_model->getNrOfDOFs());
@@ -140,82 +102,122 @@ icubWholeBodyModel::icubWholeBodyModel(const char* _name,
     v_six_elems_base.resize(3,0.0);
     a_six_elems_base.resize(6,0.0);
 
-    loadBodyPartsFromConfig(wbi_yarp_conf,bodyPartNames);
-    loadReverseTorsoJointsFromConfig(wbi_yarp_conf,reverse_torso_joints);
-
-    if( initial_q != 0 ) {
-        memcpy(all_q.data(),initial_q,all_q.size()*sizeof(double));
+    //For now set the not actuate position to zero
+    if( true ) {
+        all_q.zero();
+        //memcpy(all_q.data(),initial_q,all_q.size()*sizeof(double));
     }
-}
-#endif
 
-bool icubWholeBodyModel::init()
-{
-    this->initDriversDone = false;
-    bool initDone = true;
-    FOR_ALL_BODY_PARTS(itBp)
-        initDone = initDone && openDrivers(itBp->first);
+    //Loading information on controlboards joints
+    loadJointsControlBoardFromConfig(wbi_yarp_properties,
+                                   jointIdList,
+                                   controlBoardNames,
+                                   controlBoardAxisList);
+
+    dd.resize(controlBoardNames.size());
+    ilim.resize(controlBoardNames.size());
+
+    this->initDone = true;
+    for(int bp=0; bp < controlBoardNames.size(); bp++ )
+    {
+        initDone = initDone && openDrivers(bp);
+    }
+
     if( initDone && (p_model->getNrOfDOFs() > 0) )
     {
-        this->initDriversDone = true;
+        this->initDone = true;
     }
-    return this->initDriversDone;
+
+    //Build the map between wbi id and iDynTree id
+    wbiToiDynTreeJointId.resize(jointIdList.size());
+    for(int wbi_numeric_id =0;  wbi_numeric_id < jointIdList.size(); wbi_numeric_id++ )
+    {
+        wbi::wbiId joint_id;
+        jointIdList.numericIdToWbiId(wbi_numeric_id,joint_id);
+        int idyntree_id = p_model->getDOFIndex(joint_id.toString());
+        if( idyntree_id == - 1 )
+        {
+            std::cerr << "yarpWholeBodyModel error: joint " << joint_id.toString() << " not found in URDF file" << std::endl;
+            initDone = false;
+            return false;
+        }
+
+        wbiToiDynTreeJointId[wbi_numeric_id] = idyntree_id;
+    }
+
+
+    return this->initDone;
 }
 
-bool icubWholeBodyModel::openDrivers(int bp)
+bool yarpWholeBodyModel::openDrivers(int bp)
 {
     ilim[bp]=0; dd[bp]=0;
-    if(!openPolyDriver(name+"model", robot, dd[bp], bodyPartNames[bp]))
+    if(!openPolyDriver(name+"model", robot, dd[bp], controlBoardNames[bp]))
         return false;
     bool ok = dd[bp]->view(ilim[bp]);   //if(!isRobotSimulator(robot))
     if(ok)
         return true;
-    fprintf(stderr, "Problem initializing drivers of %s\n", bodyPartNames[bp].c_str());
+    fprintf(stderr, "Problem initializing drivers of %s\n", controlBoardNames[bp].c_str());
     return false;
 }
 
-bool icubWholeBodyModel::close()
+bool yarpWholeBodyModel::close()
 {
     bool ok = true;
-    FOR_ALL_BODY_PARTS(itBp)
+    for(int bp=0; bp < controlBoardNames.size(); bp++ )
     {
-        if( dd[itBp->first] != 0 ) {
-            ok = ok && dd[itBp->first]->close();
-            delete dd[itBp->first];
-            dd[itBp->first] = 0;
+        if( dd[bp] != 0 ) {
+            ok = ok && dd[bp]->close();
+            delete dd[bp];
+            dd[bp] = 0;
         }
     }
     if(p_model) { delete p_model; p_model=0; }
-    if(p_icub_model) { p_icub_model = 0; }
     return ok;
 }
 
-bool icubWholeBodyModel::removeJoint(const wbi::LocalId &j)
+bool yarpWholeBodyModel::removeJoint(const wbi::wbiId &j)
 {
-    if(!jointIdList.removeId(j))
-        return false;
-    all_dq.zero();
-    all_ddq.zero();
-    dof--;
+    return false;
+}
+
+bool yarpWholeBodyModel::setYarpWbiProperties(const yarp::os::Property & yarp_wbi_properties)
+{
+    wbi_yarp_properties = yarp_wbi_properties;
     return true;
 }
 
-bool icubWholeBodyModel::addJoint(const wbi::LocalId &j)
+bool yarpWholeBodyModel::getYarpWbiProperties(yarp::os::Property & yarp_wbi_properties)
 {
-    if(!jointIdList.addId(j))
+    yarp_wbi_properties = wbi_yarp_properties;
+    return true;
+}
+
+
+bool yarpWholeBodyModel::addJoint(const wbi::wbiId &j)
+{
+    if( initDone )
+    {
         return false;
+    }
+
+    if(!jointIdList.addId(j))
+    {
+        return false;
+    }
+
     dof++;
     return true;
 }
 
-int icubWholeBodyModel::addJoints(const wbi::LocalIdList &j)
+int yarpWholeBodyModel::addJoints(const wbi::wbiIdList &j)
 {
     int count = jointIdList.addIdList(j);
     dof += count;
     return count;
 }
 
-bool icubWholeBodyModel::convertBasePose(const Frame &xBase, yarp::sig::Matrix & H_world_base)
+bool yarpWholeBodyModel::convertBasePose(const Frame &xBase, yarp::sig::Matrix & H_world_base)
 {
     if( H_world_base.cols() != 4 || H_world_base.rows() != 4 )
         H_world_base.resize(4,4);
@@ -223,7 +225,7 @@ bool icubWholeBodyModel::convertBasePose(const Frame &xBase, yarp::sig::Matrix &
     return true;
 }
 
-bool icubWholeBodyModel::convertBaseVelocity(const double *dxB, yarp::sig::Vector & v_b, yarp::sig::Vector & omega_b)
+bool yarpWholeBodyModel::convertBaseVelocity(const double *dxB, yarp::sig::Vector & v_b, yarp::sig::Vector & omega_b)
 {
     v_b[0] = dxB[0];
     v_b[1] = dxB[1];
@@ -234,7 +236,7 @@ bool icubWholeBodyModel::convertBaseVelocity(const double *dxB, yarp::sig::Vecto
     return true;
 }
 
-bool icubWholeBodyModel::convertBaseVelocity(const double *dxB, yarp::sig::Vector & v_b)
+bool yarpWholeBodyModel::convertBaseVelocity(const double *dxB, yarp::sig::Vector & v_b)
 {
     v_b[0] = dxB[0];
     v_b[1] = dxB[1];
@@ -245,7 +247,7 @@ bool icubWholeBodyModel::convertBaseVelocity(const double *dxB, yarp::sig::Vecto
     return true;
 }
 
-bool icubWholeBodyModel::convertBaseAcceleration(const double *ddxB, yarp::sig::Vector & a_b, yarp::sig::Vector & domega_b)
+bool yarpWholeBodyModel::convertBaseAcceleration(const double *ddxB, yarp::sig::Vector & a_b, yarp::sig::Vector & domega_b)
 {
     a_b[0] = ddxB[0];
     a_b[1] = ddxB[1];
@@ -256,7 +258,7 @@ bool icubWholeBodyModel::convertBaseAcceleration(const double *ddxB, yarp::sig::
     return true;
 }
 
-bool icubWholeBodyModel::convertBaseAcceleration(const double *ddxB, yarp::sig::Vector & a_b)
+bool yarpWholeBodyModel::convertBaseAcceleration(const double *ddxB, yarp::sig::Vector & a_b)
 {
     a_b[0] = ddxB[0];
     a_b[1] = ddxB[1];
@@ -267,95 +269,85 @@ bool icubWholeBodyModel::convertBaseAcceleration(const double *ddxB, yarp::sig::
     return true;
 }
 
-bool icubWholeBodyModel::convertQ(const double *_q_input, yarp::sig::Vector & q_complete_output)
+bool yarpWholeBodyModel::convertQ(const double *_q_input, yarp::sig::Vector & q_complete_output)
 {
-    int i=0;
-    FOR_ALL_BODY_PARTS_OF(itBp, jointIdList) {
-        FOR_ALL_JOINTS(itBp, itJ) {
+    for(int wbi_joint_numeric_id=0; wbi_joint_numeric_id < this->dof; wbi_joint_numeric_id++ )
+    {
             double tmp;
-            tmp = _q_input[i];
-            assert(p_model->getDOFIndex(itBp->first,*itJ) >= 0);
-            assert(p_model->getDOFIndex(itBp->first,*itJ) < (int)q_complete_output.size());
-            q_complete_output[p_model->getDOFIndex(itBp->first,*itJ)] = tmp;
-            i++;
-        }
+            tmp = _q_input[wbi_joint_numeric_id];
+            assert(wbiToiDynTreeJointId[wbi_joint_numeric_id] >= 0);
+            assert(wbiToiDynTreeJointId[wbi_joint_numeric_id] < (int)q_complete_output.size());
+            q_complete_output[wbiToiDynTreeJointId[wbi_joint_numeric_id]] = tmp;
     }
     return true;
 }
 
-bool icubWholeBodyModel::convertQ(const yarp::sig::Vector & q_complete_input, double *_q_output )
+bool yarpWholeBodyModel::convertQ(const yarp::sig::Vector & q_complete_input, double *_q_output )
 {
-    int i=0;
-    FOR_ALL_BODY_PARTS_OF(itBp, jointIdList) {
-        FOR_ALL_JOINTS(itBp, itJ) {
-             _q_output[i] = q_complete_input[p_model->getDOFIndex(itBp->first,*itJ)];
-            i++;
-        }
+    for(int wbi_joint_numeric_id=0; wbi_joint_numeric_id < this->dof; wbi_joint_numeric_id++ )
+    {
+        double tmp;
+        assert(wbiToiDynTreeJointId[wbi_joint_numeric_id] >= 0);
+        assert(wbiToiDynTreeJointId[wbi_joint_numeric_id] < (int)q_complete_input.size());
+        _q_output[wbi_joint_numeric_id] = q_complete_input[wbiToiDynTreeJointId[wbi_joint_numeric_id]];
+
     }
     return true;
 }
 
-bool icubWholeBodyModel::convertDQ(const double *_dq_input, yarp::sig::Vector & dq_complete_output)
+bool yarpWholeBodyModel::convertDQ(const double *_dq_input, yarp::sig::Vector & dq_complete_output)
 {
-    int i=0;
-    FOR_ALL_BODY_PARTS_OF(itBp, jointIdList) {
-        FOR_ALL_JOINTS(itBp, itJ) {
-            dq_complete_output[p_model->getDOFIndex(itBp->first,*itJ)] = _dq_input[i];
-            i++;
-        }
-    }
+    convertQ(_dq_input,dq_complete_output);
     return true;
 }
 
-bool icubWholeBodyModel::convertDDQ(const double *_ddq_input, yarp::sig::Vector & ddq_complete_output)
+bool yarpWholeBodyModel::convertDDQ(const double *_ddq_input, yarp::sig::Vector & ddq_complete_output)
 {
-    int i=0;
-    FOR_ALL_BODY_PARTS_OF(itBp, jointIdList) {
-        FOR_ALL_JOINTS(itBp, itJ) {
-            ddq_complete_output[p_model->getDOFIndex(itBp->first,*itJ)] = _ddq_input[i];
-            i++;
-        }
-    }
+    convertQ(_ddq_input,ddq_complete_output);
     return true;
 }
 
-bool icubWholeBodyModel::convertGeneralizedTorques(yarp::sig::Vector idyntree_base_force, yarp::sig::Vector idyntree_torques, double * tau)
+bool yarpWholeBodyModel::convertGeneralizedTorques(yarp::sig::Vector idyntree_base_force, yarp::sig::Vector idyntree_torques, double * tau)
 {
     if( idyntree_base_force.size() != 6 && (int)idyntree_torques.size() != p_model->getNrOfDOFs() ) { return false; }
     for(int j = 0; j < 6; j++ ) {
         tau[j] = idyntree_base_force[j];
     }
-    int i = 0;
-    FOR_ALL_BODY_PARTS_OF(itBp, jointIdList) {
-        FOR_ALL_JOINTS(itBp, itJ) {
-            tau[i+6] = idyntree_torques[p_model->getDOFIndex(itBp->first,*itJ)];
-            i++;
-        }
+    for(int wbi_joint_numeric_id=0; wbi_joint_numeric_id < this->dof; wbi_joint_numeric_id++ )
+    {
+        tau[wbi_joint_numeric_id+6] = idyntree_torques[wbiToiDynTreeJointId[wbi_joint_numeric_id]];
     }
+
     return true;
 }
 
-int icubWholeBodyModel::bodyPartJointMapping(int bodypart_id, int local_id)
+bool yarpWholeBodyModel::getLinkId(const char *linkName, int &linkNumericId)
 {
-    if( reverse_torso_joints ) {
-        return bodypart_id==TORSO ? 2-local_id : local_id;
-    } else {
-        return local_id;
+    if( !this->initDone || p_model == 0 )
+    {
+        return false;
     }
+    int link_id = p_model->getLinkIndex(std::string(linkName));
+    if( link_id == - 1 )
+    {
+        return false;
+    }
+    linkNumericId = link_id;
+    return false;
 }
 
-bool icubWholeBodyModel::getJointLimits(double *qMin, double *qMax, int joint)
+
+bool yarpWholeBodyModel::getJointLimits(double *qMin, double *qMax, int joint)
 {
-    if( !this->initDriversDone ) return false;
+    if( !this->initDone ) return false;
     if( (joint < 0 || joint >= (int)jointIdList.size()) && joint != -1 ) { return false; }
 
     if(joint>=0)
     {
-        LocalId lid = jointIdList.globalToLocalId(joint);
-        int index = bodyPartJointMapping(lid.bodyPart,lid.index);
-        assert(ilim[lid.bodyPart]!=NULL);
-//         std::cout << "Getting limits for bp " << lid.bodyPart << " " << lid.index <<  std::endl;
-        bool res = ilim[lid.bodyPart]->getLimits(index, qMin, qMax);
+        int controlBoardId = controlBoardAxisList[joint].first;
+        int index = controlBoardAxisList[joint].second;
+        assert(ilim[controlBoardId]!=NULL);
+        bool res = ilim[controlBoardId]->getLimits(index, qMin, qMax);
         if(res)
         {
             *qMin = (*qMin) * CTRL_DEG2RAD;   // convert from deg to rad
@@ -387,7 +379,7 @@ bool icubWholeBodyModel::getJointLimits(double *qMin, double *qMax, int joint)
     //return true;
 }
 
-bool icubWholeBodyModel::computeH(double *q, const Frame &xBase, int linkId, Frame &H)
+bool yarpWholeBodyModel::computeH(double *q, const Frame &xBase, int linkId, Frame &H)
 {
     if( (linkId < 0 || linkId >= p_model->getNrOfLinks()) && linkId != COM_LINK_ID ) return false;
 
@@ -415,7 +407,7 @@ bool icubWholeBodyModel::computeH(double *q, const Frame &xBase, int linkId, Fra
 }
 
 
-bool icubWholeBodyModel::computeJacobian(double *q, const Frame &xBase, int linkId, double *J, double *pos)
+bool yarpWholeBodyModel::computeJacobian(double *q, const Frame &xBase, int linkId, double *J, double *pos)
 {
     if( (linkId < 0 || linkId >= p_model->getNrOfLinks()) && linkId != COM_LINK_ID ) return false;
 
@@ -445,11 +437,10 @@ bool icubWholeBodyModel::computeJacobian(double *q, const Frame &xBase, int link
 
 
     int i=0;
-    FOR_ALL_BODY_PARTS_OF(itBp, jointIdList) {
-        FOR_ALL_JOINTS(itBp, itJ) {
-            reduced_jacobian.setCol(i+6,complete_jacobian.getCol(6+p_model->getDOFIndex(itBp->first,*itJ)));
-            i++;
-        }
+    for(int wbi_joint_numeric_id=0; wbi_joint_numeric_id < this->dof; wbi_joint_numeric_id++ )
+    {
+        reduced_jacobian.setCol(wbi_joint_numeric_id+6,complete_jacobian.getCol(6+wbiToiDynTreeJointId[wbi_joint_numeric_id]));
+        i++;
     }
     reduced_jacobian.setSubmatrix(complete_jacobian.submatrix(0,5,0,5),0,0);
     memcpy(J,reduced_jacobian.data(),sizeof(double)*6*dof_jacobian);
@@ -463,7 +454,7 @@ bool icubWholeBodyModel::computeJacobian(double *q, const Frame &xBase, int link
     return true;
 }
 
-bool icubWholeBodyModel::computeDJdq(double *q, const Frame &xBase, double *dq, double *dxB, int linkID, double *dJdq, double *pos)
+bool yarpWholeBodyModel::computeDJdq(double *q, const Frame &xBase, double *dq, double *dxB, int linkID, double *dJdq, double *pos)
 {
     if ((linkID < 0 || linkID >= p_model->getNrOfLinks()) && linkID != COM_LINK_ID) return false;
     if (pos != 0) return false; //not implemented yet
@@ -516,7 +507,7 @@ bool icubWholeBodyModel::computeDJdq(double *q, const Frame &xBase, double *dq, 
 
 }
 
-bool icubWholeBodyModel::forwardKinematics(double *q, const Frame &xB, int linkId, double *x)
+bool yarpWholeBodyModel::forwardKinematics(double *q, const Frame &xB, int linkId, double *x)
 {
     if( (linkId < 0 || linkId >= p_model->getNrOfLinks()) && linkId != COM_LINK_ID ) return false;
 
@@ -563,7 +554,7 @@ bool icubWholeBodyModel::forwardKinematics(double *q, const Frame &xB, int linkI
     return true;
 }
 
-bool icubWholeBodyModel::inverseDynamics(double *q, const Frame &xB, double *dq, double *dxB, double *ddq, double *ddxB, double *g, double *tau)
+bool yarpWholeBodyModel::inverseDynamics(double *q, const Frame &xB, double *dq, double *dxB, double *ddq, double *ddxB, double *g, double *tau)
 {
     //We can take into account the gravity efficiently by adding a fictional acceleration to the base
     double baseAcceleration[6] = {0, 0, 0, 0, 0, 0};
@@ -605,7 +596,7 @@ bool icubWholeBodyModel::inverseDynamics(double *q, const Frame &xB, double *dq,
     return convertGeneralizedTorques(base_force,p_model->getTorques(),tau);
 }
 
-bool icubWholeBodyModel::computeMassMatrix(double *q, const Frame &xBase, double *M)
+bool yarpWholeBodyModel::computeMassMatrix(double *q, const Frame &xBase, double *M)
 {
     convertBasePose(xBase,world_base_transformation);
     convertQ(q,all_q);
@@ -650,9 +641,10 @@ bool icubWholeBodyModel::computeMassMatrix(double *q, const Frame &xBase, double
     //Rest of the matrix
     int reduced_dof_row=0;
     int reduced_dof_column = 0;
-    FOR_ALL_BODY_PARTS_OF(row_bp, jointIdList) {
-        FOR_ALL_JOINTS(row_bp, row_joint) {
-            int complete_dof_row = p_model->getDOFIndex(row_bp->first,*row_joint);
+
+    for(int reduced_dof_row=0; reduced_dof_row < this->dof; reduced_dof_row++ )
+    {
+            int complete_dof_row = wbiToiDynTreeJointId[reduced_dof_row];
 
             //Left bottom submatrix
             mapped_reduced_mm.block<1,6>(6+reduced_dof_row,0) = mapped_complete_mm.block<1,6>(6+complete_dof_row,0);
@@ -661,16 +653,13 @@ bool icubWholeBodyModel::computeMassMatrix(double *q, const Frame &xBase, double
             mapped_reduced_mm.block<6,1>(0,6+reduced_dof_row) =  mapped_reduced_mm.block<1,6>(6+reduced_dof_row,0).transpose();
 
             reduced_dof_column=0;
-            FOR_ALL_BODY_PARTS_OF(column_bp, jointIdList) {
-                FOR_ALL_JOINTS(column_bp, column_joint) {
-                    int complete_dof_column = p_model->getDOFIndex(column_bp->first,*column_joint);
+            for(int reduced_dof_column=0; reduced_dof_column < this->dof; reduced_dof_column++ )
+            {
+                    int complete_dof_column = wbiToiDynTreeJointId[reduced_dof_column];
                     mapped_reduced_mm(6+reduced_dof_row,6+reduced_dof_column) =
                         mapped_complete_mm(6+complete_dof_row,6+complete_dof_column);
-                    reduced_dof_column++;
-                }
             }
-            reduced_dof_row++;
-        }
+
     }
 
     memcpy(M,reduced_floating_base_mass_matrix.data(),sizeof(double)*(6+dof)*(6+dof));
@@ -678,7 +667,7 @@ bool icubWholeBodyModel::computeMassMatrix(double *q, const Frame &xBase, double
     return true;
 }
 
-bool icubWholeBodyModel::computeGeneralizedBiasForces(double *q, const Frame &xBase, double *dq, double *dxB, double *g, double *h)
+bool yarpWholeBodyModel::computeGeneralizedBiasForces(double *q, const Frame &xBase, double *dq, double *dxB, double *g, double *h)
 {
     /** \todo move all conversion (also the one relative to frames) in convert* functions */
     //Converting local wbi positions/velocity/acceleration to iDynTree one
@@ -725,7 +714,7 @@ bool icubWholeBodyModel::computeGeneralizedBiasForces(double *q, const Frame &xB
 }
 
 
-bool icubWholeBodyModel::computeCentroidalMomentum(double *q, const Frame &xBase, double *dq, double *dxB, double *h)
+bool yarpWholeBodyModel::computeCentroidalMomentum(double *q, const Frame &xBase, double *dq, double *dxB, double *h)
 {
     /** \todo move all conversion (also the one relative to frames) in convert* functions */
     //Converting local wbi positions/velocity/acceleration to iDynTree one

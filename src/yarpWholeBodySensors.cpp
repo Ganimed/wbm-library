@@ -16,6 +16,8 @@
  */
 
 #include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
+#include "yarpWholeBodyInterface/yarpWbiUtil.h"
+
 #include <yarp/os/Time.h>
 #include <yarp/os/Stamp.h>
 #include <iCub/ctrl/math.h>
@@ -25,7 +27,7 @@
 
 using namespace std;
 using namespace wbi;
-using namespace wbiIcub;
+using namespace yarpWbi;
 using namespace yarp::os;
 using namespace yarp::dev;
 using namespace yarp::sig;
@@ -34,14 +36,15 @@ using namespace iCub::ctrl;
 
 #define MAX_NJ 20 ///< Maximum number of joints for body part (used for buffers to avoid dynamic memory allocation)
 #define WAIT_TIME 0.001
+#define INITIAL_TIMESTAMP -1000.0
 
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 //                                          YARP WHOLE BODY SENSORS
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-yarpWholeBodySensors::yarpWholeBodySensors(const char* _name, const char* _robotName, yarp::os::Property & opt):
-initDone(false), name(_name), robot(_robotName)
+yarpWholeBodySensors::yarpWholeBodySensors(const char* _name, const yarp::os::Property & opt):
+initDone(false), name(_name), wbi_yarp_properties(opt)
 {
     /*
     loadBodyPartsFromConfig(opt,controlBoardNames);
@@ -51,6 +54,17 @@ initDone(false), name(_name), robot(_robotName)
     */
 }
 
+bool yarpWholeBodySensors::setYarpWbiProperties(const yarp::os::Property & yarp_wbi_properties)
+{
+    wbi_yarp_properties = yarp_wbi_properties;
+    return true;
+}
+
+bool yarpWholeBodySensors::getYarpWbiProperties(yarp::os::Property & yarp_wbi_properties)
+{
+    yarp_wbi_properties = wbi_yarp_properties;
+    return true;
+}
 
 bool yarpWholeBodySensors::init()
 {
@@ -64,6 +78,14 @@ bool yarpWholeBodySensors::init()
 
     bool initDone = true;
 
+    if( !wbi_yarp_properties.check("robotName") )
+    {
+        std::cerr << "yarpWholeBodySensors error: robotName not found in configuration files" << std::endl;
+        return false;
+    }
+
+    robot = wbi_yarp_properties.find("robotName").asString().c_str();
+
     yarp::os::Bottle & joints_config = getWBIYarpJointsOptions(wbi_yarp_properties);
     controlBoardNames.clear();
     initDone = appendNewControlBoardsToVector(joints_config,encoderIdList,controlBoardNames);
@@ -73,6 +95,19 @@ bool yarpWholeBodySensors::init()
     {
         return false;
     }
+
+    //Resize all the data structure that depend on the number of controlboards
+    int nrOfControlBoards = controlBoardNames.size();
+    ienc.resize(nrOfControlBoards);
+    iopl.resize(nrOfControlBoards);
+    dd.resize(nrOfControlBoards);
+    itrq.resize(nrOfControlBoards);
+
+    controlBoardAxes.resize(nrOfControlBoards);
+    qLastRead.resize(nrOfControlBoards);
+    qStampLastRead.resize(nrOfControlBoards);
+    pwmLastRead.resize(nrOfControlBoards);
+    torqueSensorsLastRead.resize(nrOfControlBoards);
 
     encoderControlBoardAxisList = getControlBoardAxisList(joints_config,encoderIdList,controlBoardNames);
     pwmControlBoardAxisList = getControlBoardAxisList(joints_config,pwmSensIdList,controlBoardNames);
@@ -117,9 +152,28 @@ bool yarpWholeBodySensors::init()
         return false;
     }
 
-    for(wbiIdList::iterator itFt=ftSensIdList.begin(); itFt!=ftSensIdList.end(); itFt++)
+
+    //Load imu and ft sensors information
+    std::vector<string> imu_ports, ft_ports;
+    bool ret = loadFTSensorPortsFromConfig(wbi_yarp_properties,ftSensIdList,imu_ports);
+    ret = ret && loadIMUSensorPortsFromConfig(wbi_yarp_properties,imuIdList,ft_ports);
+    if( ! ret )
     {
-            initDone = initDone && openFTsens(*itFt);
+        std::cerr << "yarpWholeBodySensors::init() error: failing in loading configuration of IMU and FT sensors." << std::endl;
+        return false;
+    }
+
+    //Resize all the data structure that depend on the number of fts
+    int nrOfFtSensors = ftSensIdList.size();
+    ftSensLastRead.resize(nrOfFtSensors);
+    ftStampSensLastRead.resize(nrOfFtSensors);
+    int nrOfImuSensors = imuIdList.size();
+    imuLastRead.resize(nrOfImuSensors);
+    imuStampLastRead.resize(nrOfImuSensors);
+
+    for(int ft_numeric_id = 0; ft_numeric_id < ftSensIdList.size(); ft_numeric_id++)
+    {
+            initDone = initDone && openFTsens(ft_numeric_id,ft_ports[ft_numeric_id]);
     }
 
     if( !initDone )
@@ -128,9 +182,9 @@ bool yarpWholeBodySensors::init()
         return false;
     }
 
-    for(wbiIdList::iterator itImu=imuIdList.begin(); itImu!=imuIdList.end(); itImu++)
+    for(int imu_numeric_id = 0; imu_numeric_id < imuIdList.size(); imu_numeric_id++)
     {
-            initDone = initDone && openImu(*itImu);
+            initDone = initDone && openImu(imu_numeric_id,imu_ports[imu_numeric_id]);
     }
 
     if( !initDone )
@@ -176,21 +230,21 @@ bool yarpWholeBodySensors::close()
         }
     }
 
-    for(map<wbiId,BufferedPort<Vector>*>::iterator it=portsIMU.begin(); it!=portsIMU.end(); it++)
+    for(std::vector<BufferedPort<Vector>*>::iterator it=portsIMU.begin(); it!=portsIMU.end(); it++)
     {
-        if( it->second != 0 ) {
-            it->second->close();
-            delete it->second;
-            it->second=0;
+        if( *it != 0 ) {
+            (*it)->close();
+            delete *it;
+            *it=0;
         }
     }
 
-    for(map<wbiId,BufferedPort<Vector>*>::iterator it=portsFTsens.begin(); it!=portsFTsens.end(); it++)
+    for(std::vector<BufferedPort<Vector>*>::iterator it=portsFTsens.begin(); it!=portsFTsens.end(); it++)
     {
-        if( it->second != 0 ) {
-            it->second->close();
-            delete it->second;
-            it->second=0;
+        if( *it != 0 ) {
+            (*it)->close();
+            delete *it;
+            *it=0;
         }
     }
 
@@ -237,15 +291,6 @@ int yarpWholeBodySensors::addSensors(const SensorType st, const wbiIdList &sids)
 
 bool yarpWholeBodySensors::removeSensor(const SensorType st, const wbiId &sid)
 {
-    switch(st)
-    {
-    case SENSOR_ENCODER:        return encoderIdList.removeId(sid);;
-    case SENSOR_PWM:            return pwmSensIdList.removeId(sid);
-    case SENSOR_IMU:            return imuIdList.removeId(sid);
-    case SENSOR_FORCE_TORQUE:   return ftSensIdList.removeId(sid);
-    case SENSOR_TORQUE:         return torqueSensorIdList.removeId(sid);
-    default:break;
-    }
     return false;
 }
 
@@ -277,7 +322,7 @@ int yarpWholeBodySensors::getSensorNumber(const SensorType st)
     return 0;
 }
 
-bool yarpWholeBodySensors::readSensor(const SensorType st, const wbiId &sid, double *data, double *stamps, bool blocking)
+bool yarpWholeBodySensors::readSensor(const SensorType st, const int sid, double *data, double *stamps, bool blocking)
 {
     switch(st)
     {
@@ -351,14 +396,28 @@ bool yarpWholeBodySensors::openPwm(const int bp)
         fprintf(stderr, "Problem initializing drivers of %s\n", controlBoardNames[bp].c_str());
         return false;
     }
+
+    //allocate lastRead variables
+    qLastRead[bp].resize(controlBoardAxes[bp]);
+    qStampLastRead[bp].resize(controlBoardAxes[bp]);
+    pwmLastRead[bp].resize(controlBoardAxes[bp]);
+    torqueSensorsLastRead[bp].resize(controlBoardAxes[bp]);
+
     return true;
 }
 
-bool yarpWholeBodySensors::openImu(const wbiId &i, const std::string & port_name, const int numeric_id)
+bool yarpWholeBodySensors::openImu(const int numeric_id, const std::string & port_name)
 {
+    if( numeric_id < 0 || numeric_id >= imuIdList.size() )
+    {
+        return false;
+    }
+
     string remotePort = "/" + robot + port_name;
     stringstream localPort;
-    localPort << "/" << name << "/imu" << i.bodyPart << "_" << i.index << ":i";
+    wbi::wbiId wbi_id;
+    imuIdList.numericIdToWbiId(numeric_id,wbi_id);
+    localPort << "/" << name << "/imu/" <<  wbi_id.toString() << ":i";
     portsIMU[numeric_id] = new BufferedPort<Vector>();
     if(!portsIMU[numeric_id]->open(localPort.str().c_str())) { // open local input port
         std::cerr << "yarpWholeBodySensors::openImu(): Open of localPort " << localPort << " failed " << std::endl;
@@ -374,27 +433,21 @@ bool yarpWholeBodySensors::openImu(const wbiId &i, const std::string & port_name
     }
 
     //allocate lastRead variables
-    imuLastRead[i].resize(sensorTypeDescriptions[SENSOR_IMU].dataSize,0.0);
-    imuStampLastRead[i] = INITIAL_TIMESTAMP;
+    imuLastRead[numeric_id].resize(sensorTypeDescriptions[SENSOR_IMU].dataSize,0.0);
+    imuStampLastRead[numeric_id] = INITIAL_TIMESTAMP;
 
     return true;
 }
 
-bool yarpWholeBodySensors::openFTsens(const wbiId &i, std::string port_name)
+bool yarpWholeBodySensors::openFTsens(const int ft_sens_numeric_id, const std::string & port_name)
 {
-    /*
-     * Disable because Gazebo has FT sensor (the difference in sensor availability between simulator and real robot should be addressed in interface initialization
-    if(isRobotSimulator(robot)) // icub simulator doesn't have force/torque sensors
-        return true;
-    */
-    if (isICubSimulator(robot))
-        return true;
-
     string remotePort = "/" + robot + port_name;
     stringstream localPort;
-    localPort << "/" << name << "/ftSens/" << i.toString() << ":i";
-    portsFTsens[i] = new BufferedPort<Vector>();
-    if(!portsFTsens[i]->open(localPort.str().c_str())) {
+    wbi::wbiId wbi_id;
+    ftSensIdList.numericIdToWbiId(ft_sens_numeric_id,wbi_id);
+    localPort << "/" << name << "/ftSens/" << wbi_id.toString() << ":i";
+    portsFTsens[ft_sens_numeric_id] = new BufferedPort<Vector>();
+    if(!portsFTsens[ft_sens_numeric_id]->open(localPort.str().c_str())) {
         // open local input port
         std::cerr << "yarpWholeBodySensors::openFTsens(): Open of localPort " << localPort << " failed " << std::endl;
         return false;
@@ -409,16 +462,14 @@ bool yarpWholeBodySensors::openFTsens(const wbiId &i, std::string port_name)
     }
 
     //allocate lastRead variables
-    ftSensLastRead[i].resize(sensorTypeDescriptions[SENSOR_FORCE_TORQUE].dataSize,0.0);
-    ftStampSensLastRead[i] = INITIAL_TIMESTAMP;
-
+    ftSensLastRead[ft_sens_numeric_id].resize(sensorTypeDescriptions[SENSOR_FORCE_TORQUE].dataSize,0.0);
+    ftStampSensLastRead[ft_sens_numeric_id] = INITIAL_TIMESTAMP;
 
     return true;
 }
 
 bool yarpWholeBodySensors::openTorqueSensor(const int bp)
 {
-//    torqueSensorsLastRead[bp].resize(6,0.0);
     ///< check that we are not in simulation, because iCub simulator does not implement torque sensors
     if(isICubSimulator(robot))
         return true;
@@ -436,6 +487,13 @@ bool yarpWholeBodySensors::openTorqueSensor(const int bp)
         fprintf(stderr, "Problem initializing drivers of %s\n", controlBoardNames[bp].c_str());
         return false;
     }
+
+    //allocate lastRead variables
+    qLastRead[bp].resize(controlBoardAxes[bp]);
+    qStampLastRead[bp].resize(controlBoardAxes[bp]);
+    pwmLastRead[bp].resize(controlBoardAxes[bp]);
+    torqueSensorsLastRead[bp].resize(controlBoardAxes[bp]);
+
     return true;
 }
 
@@ -555,33 +613,39 @@ bool yarpWholeBodySensors::readEncoders(double *q, double *stamps, bool wait)
 {
     double qTemp[MAX_NJ], tTemp[MAX_NJ];
     bool res = true, update=false;
-    int i=0;
-    FOR_ALL_BODY_PARTS_OF(itBp, encoderIdList)
+
+     //Read data from all controlboards
+    for(std::vector<int>::const_iterator ctrlBoard = encoderControlBoardList.begin();
+        ctrlBoard != encoderControlBoardList.end(); ctrlBoard++ )
     {
-        assert(ienc[itBp->first]!=NULL);
-        // read encoders
-        while( !(update=ienc[itBp->first]->getEncodersTimed(qTemp, tTemp)) && wait)
+        // read data
+        while( !(update=ienc[*ctrlBoard]->getEncodersTimed(qTemp, tTemp)) && wait)
             Time::delay(WAIT_TIME);
 
-        // if read succeeded => update data
+        // if reading has succeeded, update last read data
         if(update)
-            for(unsigned int i=0; i<controlBoardAxes[itBp->first]; i++)
-            {
-                assert( i < qLastRead[itBp->first].size() );
-                qLastRead[itBp->first][bodyPartJointMapping(itBp->first,i)] = CTRL_DEG2RAD*qTemp[i];;
-                qStampLastRead[itBp->first][bodyPartJointMapping(itBp->first,i)]   = tTemp[i];
-            }
-
-        // copy most recent data into output variables
-        FOR_ALL_JOINTS(itBp, itJ)
         {
-            q[i] = qLastRead[itBp->first][*itJ];
-            if(stamps!=0)
-                stamps[i] = qStampLastRead[itBp->first][*itJ];
-            i++;
+            for(int axis=0; axis < qLastRead[*ctrlBoard].size(); axis++ )
+            {
+                qLastRead[*ctrlBoard][axis] = qTemp[axis];
+                qStampLastRead[*ctrlBoard][axis] = tTemp[axis];
+            }
         }
-        res = res && update;    // if read failed => return false
+
+        res = res && update;
     }
+
+     //Copy readed data in the output vector
+    for(int encNumericId = 0; encNumericId < encoderIdList.size(); encNumericId++)
+    {
+        int encControlBoard = encoderControlBoardAxisList[encNumericId].first;
+        int encAxis = encoderControlBoardAxisList[encNumericId].second;
+        q[encNumericId] = qLastRead[encControlBoard][encAxis];
+        if(stamps!=0)
+                stamps[encNumericId] = qStampLastRead[encControlBoard][encAxis];
+    }
+
+
     return res || wait;
 }
 
@@ -589,6 +653,7 @@ bool yarpWholeBodySensors::readPwms(double *pwm, double *stamps, bool wait)
 {
     //Do not support stamps on pwm
     assert(stamps == 0);
+
     ///< check that we are not in simulation, because iCub simulator does not implement pwm control
     if(isICubSimulator(robot))
     {
@@ -599,26 +664,35 @@ bool yarpWholeBodySensors::readPwms(double *pwm, double *stamps, bool wait)
     double pwmTemp[MAX_NJ];
     bool res = true, update=false;
     int i=0;
-    FOR_ALL_BODY_PARTS_OF(itBp, pwmSensIdList)
+
+    //Read data from all controlboards
+    for(std::vector<int>::iterator ctrlBoard=pwmControlBoardList.begin();
+        ctrlBoard != pwmControlBoardList.end(); ctrlBoard++ )
     {
         // read data
-        while( !(update=iopl[itBp->first]->getOutputs(pwmTemp)) && wait)
+        while( !(update=iopl[*ctrlBoard]->getOutputs(pwmTemp)) && wait)
             Time::delay(WAIT_TIME);
 
         // if reading has succeeded, update last read data
         if(update)
-            for(unsigned int i=0; i<controlBoardAxes[itBp->first]; i++)
-                pwmLastRead[itBp->first][bodyPartJointMapping(itBp->first,i)] = pwmTemp[i];    // joints of the torso are in reverse order
-
-        // copy data in output vector
-        FOR_ALL_JOINTS(itBp, itJ)
         {
-            pwm[i]      = pwmLastRead[itBp->first][*itJ];
-            // stamps[i]   = ?;
-            i++;
+            for(int axis=0; axis < pwmLastRead[*ctrlBoard].size(); axis++ )
+            {
+                pwmLastRead[*ctrlBoard][axis] = pwmTemp[axis];
+            }
         }
+
         res = res && update;
     }
+
+    //Copy readed data in the output vector
+    for(int pwmNumericId = 0; pwmNumericId < pwmSensIdList.size(); pwmNumericId++)
+    {
+        int pwmControlBoard = pwmControlBoardAxisList[pwmNumericId].first;
+        int pwmAxes = pwmControlBoardAxisList[pwmNumericId].second;
+        pwm[pwmNumericId] = pwmLastRead[pwmControlBoard][pwmAxes];
+    }
+
     return res || wait;
 }
 
@@ -627,22 +701,20 @@ bool yarpWholeBodySensors::readIMUs(double *inertial, double *stamps, bool wait)
     assert(false);
     return false;
     Vector *v;
-    int i=0;    // sensor index
-    for(map<wbiId,BufferedPort<Vector>*>::iterator it=portsIMU.begin(); it!=portsIMU.end(); it++)
+    for(int i=0; i < imuIdList.size(); i++)
     {
-        v = it->second->read(wait);
+        v = portsIMU[i]->read(wait);
         if(v!=0)
         {
             yarp::os::Stamp info;
-            imuLastRead[it->first] = *v;
-            it->second->getEnvelope(info);
-            imuStampLastRead[it->first] = info.getTime();
+            imuLastRead[i] = *v;
+            portsIMU[i]->getEnvelope(info);
+            imuStampLastRead[i] = info.getTime();
         }
-        convertIMU(&inertial[sensorTypeDescriptions[SENSOR_IMU].dataSize*i],imuLastRead[it->first].data());
+        convertIMU(&inertial[sensorTypeDescriptions[SENSOR_IMU].dataSize*i],imuLastRead[i].data());
         if( stamps != 0 ) {
-            stamps[i] = imuStampLastRead[it->first];
+            stamps[i] = imuStampLastRead[i];
         }
-        i++;
     }
     return true;
 }
@@ -658,19 +730,19 @@ bool yarpWholeBodySensors::readFTsensors(double *ftSens, double *stamps, bool wa
 
     Vector *v;
     int i=0;    // sensor index
-    for(map<wbiId,BufferedPort<Vector>*>::iterator it=portsFTsens.begin(); it!=portsFTsens.end(); it++)
+    for(int i=0; i < ftSensIdList.size(); i++)
     {
-        v = it->second->read(wait);
+        v = portsFTsens[i]->read(wait);
         if(v!=0)
         {
-            ftSensLastRead[it->first] = *v;
+            ftSensLastRead[i] = *v;
             yarp::os::Stamp info;
-            it->second->getEnvelope(info);
-            ftStampSensLastRead[it->first] = info.getTime();
+            portsFTsens[i]->getEnvelope(info);
+            ftStampSensLastRead[i] = info.getTime();
         }
-        memcpy(&ftSens[i*6], ftSensLastRead[it->first].data(), 6*sizeof(double));
+        memcpy(&ftSens[i*6], ftSensLastRead[i].data(), 6*sizeof(double));
         if( stamps != 0 ) {
-                stamps[i] = ftStampSensLastRead[it->first];
+                stamps[i] = ftStampSensLastRead[i];
         }
         i++;
     }
@@ -685,58 +757,51 @@ bool yarpWholeBodySensors::readTorqueSensors(double *jointSens, double *stamps, 
         return true;
     }
 
-    double torqueTemp[MAX_NJ];
     bool res = true, update=false;
-    int i=0;
-    FOR_ALL_BODY_PARTS_OF(itBp, torqueSensorIdList)
+   //Do not support stamps on pwm
+    assert(stamps == 0);
+
+    //Read data from all controlboards
+    for(std::vector<int>::iterator ctrlBoard=torqueControlBoardList.begin();
+        ctrlBoard != torqueControlBoardList.end(); ctrlBoard++ )
     {
         // read data
-        while( !(update = itrq[itBp->first]->getTorques(torqueTemp)) && wait)
+        while( !(update=itrq[*ctrlBoard]->getTorques(torqueSensorsLastRead[*ctrlBoard].data())) && wait)
             Time::delay(WAIT_TIME);
 
-        // if reading has succeeded, update last read data
-        if(update)
-            for(unsigned int i = 0; i < bodyPartAxes[itBp->first]; i++)
-                torqueSensorsLastRead[itBp->first][bodyPartJointMapping(itBp->first,i)] = torqueTemp[i];    // joints of the torso are in reverse order
-
-        // copy data in output vector
-        FOR_ALL_JOINTS(itBp, itJ)
-        {
-            jointSens[i] = torqueSensorsLastRead[itBp->first][*itJ];
-            i++;
-        }
         res = res && update;
     }
+
+    //Copy readed data in the output vector
+    for(int torqueNumericId = 0; torqueNumericId < torqueSensorIdList.size(); torqueNumericId++)
+    {
+        int torqueControlBoard = torqueControlBoardAxisList[torqueNumericId].first;
+        int torqueAxis = torqueControlBoardAxisList[torqueNumericId].second;
+        jointSens[torqueNumericId] = torqueSensorsLastRead[torqueControlBoard][torqueAxis];
+    }
+
     return res || wait;
 }
 
-bool yarpWholeBodySensors::readEncoder(const wbiId &sid, double *q, double *stamps, bool wait)
+bool yarpWholeBodySensors::readEncoder(const int encoder_numeric_id, double *q, double *stamps, bool wait)
 {
-    double qTemp[MAX_NJ], tTemp[MAX_NJ];
     bool update=false;
-    assert(ienc[sid.bodyPart]!=0);
+    int encoderCtrlBoard = encoderControlBoardAxisList[encoder_numeric_id].first;
+    int encoderCtrlBoardAxis = encoderControlBoardAxisList[encoder_numeric_id].second;
+
     // read encoders
-    while( !(update=ienc[sid.bodyPart]->getEncodersTimed(qTemp, tTemp)) && wait)
+    while( !(update=ienc[encoderCtrlBoard]->getEncodersTimed(qLastRead[encoderCtrlBoard].data(), qStampLastRead[encoderCtrlBoard].data())) && wait)
         Time::delay(WAIT_TIME);
 
-    // if read succeeded => update data
-    if(update)
-        for(unsigned int i=0; i<controlBoardAxes[sid.bodyPart]; i++)
-        {
-            // joints 0 and 2 of the torso are swapped
-            qLastRead[sid.bodyPart][bodyPartJointMapping(sid.bodyPart,i)]        = CTRL_DEG2RAD*qTemp[i];
-            qStampLastRead[sid.bodyPart][bodyPartJointMapping(sid.bodyPart,i)]   = tTemp[i];
-        }
-
     // copy most recent data into output variables
-    q[0] = qLastRead[sid.bodyPart][sid.index];
+    q[0] = qLastRead[encoderCtrlBoard][encoderCtrlBoardAxis];
     if(stamps!=0)
-        stamps[0] = qStampLastRead[sid.bodyPart][sid.index];
+        stamps[0] = qStampLastRead[encoderCtrlBoard][encoderCtrlBoardAxis];
 
     return update || wait;  // if read failed => return false
 }
 
-bool yarpWholeBodySensors::readPwm(const wbiId &sid, double *pwm, double *stamps, bool wait)
+bool yarpWholeBodySensors::readPwm(const int pwm_numeric_id, double *pwm, double *stamps, bool wait)
 {
     assert(stamps == 0);
     if(isICubSimulator(robot))
@@ -744,19 +809,17 @@ bool yarpWholeBodySensors::readPwm(const wbiId &sid, double *pwm, double *stamps
         pwm[0] = 0.0;   // iCub simulator does not have pwm sensors
         return true;    // does not return false, so programs can be tested in simulation
     }
-    double pwmTemp[MAX_NJ];
+
     bool update=false;
-    assert(iopl[sid.bodyPart]!=0);
-    // read motor PWM
-    while( !(update=iopl[sid.bodyPart]->getOutputs(pwmTemp)) && wait)
+    int pwmCtrlBoard = pwmControlBoardAxisList[pwm_numeric_id].first;
+    int pwmCtrlBoardAxis = pwmControlBoardAxisList[pwm_numeric_id].second;
+
+    // read pwm sensors
+    while( !(update=iopl[pwmCtrlBoard]->getOutputs(pwmLastRead[pwmCtrlBoard].data())) && wait)
         Time::delay(WAIT_TIME);
 
-    // if read succeeded => update data
-    if(update) // joints 0 and 2 of the torso are swapped
-        pwmLastRead[sid.bodyPart][bodyPartJointMapping(sid.bodyPart,sid.index)] = pwmTemp[sid.index];
-
     // copy most recent data into output variables
-    pwm[0] = pwmLastRead[sid.bodyPart][sid.index];
+    pwm[0] = pwmLastRead[pwmCtrlBoard][pwmCtrlBoardAxis];
 
     return update || wait;  // if read failed => return false
 }
@@ -777,40 +840,35 @@ bool yarpWholeBodySensors::convertIMU(double * wbi_imu_readings, const double * 
     return true;
 }
 
-bool yarpWholeBodySensors::readIMU(const wbiId &sid, double *inertial, double *stamps, bool wait)
+bool yarpWholeBodySensors::readIMU(const int imu_sensor_numeric_id, double *inertial, double *stamps, bool wait)
 {
     #ifndef NDEBUG
-    if( portsIMU.find(sid) == portsIMU.end() ) {
-        std::cerr << "yarpWholeBodySensors::readIMU(..) error: no port found for localId " << sid.bodyPart << " " << sid.index << " " << sid.description << std::endl;
-        std::cerr << "Available sensors: " << std::endl;
-        for(map<wbiId,BufferedPort<Vector>*>::iterator it=portsIMU.begin(); it!=portsIMU.end(); it++) {
-            std::cout << "Bp: " << it->first.bodyPart << " index " << it->first.index << std::endl;
-        }
-
+    if( imu_sensor_numeric_id < 0 || imu_sensor_numeric_id >= imuIdList.size() ) {
+        std::cerr << "yarpWholeBodySensors::readIMU(..) error: no port found for imu with numeric id " << imu_sensor_numeric_id<< std::endl;
         return false;
     }
     #endif
 
-    Vector *v = portsIMU[sid]->read(wait);
+    Vector *v = portsIMU[imu_sensor_numeric_id]->read(wait);
     if(v!=0) {
         yarp::os::Stamp info;
-        imuLastRead[sid] = *v;
-        portsIMU[sid]->getEnvelope(info);
-        imuStampLastRead[sid] = info.getTime();
+        imuLastRead[imu_sensor_numeric_id] = *v;
+        portsIMU[imu_sensor_numeric_id]->getEnvelope(info);
+        imuStampLastRead[imu_sensor_numeric_id] = info.getTime();
     }
     if( stamps != 0 ) {
-        *stamps = imuStampLastRead[sid];
+        *stamps = imuStampLastRead[imu_sensor_numeric_id];
     }
-    convertIMU(inertial,imuLastRead[sid].data());
+    convertIMU(inertial,imuLastRead[imu_sensor_numeric_id].data());
 
     return true;
 }
 
-bool yarpWholeBodySensors::readFTsensor(const wbiId &sid, double *ftSens, double *stamps, bool wait)
+bool yarpWholeBodySensors::readFTsensor(const int ft_sensor_numeric_id, double *ftSens, double *stamps, bool wait)
 {
     #ifndef NDEBUG
-    if( portsFTsens.find(sid) == portsFTsens.end() ) {
-        std::cerr << "yarpWholeBodySensors::readFTsensor(..) error: no port found for localId " << sid.bodyPart << " " << sid.index << " " << sid.description << std::endl;
+    if( ft_sensor_numeric_id < 0 && ft_sensor_numeric_id >= ftSensIdList.size() ) {
+        std::cerr << "yarpWholeBodySensors::readFTsensor(..) error: no port found for ft sensor " << ft_sensor_numeric_id  << std::endl;
         return false;
     }
     #endif
@@ -821,22 +879,22 @@ bool yarpWholeBodySensors::readFTsensor(const wbiId &sid, double *ftSens, double
         return true;
     }
 
-    Vector *v = portsFTsens[sid]->read(wait);
+    Vector *v = portsFTsens[ft_sensor_numeric_id]->read(wait);
     if(v!=NULL) {
-        ftSensLastRead[sid] = *v;
+        ftSensLastRead[ft_sensor_numeric_id] = *v;
         yarp::os::Stamp info;
-        portsFTsens[sid]->getEnvelope(info);
-        ftStampSensLastRead[sid] = info.getTime();
+        portsFTsens[ft_sensor_numeric_id]->getEnvelope(info);
+        ftStampSensLastRead[ft_sensor_numeric_id] = info.getTime();
     }
-    memcpy(&ftSens[0], ftSensLastRead[sid].data(), 6*sizeof(double));
+    memcpy(&ftSens[0], ftSensLastRead[ft_sensor_numeric_id].data(), 6*sizeof(double));
     if( stamps != 0 ) {
-        *stamps = ftStampSensLastRead[sid];
+        *stamps = ftStampSensLastRead[ft_sensor_numeric_id];
     }
 
     return true;
 }
 
-bool yarpWholeBodySensors::readTorqueSensor(const wbiId &sid, double *jointTorque, double *stamps, bool wait)
+bool yarpWholeBodySensors::readTorqueSensor(const int numeric_torque_id, double *jointTorque, double *stamps, bool wait)
 {
     if(isICubSimulator(robot))
     {
@@ -845,28 +903,22 @@ bool yarpWholeBodySensors::readTorqueSensor(const wbiId &sid, double *jointTorqu
     }
     double torqueTemp;
     bool update=false;
-    assert(itrq[sid.bodyPart]!=0);
+
+    int torqueCtrlBoard = torqueControlBoardAxisList[numeric_torque_id].first;
+    int torqueCtrlBoardAxis = torqueControlBoardAxisList[numeric_torque_id].second;
+
+    assert(itrq[torqueCtrlBoard]!=0);
 
     // read joint torque
-    int jointIndex = bodyPartJointMapping(sid.bodyPart,sid.index);
-    while(!(update = itrq[sid.bodyPart]->getTorque(jointIndex, &torqueTemp)) && wait)
+    while(!(update = itrq[torqueCtrlBoard]->getTorque(torqueCtrlBoardAxis, &torqueTemp)) && wait)
         Time::delay(WAIT_TIME);
 
     // if read succeeded => update data
-    if(update) // joints 0 and 2 of the torso are swapped
-        torqueSensorsLastRead[sid.bodyPart][jointIndex] = torqueTemp;
+    if(update)
+        torqueSensorsLastRead[torqueCtrlBoard][torqueCtrlBoardAxis] = torqueTemp;
 
     // copy most recent data into output variables
-    jointTorque[0] = torqueSensorsLastRead[sid.bodyPart][jointIndex];
+    jointTorque[0] = torqueSensorsLastRead[torqueCtrlBoard][torqueCtrlBoardAxis];
 
     return update || wait;  // if read failed => return false
-}
-
-int yarpWholeBodySensors::bodyPartJointMapping(int bodypart_id, int local_id)
-{
-    if( reverse_torso_joints ) {
-        return bodypart_id==TORSO ? 2-local_id : local_id;
-    } else {
-        return local_id;
-    }
 }

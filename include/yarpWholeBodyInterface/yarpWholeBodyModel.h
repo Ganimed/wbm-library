@@ -19,23 +19,27 @@
 #ifndef WBMODEL_ICUB_H
 #define WBMODEL_ICUB_H
 
+#include <wbi/wbiUtil.h>
+#include <wbi/iWholeBodyModel.h>
+
 #include <yarp/dev/ControlBoardInterfaces.h>
 #include <yarp/dev/IVelocityControl2.h>
 #include <yarp/os/RateThread.h>
 #include <yarp/os/Semaphore.h>
 #include <yarp/os/BufferedPort.h>
+#include <yarp/dev/PolyDriver.h>
+
 #include <iCub/ctrl/adaptWinPolyEstimator.h>
 #include <iCub/ctrl/filters.h>
 #include <iCub/iDynTree/iCubTree.h>
 #include <iCub/skinDynLib/skinContactList.h>
-#include <wbiIcub/wbiIcubUtil.h>
 #include <map>
 
 
-namespace wbiIcub
+namespace yarpWbi
 {
   /**
-     * Interface to the kinematic/dynamic model of iCub.
+     * Interface to the kinematic/dynamic model of yarp robot
      */
     class yarpWholeBodyModel: public wbi::iWholeBodyModel
     {
@@ -44,8 +48,6 @@ namespace wbiIcub
         int dof;
 
         iCub::iDynTree::DynTree * p_model;
-
-        iCub::iDynTree::iCubTree_version_tag version;
 
         yarp::sig::Matrix world_base_transformation;
 
@@ -73,17 +75,18 @@ namespace wbiIcub
         std::string                                 name;           // name used as root for the local ports
         std::string                                 robot;          // name of the robot
         std::vector<int>                            bodyParts;      // list of the body parts
-        std::vector<std::string>                    bodyPartNames;  // names of the body parts
+        std::vector<std::string>                    controlBoardNames;  // names of the body parts
+        // list of controlBoard/Axis pair for each joint
+        std::vector< std::pair<int,int> >  controlBoardAxisList;
         std::vector<yarp::dev::PolyDriver*>       dd;
         std::vector<yarp::dev::IControlLimits*>   ilim;
 
-        bool reverse_torso_joints;
+        bool initDone;
 
-        bool initDriversDone;
+        std::vector<int> wbiToiDynTreeJointId;
+        yarp::os::Property wbi_yarp_properties;
 
         bool openDrivers(int bp);
-
-        int bodyPartJointMapping(int bodypart_id, int local_id);
 
         bool convertBasePose(const wbi::Frame &xBase, yarp::sig::Matrix & H_world_base);
         bool convertBaseVelocity(const double *dxB, yarp::sig::Vector & v_b, yarp::sig::Vector & omega_b);
@@ -100,57 +103,31 @@ namespace wbiIcub
         bool convertGeneralizedTorques(yarp::sig::Vector idyntree_base_force, yarp::sig::Vector idyntree_torques, double * tau);
 
     public:
-         // *** CONSTRUCTORS ***
-        /**
-          * @param _name Local name of the interface (used as stem of port names)
-          * @param _robotName Name of the robot
-          * @param icub_version version of the iCub (default: head 2 legs 2 feet_ft true)
-          * @param initial_q the initial value for all the 32 joint angles (default: all 0)
-          * @param _bodyPartNames Vector of names of the body part (used when opening the polydrivers)
-          */
-        yarpWholeBodyModel(const char* _name,
-                           const char* _robotName,
-                           const iCub::iDynTree::iCubTree_version_tag icub_version,
-                           double* initial_q=0,
-                           const std::vector<std::string> &_bodyPartNames=std::vector<std::string>(iCub::skinDynLib::BodyPart_s,iCub::skinDynLib::BodyPart_s+sizeof(iCub::skinDynLib::BodyPart_s)/sizeof(std::string)));
-
-
-        #ifdef CODYCO_USES_URDFDOM
          /**
           * @param _name Local name of the interface (used as stem of port names)
-          * @param _robotName Name of the robot
-          * @param icub_version version of the iCub (default: head 2 legs 2 feet_ft true)
-          * @param urdf_file urdf file representing the icub model
-          * @param initial_q the initial value for all the 32 joint angles (default: all 0)
-          * @param _bodyPartNames Vector of names of the body part (used when opening the polydrivers)
-          */
-         yarpWholeBodyModel(const char* _name,
-                           const char* _robotName,
-                           const iCub::iDynTree::iCubTree_version_tag icub_version,
-                           const std::string urdf_file,
-                           double* initial_q=0,
-                           const std::vector<std::string> &_bodyPartNames=std::vector<std::string>(iCub::skinDynLib::BodyPart_s,iCub::skinDynLib::BodyPart_s+sizeof(iCub::skinDynLib::BodyPart_s)/sizeof(std::string)));
-
-
-
-         /**
-          * @param _name Local name of the interface (used as stem of port names)
-          * @param _robotName Name of the robot
-          * @param urdf_file path to the urdf file describing the dynamics model
-          * @param initial_q the initial value for all the 32 joint angles (default: all 0)
-          * @param wbi_yarp_conf the yarp::os::Property containg the options for wbi
-          * @param _bodyPartNames Vector of names of the body part (used when opening the polydrivers)
+         * @param wbi_yarp_conf the yarp::os::Property containg the options for wbi
           */
         yarpWholeBodyModel(const char* _name,
-                           const char* _robotName,
-                           const char* _urdf_file,
-                           yarp::os::Property & wbi_yarp_conf,
-                           double* initial_q=0);
-        #endif
+                           yarp::os::Property & wbi_yarp_conf);
 
-        virtual ~yarpWholeBodyModel(){ close(); }
+
+        virtual ~yarpWholeBodyModel();
         virtual bool init();
         virtual bool close();
+
+        /**
+         * Set the properties of the yarpWbiActuactors interface
+         * Note: this function must be called before init, otherwise it takes no effect
+         * @param yarp_wbi_properties the properties of the yarpWholeBodyActuators object
+         */
+        virtual bool setYarpWbiProperties(const yarp::os::Property & yarp_wbi_properties);
+
+        /**
+         * Get the properties of the yarpWbiActuactors interface
+         * @param yarp_wbi_properties the properties of the yarpWholeBodyActuators object
+         */
+        virtual bool getYarpWbiProperties(yarp::os::Property & yarp_wbi_properties);
+
 
         inline virtual int getDoFs(){ return dof; }
 
@@ -170,8 +147,7 @@ namespace wbiIcub
           * @param linkName Name of the link.
           * @param linkId Id of the link (if found).
           * @return True if the link name was found, false otherwise. */
-        inline virtual bool getLinkId(const char *linkName, int &linkId)
-        { linkId = p_icub_model->getLinkIndex(linkName); return linkId>=0; }
+        virtual bool getLinkId(const char *linkName, int &linkId);
 
         /** Compute rototranslation matrix from root reference frame to reference frame associated to the specified link.
           * @param q Joint angles

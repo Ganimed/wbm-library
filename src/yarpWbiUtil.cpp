@@ -38,11 +38,11 @@ bool appendNewControlBoardsToVector(yarp::os::Bottle & joints_config,
     for(int jnt=0; jnt < jointIdList.size(); jnt++ )
     {
         wbi::wbiId jnt_name;
-        jointIdList.numericIdTowbiId(jnt,jnt_name);
+        jointIdList.numericIdToWbiId(jnt,jnt_name);
 
         if( !joints_config.check(jnt_name.toString().c_str()) )
         {
-            std::cout << "wholeBodyActuactors error: joint " << jnt_name.toString() <<
+            std::cout << "wholeBodyInterface error: joint " << jnt_name.toString() <<
                          " not found in WBI_YARP_JOINTS section of configuration file " << std::endl;
             return false;
         }
@@ -50,7 +50,7 @@ bool appendNewControlBoardsToVector(yarp::os::Bottle & joints_config,
         yarp::os::Bottle * ctrlBoard_mapping = joints_config.find(jnt_name.toString().c_str()).asList();
         if( !ctrlBoard_mapping || ctrlBoard_mapping->size() != 2 )
         {
-            std::cout << "wholeBodyActuactors error: joint " << jnt_name.toString() <<
+            std::cout << "wholeBodyInterface error: joint " << jnt_name.toString() <<
                          " found in WBI_YARP_JOINTS but is not in the canonical form (controlBoardName,axis)" << std::endl;
             return false;
         }
@@ -75,7 +75,7 @@ std::vector< std::pair<int,int> > getControlBoardAxisList(yarp::os::Bottle & joi
     for(int wbi_jnt=0; wbi_jnt < jointIdList.size(); wbi_jnt++ )
     {
         wbi::wbiId wbi_jnt_name;
-        jointIdList.numericIdTowbiId(wbi_jnt,wbi_jnt_name);
+        jointIdList.numericIdToWbiId(wbi_jnt,wbi_jnt_name);
 
         yarp::os::Bottle * ctrlBoard_mapping = joints_config.find(wbi_jnt_name.toString().c_str()).asList();
 
@@ -93,7 +93,7 @@ std::vector< std::pair<int,int> > getControlBoardAxisList(yarp::os::Bottle & joi
 std::vector< int > getControlBoardList(const std::vector< std::pair<int,int> > & controlBoardAxisList)
 {
     std::vector< int > controlBoardList;
-    for(int jnt=0; jnt < controlBoardAxisList; jnt++ )
+    for(int jnt=0; jnt < controlBoardAxisList.size(); jnt++ )
     {
         int wbi_ctrlBoard_numericId = controlBoardAxisList[jnt].first;
         if( std::find(controlBoardList.begin(), controlBoardList.end(), wbi_ctrlBoard_numericId) == controlBoardList.end() )
@@ -104,7 +104,7 @@ std::vector< int > getControlBoardList(const std::vector< std::pair<int,int> > &
     return controlBoardList;
 }
 
-std::map<std::string,int> getControlBoardIdsMap(std::vector<std::string> & controlBoardNames)
+std::map<std::string,int> getControlBoardIdsMap(const std::vector<std::string> & controlBoardNames)
 {
     std::map<std::string,int> controlBoardIds;
     for(int ctrlBoard=0; ctrlBoard < controlBoardNames.size(); ctrlBoard++)
@@ -133,7 +133,7 @@ bool loadJointsControlBoardFromConfig(yarp::os::Property & wbi_yarp_properties,
     //Resizing structures
     controlBoardAxisList.resize(jointIdList.size());
     //totalControlledJointsInControlBoard.resize(controlBoardNames.size(),0);
-    controlBoardAxisList = getControlBoardAxisList(joints_config,jointIdList);
+    controlBoardAxisList = getControlBoardAxisList(joints_config,jointIdList,controlBoardNames);
 
 
     //All elements in the jointIdList have a mapping to an axis of a controlboard
@@ -141,7 +141,7 @@ bool loadJointsControlBoardFromConfig(yarp::os::Property & wbi_yarp_properties,
     for(int wbi_jnt=0; wbi_jnt < jointIdList.size(); wbi_jnt++ )
     {
         wbi::wbiId wbi_jnt_name;
-        jointIdList.numericIdTowbiId(wbi_jnt,wbi_jnt_name);
+        jointIdList.numericIdToWbiId(wbi_jnt,wbi_jnt_name);
 
         yarp::os::Bottle * ctrlBoard_mapping = joints_config.find(wbi_jnt_name.toString().c_str()).asList();
 
@@ -154,6 +154,55 @@ bool loadJointsControlBoardFromConfig(yarp::os::Property & wbi_yarp_properties,
     }
 
     return true;
+}
+
+bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
+                               wbi::wbiIdList & sensorIdList,
+                               std::vector<std::string> & ports,
+                               const std::string group_name)
+{
+    yarp::os::Bottle ports_list = wbi_yarp_properties.findGroup(group_name);
+    if( ports_list.isNull() || ports_list.size() == 0 ) {
+        ports.resize(0);
+        return true;
+    }
+
+    sensorIdList = wbi::wbiIdList();
+    ports.resize(0);
+
+    ports.resize(ports_list.size());
+    for(int port_id = 0; port_id < ports_list.size(); port_id++ ) {
+        yarp::os::Bottle * port = ports_list.get(port_id).asList();
+        if( port == NULL || port->size() != 2 ) {
+            std::cout << "yarpWbi::loadSensorPortsFromConfig error: " << ports_list.toString() << " has a malformed element" << std::endl;
+            return false;
+        }
+        std::string sensorId = port->get(0).asString().c_str();
+        sensorIdList.addId(wbi::wbiId(sensorId));
+        std::string port_name = port->get(1).asString().c_str();
+        ports[port_id] = port_name;
+    }
+    return true;
+}
+
+bool loadFTSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
+                                 wbi::wbiIdList & sensorIdList,
+                                 std::vector<std::string> & ports)
+{
+    return loadSensorPortsFromConfig(wbi_yarp_properties,
+                                     sensorIdList,
+                                     ports,
+                                     "WBI_YARP_FT_PORTS");
+}
+
+bool loadIMUSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
+                                 wbi::wbiIdList & sensorIdList,
+                                 std::vector<std::string> & ports)
+{
+    return loadSensorPortsFromConfig(wbi_yarp_properties,
+                                     sensorIdList,
+                                     ports,
+                                     "WBI_YARP_IMU_PORTS");
 }
 
 /*
@@ -185,55 +234,7 @@ bool loadBodyPartsFromConfig(yarp::os::Property & wbi_yarp_properties, std::vect
         return true;
 }
 
-bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
-                               const std::vector<std::string> & body_parts_vector,
-                               std::vector<id_2_PortName> &ports,
-                               const std::string group_name)
-{
-    yarp::os::Bottle ports_list = wbi_yarp_properties.findGroup(group_name);
-    if( ports_list.isNull() || ports_list.size() == 0 ) {
-        ports.resize(0);
-        return true;
-    }
-    ports.resize(ports_list.size());
-    for(int port_id = 0; port_id < ports_list.size(); port_id++ ) {
-        yarp::os::Bottle * port = ports_list.get(port_id).asList();
-        if( port == NULL || port->size() != 3 ) {
-            std::cout << "yarpWbi::loadSensorPortsFromConfig error: " << ports_list.toString() << " has an element malformed element" << std::endl;
-            return false;
-        }
-        std::string bodyPart = port->get(0).asString().c_str();
-        int id = port->get(1).asInt();
-        std::string port_name = port->get(2).asString().c_str();
-        int body_part_index = std::find(body_parts_vector.begin(), body_parts_vector.end(), bodyPart) - body_parts_vector.begin();
-        if( body_part_index >= (int)body_parts_vector.size() || body_part_index < 0 ) {
-            std::cout << "yarpWbi::loadSensorPortsFromConfig error: bodyPart in " << port->toString() << " not recognized." << std::endl;
-            return false;
-        }
-        id_2_PortName id_port_map;
-        id_port_map.id = wbi::LocalId(body_part_index,id);
-        id_port_map.portName = port_name;
-        ports[port_id] = id_port_map;
-    }
-    return true;
-}
 
-bool loadFTSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
-                                 const std::vector<std::string> & body_parts_vector,
-                                 std::vector<id_2_PortName> &ft_ports)
-{
-    return loadSensorPortsFromConfig(wbi_yarp_properties,body_parts_vector,ft_ports,"WBI_YARP_FT_PORTS");
-}
-
-bool loadIMUSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
-                                      const std::vector<std::string> & body_parts_vector,
-                                      std::vector<id_2_PortName> &imu_ports)
-{
-    return loadSensorPortsFromConfig(wbi_yarp_properties,
-                                     body_parts_vector,
-                                     imu_ports,
-                                     "WBI_YARP_IMU_PORTS");
-}
 */
 
 bool loadTreeSerializationFromConfig(yarp::os::Property & wbi_yarp_properties,

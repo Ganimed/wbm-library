@@ -7,7 +7,7 @@ project(yarpWholeBodyInterface CXX)
 
 set(LIBRARY_NAME yarpwholebodyinterface)
 set(VARS_PREFIX ${PROJECT_NAME})
-set(INCLUDE_DIRS wbiIcub)
+set(INCLUDE_DIRS yarpWholeBodyInterface)
 
 set(${VARS_PREFIX}_MAJOR_VERSION 0)
 set(${VARS_PREFIX}_MINOR_VERSION 2)
@@ -21,7 +21,7 @@ ycm_default_dirs(${VARS_PREFIX})
 option(CODYCO_USES_URDFDOM "Compile yarpWholeBodyInterface with URDF support" TRUE)
 option(ICUBWBI_USE_EXTERNAL_TORQUE_CONTROL "Compile yarpwholebodyinterface to use JTC external torque control" FALSE)
 option(COMPILE_AS_SHARED_LIBRARY "Compile ${PROJECT_NAME} as a shared library" TRUE)
-
+option(ENABLE_TESTS "Enable unit testing using Gazebo simulator" TRUE)
 
 find_package(YARP REQUIRED)
 find_package(ICUB REQUIRED)
@@ -29,15 +29,15 @@ find_package(iDynTree REQUIRED)
 find_package(wholeBodyInterface 0.2.0 REQUIRED)
 
 SET(folder_source src/yarpWbiUtil.cpp
-                  src/yarpWholeBodyInterface.cpp
+                  #src/yarpWholeBodyInterface.cpp
                   src/yarpWholeBodyModel.cpp
-                  src/yarpWholeBodyStates.cpp
+                  #src/yarpWholeBodyStates.cpp
                   #src/icubWholeBodyStatesLocal.cpp
                   src/yarpWholeBodyActuators.cpp
                   src/yarpWholeBodySensors.cpp)
-SET(folder_header include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
+SET(folder_header #include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
                   include/yarpWholeBodyInterface/yarpWholeBodyModel.h
-                  include/yarpWholeBodyInterface/yarpWholeBodyStates.h
+                  #include/yarpWholeBodyInterface/yarpWholeBodyStates.h
                   #include/yarpWholeBodyInterface/icubWholeBodyStatesLocal.h
                   include/yarpWholeBodyInterface/yarpWholeBodyActuators.h
                   include/yarpWholeBodyInterface/yarpWholeBodySensors.h
@@ -101,3 +101,9 @@ install_basic_package_files(${PROJECT_NAME} VARS_PREFIX ${VARS_PREFIX}
 
 include(AddUninstallTarget)
 
+if(ENABLE_TESTS)
+#enable testing
+include(CTest)
+enable_testing()
+add_subdirectory(unitTests)
+endif()

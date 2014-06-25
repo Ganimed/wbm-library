@@ -28,11 +28,11 @@
 #include <iCub/ctrl/filters.h>
 #include <iCub/iDynTree/iCubTree.h>
 #include <iCub/skinDynLib/skinContactList.h>
-#include <wbiIcub/wbiIcubUtil.h>
+#include <yarpWholeBodyInterface/yarpWbiUtil.h>
 #include <map>
 
 
-namespace wbiIcub
+namespace yarpWbi
 {
 
     /**
@@ -45,7 +45,7 @@ namespace wbiIcub
         std::string                 name;           // name used as root for the local ports
         std::string                 robot;          // name of the robot
 
-        yarp::os::Property          configurationOptions; //configuration options
+        yarp::os::Property          wbi_yarp_properties; //configuration options
 
         //std::vector<int>            bodyParts;      // list of the body parts
         std::vector<std::string>    controlBoardNames;  // names of the body parts
@@ -53,9 +53,13 @@ namespace wbiIcub
 
 
         //List of controlboard related sensors
-        wbi::wbiIdList            emptyList;      ///< empty list of IDs to return in case of error
-        wbi::wbiIdList            encoderIdList;  // list of the joint encoder ids
+        ///< empty list of IDs to return in case of error
+        wbi::wbiIdList            emptyList;
+        ///< list of encoder IDs
+        wbi::wbiIdList            encoderIdList;
+        ///< list of controlboard numeric IDs (i.e. indeces of controlBoardNames vector) for which encoder are added
         std::vector<int>          encoderControlBoardList;
+        ///< map from encoder numeric IDs (i.e. indeces of encoderIdList vector) to a pair of int that are: (controlboard id,axis)
         std::vector< std::pair<int,int> >  encoderControlBoardAxisList;
         wbi::wbiIdList            pwmSensIdList;  // list of the motor PWM sensor ids
         std::vector<int>          pwmControlBoardList;
@@ -68,11 +72,11 @@ namespace wbiIcub
         wbi::wbiIdList            imuIdList;      // list of the IMU ids
         wbi::wbiIdList            ftSensIdList;   // list of the force/torque sensor ids
 
-        // LAST READING DATA (map body parts to data)
-        std::map<int, yarp::sig::Vector>            qLastRead;
-        std::map<int, yarp::sig::Vector>            qStampLastRead;
-        std::map<int, yarp::sig::Vector>            pwmLastRead;
-        std::map<int, yarp::sig::Vector>            torqueSensorsLastRead;
+        // LAST READING DATA (map controlboard numeric IDs (i.e. indeces of controlBoardNames vector) to data)
+        std::vector<yarp::sig::Vector>            qLastRead;
+        std::vector<yarp::sig::Vector>            qStampLastRead;
+        std::vector<yarp::sig::Vector>            pwmLastRead;
+        std::vector<yarp::sig::Vector>            torqueSensorsLastRead;
 
         // the "key" of these vectors is the wbi numeric id
         std::vector<yarp::sig::Vector>  imuLastRead;
@@ -91,11 +95,14 @@ namespace wbiIcub
         std::vector< yarp::os::BufferedPort<yarp::sig::Vector>*>   portsIMU;
         std::vector< yarp::os::BufferedPort<yarp::sig::Vector>*>   portsTorqueSensor;
 
+        //ControlBoard oriented sensors
         bool openPwm(const int controlBoard);
         bool openEncoder(const int controlBoard);
-        bool openImu(const wbi::wbiId &i);
-        bool openFTsens(const wbi::wbiId &i);
         bool openTorqueSensor(const int controlBoard);
+
+        //Indipendent sensors
+        bool openImu(const int id, const std::string & port_name);
+        bool openFTsens(const int id, const std::string & port_name);
 
         bool convertIMU(double * wbi_inertial_readings, const double * yarp_inertial_readings);
 
@@ -115,11 +122,11 @@ namespace wbiIcub
         virtual bool addTorqueSensor(const wbi::wbiId &i);
         virtual int addTorqueSensors(const wbi::wbiIdList &i);
 
-        virtual bool readEncoder(const wbi::wbiId &i, double *q, double *stamps=0, bool wait=true);
-        virtual bool readPwm(const wbi::wbiId &i, double *pwm, double *stamps=0, bool wait=true);
-        virtual bool readIMU(const wbi::wbiId &i, double *inertial, double *stamps=0, bool wait=true);
-        virtual bool readFTsensor(const wbi::wbiId &i, double *ftSens, double *stamps=0, bool wait=true);
-        virtual bool readTorqueSensor(const wbi::wbiId &i, double *jointTorque, double *stamps=0, bool wait=true);
+        virtual bool readEncoder(const int id, double *q, double *stamps=0, bool wait=true);
+        virtual bool readPwm(const int id, double *pwm, double *stamps=0, bool wait=true);
+        virtual bool readIMU(const int id, double *inertial, double *stamps=0, bool wait=true);
+        virtual bool readFTsensor(const int id, double *ftSens, double *stamps=0, bool wait=true);
+        virtual bool readTorqueSensor(const int id, double *jointTorque, double *stamps=0, bool wait=true);
 
         virtual bool readEncoders(double *q, double *stamps=0, bool wait=true);
         virtual bool readPwms(double *pwm, double *stamps=0, bool wait=true);
@@ -128,19 +135,29 @@ namespace wbiIcub
         virtual bool readTorqueSensors(double *jointTorques, double *stamps=0, bool wait=true);
 
     public:
-        // *** CONSTRUCTORS ***
-        yarpWholeBodySensors(const char* _name, const char* _robotName);
-
         /**
           * @param _name Local name of the interface (used as stem of port names)
-          * @param _robotName Name of the robot
           * @param _yarp_wbi_properties yarp::os::Property object used to configure the interface
           */
-        yarpWholeBodySensors(const char* _name, const char* _robotName,
-                             yarp::os::Property & _yarp_wbi_properties);
+        yarpWholeBodySensors(const char* _name,
+                             const yarp::os::Property & _yarp_wbi_properties=yarp::os::Property());
 
         virtual bool init();
         virtual bool close();
+
+        /**
+         * Set the properties of the yarpWbiActuactors interface
+         * Note: this function must be called before init, otherwise it takes no effect
+         * @param yarp_wbi_properties the properties of the yarpWholeBodyActuators object
+         */
+        virtual bool setYarpWbiProperties(const yarp::os::Property & yarp_wbi_properties);
+
+        /**
+         * Get the properties of the yarpWbiActuactors interface
+         * @param yarp_wbi_properties the properties of the yarpWholeBodyActuators object
+         */
+        virtual bool getYarpWbiProperties(yarp::os::Property & yarp_wbi_properties);
+
 
         /**
          * Add the specified sensor so that it can be read.
