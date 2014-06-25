@@ -128,7 +128,7 @@ namespace wbi
          * Convert a numeric id to a wbiId
          * @return true it the specified wbiId is found in the list, false otherwise
          */
-        virtual bool numericIdTowbiId(const int numeridId, wbiId & wbi_id) const;
+        virtual bool numericIdToWbiId(const int numeridId, wbiId & wbi_id) const;
 
         /**
          * Remove the specified id from the list
