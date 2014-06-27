@@ -10,7 +10,7 @@
 
 
 if(NOT wholeBodyInterface_FOUND)
-  message( "Looking for wholeBodyInterface in: @CMAKE_INSTALL_PREFIX@")
+  #message( "Looking for wholeBodyInterface in: @CMAKE_INSTALL_PREFIX@")
 
   # Version
   set(wholeBodyInterface_VERSION "@wholeBodyInterface_VERSION@")
