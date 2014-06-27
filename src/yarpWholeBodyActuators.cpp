@@ -16,7 +16,6 @@
  */
 
 #define MAX_NJ 20
-
 #include "yarpWholeBodyInterface/yarpWholeBodyActuators.h"
 #include <wbi/wbiConstants.h>
 #include <yarp/os/Property.h>

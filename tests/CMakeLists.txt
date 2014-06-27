@@ -63,6 +63,7 @@ include_directories(${YARP_INCLUDE_DIRS}
                     ${iDynTree_INCLUDE_DIRS}
                     ${kdl_codyco_INCLUDE_DIRS}
                     ../include)
+
 add_executable(yarpWbiActuactorsUnitTest yarpWbiActuactorsUnitTest.cpp)
 target_link_libraries(yarpWbiActuactorsUnitTest ${YARP_LIBRARIES}
                                                 ${Gazebo_LIBRARIES}
@@ -76,3 +77,15 @@ target_link_libraries(yarpWbiActuactorsUnitTest ${YARP_LIBRARIES}
 
 add_test(NAME test_yarpWbiActuactorsUnitTest COMMAND yarpWbiActuactorsUnitTest)
 
+add_executable(yarpWbiModelUnitTest yarpWbiModelUnitTest.cpp)
+target_link_libraries(yarpWbiModelUnitTest ${YARP_LIBRARIES}
+                                                ${Gazebo_LIBRARIES}
+                                                ${SDFORMAT_LIBRARIES}
+                                                ${GAZEBO_LIBRARIES}
+                                                ${PROTOBUF_LIBRARIES}
+                                                ${Boost_LIBRARIES}
+                                                gazebo_yarp_server_fixture
+                                                ${wholeBodyInterface_LIBRARIES}
+                                                ${LIBRARY_NAME})
+
+add_test(NAME test_yarpWbiModelUnitTest COMMAND yarpWbiModelUnitTest)

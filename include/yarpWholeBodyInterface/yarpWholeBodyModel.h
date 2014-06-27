@@ -47,7 +47,11 @@ namespace yarpWbi
         wbi::wbiIdList jointIdList;
         int dof;
 
-        iCub::iDynTree::DynTree * p_model;
+        bool initDone;
+
+        //iCub::iDynTree::DynTree * p_model;
+        yarp::os::Property wbi_yarp_properties;
+        iCub::iDynTree::DynTree model;
 
         yarp::sig::Matrix world_base_transformation;
 
@@ -81,10 +85,8 @@ namespace yarpWbi
         std::vector<yarp::dev::PolyDriver*>       dd;
         std::vector<yarp::dev::IControlLimits*>   ilim;
 
-        bool initDone;
 
         std::vector<int> wbiToiDynTreeJointId;
-        yarp::os::Property wbi_yarp_properties;
 
         bool openDrivers(int bp);
 
@@ -108,7 +110,7 @@ namespace yarpWbi
          * @param wbi_yarp_conf the yarp::os::Property containg the options for wbi
           */
         yarpWholeBodyModel(const char* _name,
-                           yarp::os::Property & wbi_yarp_conf);
+                           const yarp::os::Property & wbi_yarp_conf=yarp::os::Property());
 
 
         virtual ~yarpWholeBodyModel();
