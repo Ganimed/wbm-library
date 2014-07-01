@@ -15,16 +15,18 @@
  * Public License for more details
  */
 
-#include "wbiIcub/wholeBodyInterfaceIcub.h"
 #include <iCub/skinDynLib/common.h>
 #include <yarp/os/Time.h>
 #include <string>
 #include <yarp/os/Log.h>
 #include <yarp/math/api.h>
 
+#include "yarpWholeBodyInterface/yarpWholeBodyStates.h"
+#include "yarpWholeBodyInterface/yarpWbiUtil.h"
+
 using namespace std;
 using namespace wbi;
-using namespace wbiIcub;
+using namespace yarpWbi;
 using namespace yarp::os;
 using namespace yarp::dev;
 using namespace yarp::sig;
@@ -45,24 +47,46 @@ using namespace yarp::math;
 //                                          ICUB WHOLE BODY STATES
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-icubWholeBodyStates::icubWholeBodyStates(const char* _name, const char* _robotName, double estimationTimeWindow)
+yarpWholeBodyStates::yarpWholeBodyStates(const char* _name, const yarp::os::Property & opt):
+initDone(false), name(_name), wbi_yarp_properties(opt)
 {
-    sensors = new icubWholeBodySensors(_name, _robotName);              // sensor interface
-    estimator = new icubWholeBodyEstimator(ESTIMATOR_PERIOD, sensors);  // estimation thread
 }
 
-icubWholeBodyStates::~icubWholeBodyStates()
+bool yarpWholeBodyStates::setYarpWbiProperties(const yarp::os::Property & yarp_wbi_properties)
+{
+    wbi_yarp_properties = yarp_wbi_properties;
+    return true;
+}
+
+bool yarpWholeBodyStates::getYarpWbiProperties(yarp::os::Property & yarp_wbi_properties)
+{
+    yarp_wbi_properties = wbi_yarp_properties;
+    return true;
+}
+
+yarpWholeBodyStates::~yarpWholeBodyStates()
 {
     close();
 }
 
-bool icubWholeBodyStates::init()
+bool yarpWholeBodyStates::init()
 {
+    if( !wbi_yarp_properties.check("robotName") )
+    {
+        std::cerr << "yarpWholeBodySensors error: robotName not found in configuration files" << std::endl;
+        return false;
+    }
+
+    std::string robot = wbi_yarp_properties.find("robotName").asString().c_str();
+
+
+    sensors = new yarpWholeBodySensors(name.c_str(), wbi_yarp_properties);              // sensor interface
+    estimator = new yarpWholeBodyEstimator(ESTIMATOR_PERIOD, sensors);  // estimation thread
     bool ok = sensors->init();              // initialize sensor interface
     return ok ? estimator->start() : false; // start estimation thread
 }
 
-bool icubWholeBodyStates::close()
+bool yarpWholeBodyStates::close()
 {
     if(estimator) estimator->stop();  // stop estimator BEFORE closing sensor interface
     bool ok = (sensors ? sensors->close() : true);
@@ -71,12 +95,13 @@ bool icubWholeBodyStates::close()
     return ok;
 }
 
-bool icubWholeBodyStates::setWorldBasePosition(const wbi::Frame & xB)
+bool yarpWholeBodyStates::setWorldBasePosition(const wbi::Frame & xB)
 {
-    return estimator->setWorldBasePosition(xB);
+    return false;
+    //return estimator->setWorldBasePosition(xB);
 }
 
-bool icubWholeBodyStates::addEstimate(const EstimateType et, const LocalId &sid)
+bool yarpWholeBodyStates::addEstimate(const EstimateType et, const wbiId &sid)
 {
     switch(et)
     {
@@ -94,13 +119,13 @@ bool icubWholeBodyStates::addEstimate(const EstimateType et, const LocalId &sid)
     //case ESTIMATE_IMU:                      return lockAndAddSensor(SENSOR_IMU, sid);
     case ESTIMATE_FORCE_TORQUE_SENSOR:      return lockAndAddSensor(SENSOR_FORCE_TORQUE, sid);
     ///< \todo TODO properly account for external forque torque
-    case ESTIMATE_EXTERNAL_FORCE_TORQUE:    return estimator->openEEWrenchPorts();
+    case ESTIMATE_EXTERNAL_FORCE_TORQUE:    return false; //estimator->openEEWrenchPorts();
     default: break;
     }
     return false;
 }
 
-int icubWholeBodyStates::addEstimates(const EstimateType et, const LocalIdList &sids)
+int yarpWholeBodyStates::addEstimates(const EstimateType et, const wbiIdList &sids)
 {
     switch(et)
     {
@@ -124,7 +149,7 @@ int icubWholeBodyStates::addEstimates(const EstimateType et, const LocalIdList &
     return false;
 }
 
-bool icubWholeBodyStates::removeEstimate(const EstimateType et, const LocalId &sid)
+bool yarpWholeBodyStates::removeEstimate(const EstimateType et, const wbiId &sid)
 {
     switch(et)
     {
@@ -146,7 +171,7 @@ bool icubWholeBodyStates::removeEstimate(const EstimateType et, const LocalId &s
     return false;
 }
 
-const LocalIdList& icubWholeBodyStates::getEstimateList(const EstimateType et)
+const wbiIdList& yarpWholeBodyStates::getEstimateList(const EstimateType et)
 {
     switch(et)
     {
@@ -169,7 +194,7 @@ const LocalIdList& icubWholeBodyStates::getEstimateList(const EstimateType et)
     return emptyList;
 }
 
-int icubWholeBodyStates::getEstimateNumber(const EstimateType et)
+int yarpWholeBodyStates::getEstimateNumber(const EstimateType et)
 {
     switch(et)
     {
@@ -192,44 +217,44 @@ int icubWholeBodyStates::getEstimateNumber(const EstimateType et)
     return 0;
 }
 
-bool icubWholeBodyStates::getEstimate(const EstimateType et, const LocalId &sid, double *data, double time, bool blocking)
+bool yarpWholeBodyStates::getEstimate(const EstimateType et, const int numeric_id, double *data, double time, bool blocking)
 {
     switch(et)
     {
     case ESTIMATE_JOINT_POS:
-        return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_ENCODER).localToGlobalId(sid), estimator->estimates.lastQ, data);
+        return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastQ, data);
     case ESTIMATE_JOINT_VEL:
-        return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_ENCODER).localToGlobalId(sid), estimator->estimates.lastDq, data);
+        return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastDq, data);
     case ESTIMATE_JOINT_ACC:
-        return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_ENCODER).localToGlobalId(sid), estimator->estimates.lastD2q, data);
+        return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastD2q, data);
     case ESTIMATE_JOINT_TORQUE:
-        return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_TORQUE).localToGlobalId(sid), estimator->estimates.lastTauJ, data);
+        return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastTauJ, data);
     case ESTIMATE_JOINT_TORQUE_DERIVATIVE:
-        return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_TORQUE).localToGlobalId(sid), estimator->estimates.lastDtauJ, data);
+        return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastDtauJ, data);
     case ESTIMATE_MOTOR_POS:
         return false;
     case ESTIMATE_MOTOR_VEL:
-        return getMotorVel(sid, data, time, blocking);
+        return getMotorVel(numeric_id, data, time, blocking);
     case ESTIMATE_MOTOR_ACC:
         return false;
     case ESTIMATE_MOTOR_TORQUE:
-        return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_TORQUE).localToGlobalId(sid), estimator->estimates.lastTauM, data);
+        return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastTauM, data);
     case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:
-        return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_TORQUE).localToGlobalId(sid), estimator->estimates.lastDtauM, data);
+        return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastDtauM, data);
     case ESTIMATE_MOTOR_PWM:
-        return lockAndReadSensor(SENSOR_PWM, sid, data, time, blocking);
+        return lockAndReadSensor(SENSOR_PWM, numeric_id, data, time, blocking);
     //case ESTIMATE_IMU:
     //    return lockAndReadSensor(SENSOR_IMU, sid, data, time, blocking);
     case ESTIMATE_FORCE_TORQUE_SENSOR:
-        return lockAndReadSensor(SENSOR_FORCE_TORQUE, sid, data, time, blocking);
+        return lockAndReadSensor(SENSOR_FORCE_TORQUE, numeric_id, data, time, blocking);
     case ESTIMATE_EXTERNAL_FORCE_TORQUE:
-        return lockAndGetExternalWrench(sid,data);
+        return false; //lockAndGetExternalWrench(sid,data);
     default: break;
     }
     return false;
 }
 
-bool icubWholeBodyStates::getEstimates(const EstimateType et, double *data, double time, bool blocking)
+bool yarpWholeBodyStates::getEstimates(const EstimateType et, double *data, double time, bool blocking)
 {
     switch(et)
     {
@@ -251,7 +276,7 @@ bool icubWholeBodyStates::getEstimates(const EstimateType et, double *data, doub
     return false;
 }
 
-bool icubWholeBodyStates::setEstimationParameter(const EstimateType et, const EstimationParameter ep, const void *value)
+bool yarpWholeBodyStates::setEstimationParameter(const EstimateType et, const EstimationParameter ep, const void *value)
 {
     return estimator->lockAndSetEstimationParameter(et, ep, value);
 }
@@ -262,11 +287,12 @@ bool icubWholeBodyStates::setEstimationParameter(const EstimateType et, const Es
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 
-bool icubWholeBodyStates::getMotorVel(double *data, double time, bool /*blocking*/)
+bool yarpWholeBodyStates::getMotorVel(double *data, double time, bool /*blocking*/)
 {
     bool res = estimator->lockAndCopyVector(estimator->estimates.lastDq, data);    ///< read joint vel
     if(!res) return false;
-    LocalIdList idList = lockAndGetSensorList(SENSOR_ENCODER);
+    /*
+    wbiIdList idList = lockAndGetSensorList(SENSOR_ENCODER);
     int i=0;
     FOR_ALL_OF(itBp, itJ, idList)   ///< manage coupled joints
     {
@@ -288,16 +314,18 @@ bool icubWholeBodyStates::getMotorVel(double *data, double time, bool /*blocking
             data[i] = data[i];
         i++;
     }
-    return true;
+    */
+    return false;
 }
 
-bool icubWholeBodyStates::getMotorVel(const LocalId &lid, double *data, double /*time*/, bool /*blocking*/)
+bool yarpWholeBodyStates::getMotorVel(const int numeric_id, double *data, double /*time*/, bool /*blocking*/)
 {
     ///< read joint vel
-    return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_ENCODER).localToGlobalId(lid), estimator->estimates.lastDq, data);
+    //return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_ENCODER).localToGlobalId(lid), estimator->estimates.lastDq, data);
+    return false;
 }
 
-bool icubWholeBodyStates::lockAndReadSensors(const SensorType st, double *data, double /*time*/, bool blocking)
+bool yarpWholeBodyStates::lockAndReadSensors(const SensorType st, double *data, double /*time*/, bool blocking)
 {
     estimator->mutex.wait();
     bool res = sensors->readSensors(st, data, 0, blocking);
@@ -305,16 +333,19 @@ bool icubWholeBodyStates::lockAndReadSensors(const SensorType st, double *data, 
     return res;
 }
 
-bool icubWholeBodyStates::lockAndReadSensor(const SensorType st, const LocalId sid, double *data, double time, bool blocking)
+bool yarpWholeBodyStates::lockAndReadSensor(const SensorType st, const int numeric_id, double *data, double time, bool blocking)
 {
     estimator->mutex.wait();
-    bool res = sensors->readSensor(st, sid, data, 0, blocking);
+    bool res = sensors->readSensor(st, numeric_id, data, 0, blocking);
     estimator->mutex.post();
     return res;
 }
 
-bool icubWholeBodyStates::lockAndGetExternalWrench(const LocalId sid, double * data)
+/*
+bool yarpWholeBodyStates::lockAndGetExternalWrench(const int numeric_id, double * data)
 {
+    return false;
+
     estimator->mutex.wait();
     if( !estimator->ee_wrenches_enabled )
     {
@@ -341,8 +372,9 @@ bool icubWholeBodyStates::lockAndGetExternalWrench(const LocalId sid, double * d
     estimator->mutex.post();
     return true;
 }
+*/
 
-bool icubWholeBodyStates::lockAndAddSensor(const SensorType st, const LocalId &sid)
+bool yarpWholeBodyStates::lockAndAddSensor(const SensorType st, const wbiId &sid)
 {
     estimator->mutex.wait();
     bool res = sensors->addSensor(st, sid);
@@ -350,7 +382,7 @@ bool icubWholeBodyStates::lockAndAddSensor(const SensorType st, const LocalId &s
     return res;
 }
 
-int icubWholeBodyStates::lockAndAddSensors(const SensorType st, const LocalIdList &sids)
+int yarpWholeBodyStates::lockAndAddSensors(const SensorType st, const wbiIdList &sids)
 {
     estimator->mutex.wait();
     int res = sensors->addSensors(st, sids);
@@ -358,7 +390,7 @@ int icubWholeBodyStates::lockAndAddSensors(const SensorType st, const LocalIdLis
     return res;
 }
 
-bool icubWholeBodyStates::lockAndRemoveSensor(const SensorType st, const LocalId &sid)
+bool yarpWholeBodyStates::lockAndRemoveSensor(const SensorType st, const wbiId &sid)
 {
     estimator->mutex.wait();
     bool res = sensors->removeSensor(st, sid);
@@ -366,15 +398,15 @@ bool icubWholeBodyStates::lockAndRemoveSensor(const SensorType st, const LocalId
     return res;
 }
 
-LocalIdList icubWholeBodyStates::lockAndGetSensorList(const SensorType st)
+wbiIdList yarpWholeBodyStates::lockAndGetSensorList(const SensorType st)
 {
     estimator->mutex.wait();
-    LocalIdList res = sensors->getSensorList(st);
+    wbiIdList res = sensors->getSensorList(st);
     estimator->mutex.post();
     return res;
 }
 
-int icubWholeBodyStates::lockAndGetSensorNumber(const SensorType st)
+int yarpWholeBodyStates::lockAndGetSensorNumber(const SensorType st)
 {
     estimator->mutex.wait();
     int res = sensors->getSensorNumber(st);
@@ -387,7 +419,7 @@ int icubWholeBodyStates::lockAndGetSensorNumber(const SensorType st)
 //                                          ICUB WHOLE BODY ESTIMATOR
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-icubWholeBodyEstimator::icubWholeBodyEstimator(int _period, icubWholeBodySensors *_sensors)
+yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period, yarpWholeBodySensors *_sensors)
 : RateThread(_period),
   sensors(_sensors),
   dqFilt(0),
@@ -395,8 +427,8 @@ icubWholeBodyEstimator::icubWholeBodyEstimator(int _period, icubWholeBodySensors
   dTauJFilt(0),
   dTauMFilt(0),
   tauJFilt(0),
-  tauMFilt(0),
-  ee_wrenches_enabled(false)
+  tauMFilt(0)//,
+  //ee_wrenches_enabled(false)
 {
     resizeAll(sensors->getSensorNumber(SENSOR_ENCODER));
 
@@ -418,7 +450,7 @@ icubWholeBodyEstimator::icubWholeBodyEstimator(int _period, icubWholeBodySensors
     pwmCutFrequency     =   3.0;
 }
 
-bool icubWholeBodyEstimator::threadInit()
+bool yarpWholeBodyEstimator::threadInit()
 {
     resizeAll(sensors->getSensorNumber(SENSOR_ENCODER));
     ///< create derivative filters
@@ -436,18 +468,24 @@ bool icubWholeBodyEstimator::threadInit()
     tauMFilt    = new FirstOrderLowPassFilter(tauMCutFrequency, getRate()*1e-3, estimates.lastTauJ);
     pwmFilt     = new FirstOrderLowPassFilter(pwmCutFrequency, getRate()*1e-3, estimates.lastPwm);
 
-    H_world_base.resize(4,4);
-    H_world_base.eye();
-    right_gripper_local_id = wbi::LocalId(RIGHT_ARM,8);
-    left_gripper_local_id = wbi::LocalId(LEFT_ARM,8);
-    left_sole_local_id = wbi::LocalId(LEFT_LEG,8);
-    right_sole_local_id = wbi::LocalId(RIGHT_LEG,8);
+    //H_world_base.resize(4,4);
+    //H_world_base.eye();
+
+    /*
+    right_gripper_local_id = wbi::wbiId(RIGHT_ARM,8);
+    left_gripper_local_id = wbi::wbiId(LEFT_ARM,8);
+    left_sole_local_id = wbi::wbiId(LEFT_LEG,8);
+    right_sole_local_id = wbi::wbiId(RIGHT_LEG,8);
+    */
 
     return ok;
 }
 
-bool icubWholeBodyEstimator::openEEWrenchPorts()
+/*
+bool yarpWholeBodyEstimator::openEEWrenchPorts()
 {
+    return false;
+
     bool okEE = true;
     if( ee_wrenches_enabled ) return true;
     mutex.wait();
@@ -459,18 +497,22 @@ bool icubWholeBodyEstimator::openEEWrenchPorts()
     mutex.post();
 
     return okEE;
-}
 
-bool icubWholeBodyEstimator::setWorldBasePosition(const wbi::Frame & xB)
+}*/
+
+bool yarpWholeBodyEstimator::setWorldBasePosition(const wbi::Frame & xB)
 {
+    return false;
+    /*
     mutex.wait();
     H_world_base.resize(4,4);
     xB.get4x4Matrix(H_world_base.data());
     mutex.post();
     return true;
+    */
 }
 
-void icubWholeBodyEstimator::run()
+void yarpWholeBodyEstimator::run()
 {
     mutex.wait();
     {
@@ -509,70 +551,49 @@ void icubWholeBodyEstimator::run()
         estimates.lastPwm = pwmFilt->filt(pwm);     ///< low pass filter
 
         ///< Read end effector wrenches
+        /*
         if( ee_wrenches_enabled )
         {
             readEEWrenches(right_gripper_local_id,RAExtWrench);
             readEEWrenches(left_gripper_local_id,LAExtWrench);
             readEEWrenches(right_sole_local_id,RLExtWrench);
             readEEWrenches(left_sole_local_id,LLExtWrench);
-        }
+        }*/
     }
     mutex.post();
 
     return;
 }
 
-std::string getPartName(const wbi::LocalId & local_id)
-{
-    std::string part = "";
-    if( local_id.bodyPart == RIGHT_ARM )
-    {
-        part = "right_arm";
-    }
-    else if( local_id.bodyPart == LEFT_ARM )
-    {
-        part = "left_arm";
-    }
-    else if( local_id.bodyPart == RIGHT_LEG )
-    {
-        part = "right_leg";
-    }
-    else if( local_id.bodyPart == LEFT_LEG )
-    {
-        part = "left_leg";
-    }
-    return part;
-}
-
-
-bool icubWholeBodyEstimator::openEEWrenchPorts(const wbi::LocalId & local_id)
+/*
+bool yarpWholeBodyEstimator::openEEWrenchPorts(const wbi::wbiId & local_id)
 {
     std::string wbd_module_name = "wholeBodyDynamicsTree";
     std::string part, remotePort;
     part = getPartName(local_id);
     if( part == "")
     {
-        std::cerr << "icubWholeBodyEstimator::openEEWrenchPorts: local_id not found " << std::endl;
+        std::cerr << "yarpWholeBodyEstimator::openEEWrenchPorts: local_id not found " << std::endl;
     }
     remotePort = "/" + wbd_module_name + "/" + part + "/" + "cartesianEndEffectorWrench:o";
     stringstream localPort;
-    localPort << "/" << "icubWholeBodyEstimator" << "/eeWrench" << local_id.bodyPart << "_" << local_id.index << ":i";
+    localPort << "/" << "yarpWholeBodyEstimator" << "/eeWrench" << local_id.bodyPart << "_" << local_id.index << ":i";
     portsEEWrenches[local_id] = new BufferedPort<Vector>();
     if(!portsEEWrenches[local_id]->open(localPort.str().c_str())) {
         // open local input port
-        std::cerr << " icubWholeBodyEstimator::openEEWrenchPorts: Open of localPort " << localPort << " failed " << std::endl;
+        std::cerr << " yarpWholeBodyEstimator::openEEWrenchPorts: Open of localPort " << localPort << " failed " << std::endl;
         //YARP_ASSERT(false);
         ee_wrenches_enabled = false;
         return false;
     }
     if(!Network::exists(remotePort.c_str())) {            // check remote output port exists
-        std::cerr << "icubWholeBodyEstimator::openEEWrenchPorts:  " << remotePort << " does not exist " << std::endl;
+        std::cerr << "yarpWholeBodyEstimator::openEEWrenchPorts:  " << remotePort << " does not exist " << std::endl;
         //YARP_ASSERT(false);
         ee_wrenches_enabled = false;
         return false;
     }
     if(!Network::connect(remotePort.c_str(), localPort.str().c_str(), "udp")) {  // connect remote to local port
-        std::cerr << "icubWholeBodyEstimator::openEEWrenchPorts:  could not connect " << remotePort << " to " << localPort << std::endl;
+        std::cerr << "yarpWholeBodyEstimator::openEEWrenchPorts:  could not connect " << remotePort << " to " << localPort << std::endl;
         //YARP_ASSERT(false);
         ee_wrenches_enabled = false;
         return false;
@@ -585,7 +606,7 @@ bool icubWholeBodyEstimator::openEEWrenchPorts(const wbi::LocalId & local_id)
     return true;
 }
 
-void icubWholeBodyEstimator::readEEWrenches(const wbi::LocalId & local_id, yarp::sig::Vector & vec)
+void yarpWholeBodyEstimator::readEEWrenches(const wbi::wbiId & local_id, yarp::sig::Vector & vec)
 {
     vec.resize(6);
     vec.zero();
@@ -601,16 +622,16 @@ void icubWholeBodyEstimator::readEEWrenches(const wbi::LocalId & local_id, yarp:
     }
 }
 
-void icubWholeBodyEstimator::closeEEWrenchPorts(const wbi::LocalId & local_id)
+void yarpWholeBodyEstimator::closeEEWrenchPorts(const wbi::wbiId & local_id)
 {
     if( ee_wrenches_enabled )
     {
         portsEEWrenches[local_id]->close();
         delete portsEEWrenches[local_id];
     }
-}
+}*/
 
-void icubWholeBodyEstimator::threadRelease()
+void yarpWholeBodyEstimator::threadRelease()
 {
     //this causes a memory access violation (to investigate)
     if(dqFilt!=0)    { delete dqFilt;  dqFilt=0; }
@@ -621,25 +642,23 @@ void icubWholeBodyEstimator::threadRelease()
     if(tauMFilt!=0)  { delete tauMFilt; tauMFilt=0; }  ///< low pass filter for motor torque
     if(pwmFilt!=0)   { delete pwmFilt; pwmFilt=0;   }
 
+    /*
     if( ee_wrenches_enabled )
     {
-        closeEEWrenchPorts(right_gripper_local_id);
-        closeEEWrenchPorts(left_gripper_local_id);
-        closeEEWrenchPorts(right_sole_local_id);
-        closeEEWrenchPorts(left_sole_local_id);
-    }
+        closeExternalWrenchPorts(right_gripper_local_id);
+    }*/
 
     return;
 }
 
-void icubWholeBodyEstimator::lockAndResizeAll(int n)
+void yarpWholeBodyEstimator::lockAndResizeAll(int n)
 {
     mutex.wait();
     resizeAll(n);
     mutex.post();
 }
 
-void icubWholeBodyEstimator::resizeAll(int n)
+void yarpWholeBodyEstimator::resizeAll(int n)
 {
     q.resize(n);
     qStamps.resize(n);
@@ -657,7 +676,7 @@ void icubWholeBodyEstimator::resizeAll(int n)
     estimates.lastPwm.resize(n);
 }
 
-bool icubWholeBodyEstimator::lockAndCopyVector(const Vector &src, double *dest)
+bool yarpWholeBodyEstimator::lockAndCopyVector(const Vector &src, double *dest)
 {
     if(dest==0)
         return false;
@@ -667,7 +686,7 @@ bool icubWholeBodyEstimator::lockAndCopyVector(const Vector &src, double *dest)
     return true;
 }
 
-bool icubWholeBodyEstimator::lockAndCopyVectorElement(int index, const Vector &src, double *dest)
+bool yarpWholeBodyEstimator::lockAndCopyVectorElement(int index, const Vector &src, double *dest)
 {
     mutex.wait();
     dest[0] = src[index];
@@ -675,7 +694,7 @@ bool icubWholeBodyEstimator::lockAndCopyVectorElement(int index, const Vector &s
     return true;
 }
 
-bool icubWholeBodyEstimator::lockAndSetEstimationParameter(const EstimateType et, const EstimationParameter ep, const void *value)
+bool yarpWholeBodyEstimator::lockAndSetEstimationParameter(const EstimateType et, const EstimationParameter ep, const void *value)
 {
     bool res = false;
     mutex.wait();
@@ -736,7 +755,7 @@ bool icubWholeBodyEstimator::lockAndSetEstimationParameter(const EstimateType et
     return res;
 }
 
-bool icubWholeBodyEstimator::setVelFiltParams(int windowLength, double threshold)
+bool yarpWholeBodyEstimator::setVelFiltParams(int windowLength, double threshold)
 {
     if(windowLength<1 || threshold<=0.0)
         return false;
@@ -752,7 +771,7 @@ bool icubWholeBodyEstimator::setVelFiltParams(int windowLength, double threshold
     return true;
 }
 
-bool icubWholeBodyEstimator::setAccFiltParams(int windowLength, double threshold)
+bool yarpWholeBodyEstimator::setAccFiltParams(int windowLength, double threshold)
 {
     if(windowLength<1 || threshold<=0.0)
         return false;
@@ -768,7 +787,7 @@ bool icubWholeBodyEstimator::setAccFiltParams(int windowLength, double threshold
     return true;
 }
 
-bool icubWholeBodyEstimator::setDtauJFiltParams(int windowLength, double threshold)
+bool yarpWholeBodyEstimator::setDtauJFiltParams(int windowLength, double threshold)
 {
     if(windowLength<1 || threshold<=0.0)
         return false;
@@ -784,7 +803,7 @@ bool icubWholeBodyEstimator::setDtauJFiltParams(int windowLength, double thresho
     return true;
 }
 
-bool icubWholeBodyEstimator::setDtauMFiltParams(int windowLength, double threshold)
+bool yarpWholeBodyEstimator::setDtauMFiltParams(int windowLength, double threshold)
 {
     if(windowLength<1 || threshold<=0.0)
         return false;
@@ -800,17 +819,17 @@ bool icubWholeBodyEstimator::setDtauMFiltParams(int windowLength, double thresho
     return true;
 }
 
-bool icubWholeBodyEstimator::setTauJCutFrequency(double fc)
+bool yarpWholeBodyEstimator::setTauJCutFrequency(double fc)
 {
     return tauJFilt->setCutFrequency(fc);
 }
 
-bool icubWholeBodyEstimator::setTauMCutFrequency(double fc)
+bool yarpWholeBodyEstimator::setTauMCutFrequency(double fc)
 {
     return tauMFilt->setCutFrequency(fc);
 }
 
-bool icubWholeBodyEstimator::setPwmCutFrequency(double fc)
+bool yarpWholeBodyEstimator::setPwmCutFrequency(double fc)
 {
     return pwmFilt->setCutFrequency(fc);
 }

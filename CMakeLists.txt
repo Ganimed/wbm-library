@@ -31,13 +31,13 @@ find_package(wholeBodyInterface 0.2.0 REQUIRED)
 SET(folder_source src/yarpWbiUtil.cpp
                   #src/yarpWholeBodyInterface.cpp
                   src/yarpWholeBodyModel.cpp
-                  #src/yarpWholeBodyStates.cpp
+                  src/yarpWholeBodyStates.cpp
                   #src/icubWholeBodyStatesLocal.cpp
                   src/yarpWholeBodyActuators.cpp
                   src/yarpWholeBodySensors.cpp)
 SET(folder_header #include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
                   include/yarpWholeBodyInterface/yarpWholeBodyModel.h
-                  #include/yarpWholeBodyInterface/yarpWholeBodyStates.h
+                  include/yarpWholeBodyInterface/yarpWholeBodyStates.h
                   #include/yarpWholeBodyInterface/icubWholeBodyStatesLocal.h
                   include/yarpWholeBodyInterface/yarpWholeBodyActuators.h
                   include/yarpWholeBodyInterface/yarpWholeBodySensors.h

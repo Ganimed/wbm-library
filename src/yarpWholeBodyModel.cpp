@@ -49,18 +49,21 @@ using namespace iCub::skinDynLib;
 // *********************************************************************************************************************
 yarpWholeBodyModel::yarpWholeBodyModel(const char* _name,
                                        const yarp::os::Property & _wbi_yarp_conf)
-    : dof(0),
-      six_elem_buffer(6,0.0),
-      three_elem_buffer(3,0.0),
-      initDone(false),
+    : initDone(false),
+      dof(0),
       wbi_yarp_properties(_wbi_yarp_conf),
-      model(wbi_yarp_properties.find("urdf_file").asString().c_str(),std::vector<std::string>(0),"")
+      six_elem_buffer(6,0.0),
+      three_elem_buffer(3,0.0)
 {
 }
 
 yarpWholeBodyModel::~yarpWholeBodyModel()
 {
-    //delete p_model;
+    if( p_model )
+    {
+        delete p_model;
+        p_model = 0;
+    }
 }
 
 bool yarpWholeBodyModel::init()
@@ -86,10 +89,10 @@ bool yarpWholeBodyModel::init()
     std::vector<std::string> joint_names;
     joint_names.resize(0,"");
     assert((int)jointIdList.size() == dof);
-    //p_model = new iCub::iDynTree::DynTree(std::string(urdf_file),joint_names,kinematic_base_link_name);
-    all_q.resize(model.getNrOfDOFs(),0.0);
+    p_model = new iCub::iDynTree::DynTree(std::string(urdf_file),joint_names,kinematic_base_link_name);
+    all_q.resize(p_model->getNrOfDOFs(),0.0);
     all_q_min = all_q_max = all_ddq = all_dq = all_q;
-    floating_base_mass_matrix.resize(model.getNrOfDOFs(),model.getNrOfDOFs());
+    floating_base_mass_matrix.resize(p_model->getNrOfDOFs(),p_model->getNrOfDOFs());
     floating_base_mass_matrix.zero();
 
     world_base_transformation.resize(4,4);
@@ -123,7 +126,7 @@ bool yarpWholeBodyModel::init()
         initDone = initDone && openDrivers(bp);
     }
 
-    if( initDone && (model.getNrOfDOFs() > 0) )
+    if( initDone && (p_model->getNrOfDOFs() > 0) )
     {
         this->initDone = true;
     }
@@ -134,7 +137,7 @@ bool yarpWholeBodyModel::init()
     {
         wbi::wbiId joint_id;
         jointIdList.numericIdToWbiId(wbi_numeric_id,joint_id);
-        int idyntree_id = model.getDOFIndex(joint_id.toString());
+        int idyntree_id = p_model->getDOFIndex(joint_id.toString());
         if( idyntree_id == - 1 )
         {
             std::cerr << "yarpWholeBodyModel error: joint " << joint_id.toString() << " not found in URDF file" << std::endl;
@@ -308,7 +311,7 @@ bool yarpWholeBodyModel::convertDDQ(const double *_ddq_input, yarp::sig::Vector 
 
 bool yarpWholeBodyModel::convertGeneralizedTorques(yarp::sig::Vector idyntree_base_force, yarp::sig::Vector idyntree_torques, double * tau)
 {
-    if( idyntree_base_force.size() != 6 && (int)idyntree_torques.size() != model.getNrOfDOFs() ) { return false; }
+    if( idyntree_base_force.size() != 6 && (int)idyntree_torques.size() != p_model->getNrOfDOFs() ) { return false; }
     for(int j = 0; j < 6; j++ ) {
         tau[j] = idyntree_base_force[j];
     }
@@ -326,7 +329,7 @@ bool yarpWholeBodyModel::getLinkId(const char *linkName, int &linkNumericId)
     {
         return false;
     }
-    int link_id = model.getLinkIndex(std::string(linkName));
+    int link_id = p_model->getLinkIndex(std::string(linkName));
     if( link_id == - 1 )
     {
         return false;
@@ -362,8 +365,8 @@ bool yarpWholeBodyModel::getJointLimits(double *qMin, double *qMax, int joint)
     return res;
 
     // OLD IMPLEMENTATION
-    //all_q_min = model.getJointBoundMin();
-    //all_q_max = model.getJointBoundMax();
+    //all_q_min = p_model->getJointBoundMin();
+    //all_q_max = p_model->getJointBoundMax();
 
     //if( joint == -1 ) {
     //    //Get all joint limits
@@ -372,31 +375,31 @@ bool yarpWholeBodyModel::getJointLimits(double *qMin, double *qMax, int joint)
     //} else {
     //    //Get only a joint
     //    LocalId loc_id = jointIdList.globalToLocalId(joint);
-    //    *qMin = all_q_min[model.getDOFIndex(loc_id.bodyPart,loc_id.index)];
-    //    *qMax = all_q_max[model.getDOFIndex(loc_id.bodyPart,loc_id.index)];
+    //    *qMin = all_q_min[p_model->getDOFIndex(loc_id.bodyPart,loc_id.index)];
+    //    *qMax = all_q_max[p_model->getDOFIndex(loc_id.bodyPart,loc_id.index)];
     //}
     //return true;
 }
 
 bool yarpWholeBodyModel::computeH(double *q, const Frame &xBase, int linkId, Frame &H)
 {
-    if( (linkId < 0 || linkId >= model.getNrOfLinks()) && linkId != COM_LINK_ID ) return false;
+    if( (linkId < 0 || linkId >= p_model->getNrOfLinks()) && linkId != COM_LINK_ID ) return false;
 
     convertBasePose(xBase,world_base_transformation);
     convertQ(q,all_q);
 
-    model.setWorldBasePose(world_base_transformation);
-    model.setAng(all_q);
+    p_model->setWorldBasePose(world_base_transformation);
+    p_model->setAng(all_q);
 
     Matrix H_result;
     H_result.zero();
     if( linkId != COM_LINK_ID ) {
-        H_result = model.getPosition(linkId);
+        H_result = p_model->getPosition(linkId);
         if( H_result.cols() != 4 || H_result.rows() != 4 ) { return false; }
     } else {
        H_result = Matrix(4,4);
        H_result.eye();
-       Vector com = model.getCOM();
+       Vector com = p_model->getCOM();
        if( com.size() == 0 ) { return false; }
        H_result.setSubcol(com,0,3);
     }
@@ -408,7 +411,7 @@ bool yarpWholeBodyModel::computeH(double *q, const Frame &xBase, int linkId, Fra
 
 bool yarpWholeBodyModel::computeJacobian(double *q, const Frame &xBase, int linkId, double *J, double *pos)
 {
-    if( (linkId < 0 || linkId >= model.getNrOfLinks()) && linkId != COM_LINK_ID ) return false;
+    if( (linkId < 0 || linkId >= p_model->getNrOfLinks()) && linkId != COM_LINK_ID ) return false;
 
     if( pos != 0 ) return false; //not implemented yet
 
@@ -422,15 +425,15 @@ bool yarpWholeBodyModel::computeJacobian(double *q, const Frame &xBase, int link
     convertBasePose(xBase,world_base_transformation);
     convertQ(q,all_q);
 
-    model.setWorldBasePose(world_base_transformation);
-    model.setAng(all_q);
+    p_model->setWorldBasePose(world_base_transformation);
+    p_model->setAng(all_q);
 
     //Get Jacobian, the one of the link or the one of the COM
     if( linkId != COM_LINK_ID ) {
-         ret_val = model.getJacobian(linkId,complete_jacobian);
+         ret_val = p_model->getJacobian(linkId,complete_jacobian);
          if( !ret_val ) return false;
     } else {
-         ret_val = model.getCOMJacobian(complete_jacobian);
+         ret_val = p_model->getCOMJacobian(complete_jacobian);
          if( !ret_val ) return false;
     }
 
@@ -455,7 +458,7 @@ bool yarpWholeBodyModel::computeJacobian(double *q, const Frame &xBase, int link
 
 bool yarpWholeBodyModel::computeDJdq(double *q, const Frame &xBase, double *dq, double *dxB, int linkID, double *dJdq, double *pos)
 {
-    if ((linkID < 0 || linkID >= model.getNrOfLinks()) && linkID != COM_LINK_ID) return false;
+    if ((linkID < 0 || linkID >= p_model->getNrOfLinks()) && linkID != COM_LINK_ID) return false;
     if (pos != 0) return false; //not implemented yet
 
     //joints
@@ -468,24 +471,24 @@ bool yarpWholeBodyModel::computeDJdq(double *q, const Frame &xBase, double *dq, 
     convertBaseVelocity(dxB, v_six_elems_base);
     a_six_elems_base.zero();
 
-    model.setAng(all_q);
-    model.setDAng(all_dq);
-    model.setD2Ang(all_ddq);
+    p_model->setAng(all_q);
+    p_model->setDAng(all_dq);
+    p_model->setD2Ang(all_ddq);
 
-    model.setWorldBasePose(world_base_transformation);
+    p_model->setWorldBasePose(world_base_transformation);
 
     //The setKinematicBaseVelAcc accepts the velocity and accelerations of the kinematic base in world orientation
-    model.setKinematicBaseVelAcc(v_six_elems_base,a_six_elems_base);
+    p_model->setKinematicBaseVelAcc(v_six_elems_base,a_six_elems_base);
 
-    model.kinematicRNEA();
+    p_model->kinematicRNEA();
 
     bool ret;
 
     if( linkID != COM_LINK_ID ) {
-        ret = model.getAcc(linkID,six_elem_buffer);
+        ret = p_model->getAcc(linkID,six_elem_buffer);
     } else {
         // Only the linear part of DJdq is supported for the COM
-        ret = model.getAccCOM(three_elem_buffer);
+        ret = p_model->getAccCOM(three_elem_buffer);
         for(int i=0; i < 3; i++ ) {
             six_elem_buffer[i] = three_elem_buffer[i];
             six_elem_buffer[i+3] = 0.0;
@@ -508,23 +511,23 @@ bool yarpWholeBodyModel::computeDJdq(double *q, const Frame &xBase, double *dq, 
 
 bool yarpWholeBodyModel::forwardKinematics(double *q, const Frame &xB, int linkId, double *x)
 {
-    if( (linkId < 0 || linkId >= model.getNrOfLinks()) && linkId != COM_LINK_ID ) return false;
+    if( (linkId < 0 || linkId >= p_model->getNrOfLinks()) && linkId != COM_LINK_ID ) return false;
 
     convertBasePose(xB,world_base_transformation);
     convertQ(q,all_q);
 
-    model.setWorldBasePose(world_base_transformation);
-    model.setAng(all_q);
+    p_model->setWorldBasePose(world_base_transformation);
+    p_model->setAng(all_q);
 
     Matrix H_result;
 
     if( linkId != COM_LINK_ID ) {
-        H_result = model.getPosition(linkId);
+        H_result = p_model->getPosition(linkId);
         if( H_result.cols() != 4 || H_result.rows() != 4 ) { return false; }
     } else {
        H_result = Matrix(4,4);
        H_result.eye();
-       Vector com = model.getCOM();
+       Vector com = p_model->getCOM();
        if( com.size() == 0 ) { return false; }
        H_result.setSubcol(com,0,3);
     }
@@ -574,25 +577,25 @@ bool yarpWholeBodyModel::inverseDynamics(double *q, const Frame &xB, double *dq,
     convertDDQ(ddq, all_ddq);
 
     //Setting iDynTree variables
-    model.setWorldBasePose(world_base_transformation);
-    model.setAng(all_q);
+    p_model->setWorldBasePose(world_base_transformation);
+    p_model->setAng(all_q);
     //The kinematic initial values are expressed in the imu link (in this case, the base) for iDynTree
     yarp::sig::Matrix base_world_rotation = world_base_transformation.submatrix(0,2,0,2).transposed();
 
-    model.setInertialMeasure(base_world_rotation * omega_base,
+    p_model->setInertialMeasure(base_world_rotation * omega_base,
                                 base_world_rotation * domega_base,
                                 base_world_rotation * a_base);
-    model.setDAng(all_dq);
-    model.setD2Ang(all_ddq);
+    p_model->setDAng(all_dq);
+    p_model->setD2Ang(all_ddq);
 
     //Computing inverse dynamics
-    model.kinematicRNEA();
-    model.dynamicRNEA();
+    p_model->kinematicRNEA();
+    p_model->dynamicRNEA();
 
     //Get the output floating base torques and convert them to wbi generalized torques
-    yarp::sig::Vector base_force = model.getBaseForceTorque(iCub::iDynTree::WORLD_FRAME);
+    yarp::sig::Vector base_force = p_model->getBaseForceTorque(iCub::iDynTree::WORLD_FRAME);
 
-    return convertGeneralizedTorques(base_force,model.getTorques(),tau);
+    return convertGeneralizedTorques(base_force,p_model->getTorques(),tau);
 }
 
 bool yarpWholeBodyModel::computeMassMatrix(double *q, const Frame &xBase, double *M)
@@ -601,15 +604,15 @@ bool yarpWholeBodyModel::computeMassMatrix(double *q, const Frame &xBase, double
     convertQ(q,all_q);
 
     //Setting iDynTree variables
-    model.setWorldBasePose(world_base_transformation);
-    model.setAng(all_q);
+    p_model->setWorldBasePose(world_base_transformation);
+    p_model->setAng(all_q);
 
 
 
     //iDynTree floating base mass matrix is already world orientation friendly
     //(i.e. expects the base velocity to be expressed in world reference frame)
     floating_base_mass_matrix.zero();
-    model.getFloatingBaseMassMatrix(floating_base_mass_matrix);
+    p_model->getFloatingBaseMassMatrix(floating_base_mass_matrix);
 
     if( reduced_floating_base_mass_matrix.cols() != 6+dof ||
         reduced_floating_base_mass_matrix.rows() != 6+dof ) {
@@ -684,26 +687,26 @@ bool yarpWholeBodyModel::computeGeneralizedBiasForces(double *q, const Frame &xB
     convertDDQ(ddq.data(),all_ddq);
 
     //Setting iDynTree variables
-    model.setWorldBasePose(world_base_transformation);
-    model.setAng(all_q);
+    p_model->setWorldBasePose(world_base_transformation);
+    p_model->setAng(all_q);
     //The kinematic initial values are expressed in the imu link (in this case, the base) for iDynTree
     yarp::sig::Matrix base_world_rotation = world_base_transformation.submatrix(0,2,0,2).transposed();
 
-    model.setInertialMeasure(base_world_rotation * omega_base,
+    p_model->setInertialMeasure(base_world_rotation * omega_base,
                                      base_world_rotation * domega_base,
                                      base_world_rotation * a_base);
-    model.setDAng(all_dq);
-    model.setD2Ang(all_ddq);
+    p_model->setDAng(all_dq);
+    p_model->setD2Ang(all_ddq);
 
     //Computing inverse dynamics
-    model.kinematicRNEA();
-    model.dynamicRNEA();
+    p_model->kinematicRNEA();
+    p_model->dynamicRNEA();
 
     //Get the output floating base torques and convert them to wbi generalized torques
-    yarp::sig::Vector base_force = model.getBaseForceTorque(iCub::iDynTree::WORLD_FRAME);
+    yarp::sig::Vector base_force = p_model->getBaseForceTorque(iCub::iDynTree::WORLD_FRAME);
 
 
-    convertGeneralizedTorques(base_force,model.getTorques(),h);
+    convertGeneralizedTorques(base_force,p_model->getTorques(),h);
 
     return true;
 }
@@ -722,18 +725,18 @@ bool yarpWholeBodyModel::computeCentroidalMomentum(double *q, const Frame &xBase
     a_six_elems_base.zero();
 
     //Setting iDynTree variables
-    model.setWorldBasePose(world_base_transformation);
-    model.setKinematicBaseVelAcc(v_six_elems_base,a_six_elems_base);
-    model.setAng(all_q);
-    model.setDAng(all_dq);
-    model.setD2Ang(all_ddq);
+    p_model->setWorldBasePose(world_base_transformation);
+    p_model->setKinematicBaseVelAcc(v_six_elems_base,a_six_elems_base);
+    p_model->setAng(all_q);
+    p_model->setDAng(all_dq);
+    p_model->setD2Ang(all_ddq);
 
     //Computing centroidal momentum
     if( six_elem_buffer.size() != 6 ) {
         six_elem_buffer.resize(6,0.0);
     }
 
-    six_elem_buffer = model.getCentroidalMomentum();
+    six_elem_buffer = p_model->getCentroidalMomentum();
 
     memcpy(h,six_elem_buffer.data(),6*sizeof(double));
 

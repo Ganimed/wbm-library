@@ -45,13 +45,13 @@ namespace yarpWbi
     {
     protected:
         wbi::wbiIdList jointIdList;
-        int dof;
 
         bool initDone;
+        int dof;
 
         //iCub::iDynTree::DynTree * p_model;
         yarp::os::Property wbi_yarp_properties;
-        iCub::iDynTree::DynTree model;
+        iCub::iDynTree::DynTree * p_model;
 
         yarp::sig::Matrix world_base_transformation;
 

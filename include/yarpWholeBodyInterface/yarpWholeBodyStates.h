@@ -26,13 +26,15 @@
 #include <yarp/os/BufferedPort.h>
 #include <iCub/ctrl/adaptWinPolyEstimator.h>
 #include <iCub/ctrl/filters.h>
-#include <iCub/iDynTree/iCubTree.h>
 #include <iCub/skinDynLib/skinContactList.h>
-#include <wbiIcub/wbiIcubUtil.h>
+
+#include "yarpWholeBodyInterface/yarpWbiUtil.h"
+#include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
+
 #include <map>
 
 
-namespace wbiIcub
+namespace yarpWbi
 {
     /**
      * Thread that estimates the state of the iCub robot.
@@ -40,7 +42,7 @@ namespace wbiIcub
     class yarpWholeBodyEstimator: public yarp::os::RateThread
     {
     protected:
-        yarpWholeBodySensors        *sensors;
+        yarpWbi::yarpWholeBodySensors        *sensors;
         //double                      estWind;        // time window for the estimation
 
         iCub::ctrl::AWLinEstimator  *dqFilt;        // joint velocity filter
@@ -82,7 +84,7 @@ namespace wbiIcub
         /** Set the cut frequency of the motor PWM low pass filter. */
         bool setPwmCutFrequency(double fc);
 
-
+        /*
         std::map<wbi::wbiId, yarp::os::BufferedPort<yarp::sig::Vector>*>  portsEEWrenches;
         std::map<wbi::wbiId, yarp::sig::Vector>  lastEEWrenches;
 
@@ -91,22 +93,25 @@ namespace wbiIcub
         void closeEEWrenchPorts(const wbi::LocalId & local_id);
 
         yarp::sig::Matrix H_world_base;
+        */
 
     public:
         // end effector wrenches ports (the key of the maps is the sensor id)
-        bool ee_wrenches_enabled;
-        bool openEEWrenchPorts();
+        //bool ee_wrenches_enabled;
+        //bool openEEWrenchPorts();
 
-
+        /*
         yarp::sig::Vector RAExtWrench;
         yarp::sig::Vector LAExtWrench;
         yarp::sig::Vector RLExtWrench;
         yarp::sig::Vector LLExtWrench;
 
+
         wbi::wbiId right_gripper_local_id;
         wbi::wbiId left_gripper_local_id;
         wbi::wbiId left_sole_local_id;
         wbi::wbiId right_sole_local_id;
+        */
 
         yarp::os::Semaphore         mutex;          // mutex for access to class global variables
 
@@ -127,7 +132,7 @@ namespace wbiIcub
 
         /** Constructor.
          */
-        yarpWholeBodyEstimator(int _period, yarpWholeBodySensors *_sensors);
+        yarpWholeBodyEstimator(int _period, yarpWbi::yarpWholeBodySensors *_sensors);
 
         bool lockAndSetEstimationParameter(const wbi::EstimateType et,
                                            const wbi::EstimationParameter ep,
@@ -150,32 +155,37 @@ namespace wbiIcub
     /**
      * Class to access the estimates of the states of iCub.
      */
-    class icubWholeBodyStates : public wbi::iWholeBodyStates
+    class yarpWholeBodyStates : public wbi::iWholeBodyStates
     {
     protected:
-        icubWholeBodySensors        *sensors;       // interface to access the robot sensors
-        icubWholeBodyEstimator      *estimator;     // estimation thread
-        wbi::LocalIdList            emptyList;      ///< empty list of IDs to return in case of error
+        bool initDone;
+        std::string name;
+        yarp::os::Property wbi_yarp_properties;
+
+
+        yarpWbi::yarpWholeBodySensors        *sensors;       // interface to access the robot sensors
+        yarpWholeBodyEstimator      *estimator;     // estimation thread
+        wbi::wbiIdList               emptyList;      ///< empty list of IDs to return in case of error
         //double                      estWind;      // time window for the estimation
 
-        virtual bool lockAndReadSensor(const wbi::SensorType st, const wbi::LocalId sid, double *data, double time, bool blocking);
+        virtual bool lockAndReadSensor(const wbi::SensorType st, const int numeric_id, double *data, double time, bool blocking);
         virtual bool lockAndReadSensors(const wbi::SensorType st, double *data, double time, bool blocking);
-        virtual bool lockAndAddSensor(const wbi::SensorType st, const wbi::LocalId &sid);
-        virtual int lockAndAddSensors(const wbi::SensorType st, const wbi::LocalIdList &sids);
-        virtual bool lockAndRemoveSensor(const wbi::SensorType st, const wbi::LocalId &sid);
-        virtual wbi::LocalIdList lockAndGetSensorList(const wbi::SensorType st);
+        virtual bool lockAndAddSensor(const wbi::SensorType st, const wbi::wbiId &sid);
+        virtual int lockAndAddSensors(const wbi::SensorType st, const wbi::wbiIdList &sids);
+        virtual bool lockAndRemoveSensor(const wbi::SensorType st, const wbi::wbiId &sid);
+        virtual wbi::wbiIdList lockAndGetSensorList(const wbi::SensorType st);
         virtual int lockAndGetSensorNumber(const wbi::SensorType st);
-        virtual bool lockAndGetExternalWrench(const wbi::LocalId sid, double * data);
+        //virtual bool lockAndGetExternalWrench(const wbi::LocalId sid, double * data);
 
         /** Get the velocity of the specified motor. */
-        bool getMotorVel(const wbi::LocalId &sid, double *data, double time, bool blocking);
+        bool getMotorVel(const int numeric_id, double *data, double time, bool blocking);
         /** Get the velocities of all the robot motors. */
         bool getMotorVel(double *data, double time, bool blocking);
 
     public:
         // *** CONSTRUCTORS ***
-        icubWholeBodyStates(const char* _name, const char* _robotName, double estimationTimeWindow);
-        virtual ~icubWholeBodyStates();
+        yarpWholeBodyStates(const char* _name, const yarp::os::Property & _wbi_yarp_conf);
+        virtual ~yarpWholeBodyStates();
 
         virtual bool init();
         virtual bool close();
@@ -218,7 +228,7 @@ namespace wbiIcub
         /** Get a copy of the estimate list of the specified estimate type.
          * @param st Type of estimate.
          * @return A copy of the estimate list. */
-        virtual const wbi::LocalIdList& getEstimateList(const wbi::EstimateType st);
+        virtual const wbi::wbiIdList& getEstimateList(const wbi::EstimateType st);
 
         /** Get the number of estimates of the specified type.
          * @return The number of estimates of the specified type. */
