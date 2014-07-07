@@ -58,8 +58,8 @@ const std::string icubWholeBodyActuators::icubWholeBodyActuatorsExternalTorqueMo
 //                                          YARP WHOLE BODY ACTUATOR
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-icubWholeBodyActuators::icubWholeBodyActuators(const char* _name, 
-                                               const char* _robotName, 
+icubWholeBodyActuators::icubWholeBodyActuators(const char* _name,
+                                               const char* _robotName,
                                                const std::vector<std::string> &_bodyPartNames)
 : m_commandedParts(0), initDone(false), dof(0), name(_name), robot(_robotName), bodyPartNames(_bodyPartNames), reverse_torso_joints(true)
 #ifdef WBI_ICUB_COMPILE_PARAM_HELP
@@ -68,7 +68,7 @@ icubWholeBodyActuators::icubWholeBodyActuators(const char* _name,
 {}
 
 icubWholeBodyActuators::icubWholeBodyActuators(const char* _name,
-                                               const char* _robotName, 
+                                               const char* _robotName,
                                                const yarp::os::Property & yarp_wbi_properties)
 : m_commandedParts(0), initDone(false), dof(0), name(_name), robot(_robotName)
 #ifdef WBI_ICUB_COMPILE_PARAM_HELP
@@ -89,15 +89,15 @@ icubWholeBodyActuators::~icubWholeBodyActuators()
 
 bool icubWholeBodyActuators::openDrivers(int bp)
 {
-    if( bp >= (int)bodyPartNames.size() || bp < 0 ) { 
-        std::cerr << "icubWholeBodyActuators::openDrivers error: called with bodypart " << bp << 
+    if( bp >= (int)bodyPartNames.size() || bp < 0 ) {
+        std::cerr << "icubWholeBodyActuators::openDrivers error: called with bodypart " << bp <<
                      " but the total number of bodyparts is " << bodyPartNames.size() << std::endl;
         return false;
     }
     itrq[bp]=0; iimp[bp]=0; icmd[bp]=0; ivel[bp]=0; ipos[bp]=0; iopl[bp]=0;  dd[bp]=0;
     if(!openPolyDriver(name, robot, dd[bp], bodyPartNames[bp].c_str()))
         return false;
-    
+
     bool ok = dd[bp]->view(itrq[bp]) && dd[bp]->view(iimp[bp]) && dd[bp]->view(icmd[bp])
               && dd[bp]->view(ivel[bp]) && dd[bp]->view(ipos[bp]) && dd[bp]->view(iopl[bp])
               && dd[bp]->view(positionDirectInterface[bp]);
@@ -106,7 +106,7 @@ bool icubWholeBodyActuators::openDrivers(int bp)
         fprintf(stderr, "Problem initializing drivers of %s\n", bodyPartNames[bp].c_str());
         return false;
     }
-    
+
     return true;
 }
 
@@ -132,7 +132,7 @@ bool icubWholeBodyActuators::init()
     if (ok && dof > 0) {
         m_commandedParts = new unsigned char[dof];
     }
-    
+
 #ifdef WBI_ICUB_COMPILE_PARAM_HELP
     ///TEMP
     if (_torqueModuleConnection) {
@@ -144,7 +144,7 @@ bool icubWholeBodyActuators::init()
         yarp::os::Value found;
         _rpcAutoConnect = false;
         found = configurationParameters.find(icubWholeBodyActuatorsExternalTorqueModuleAutoconnect.c_str());
-        
+
         if (!found.isNull() && found.isBool()) {
             _rpcAutoConnect = found.asBool();
         }
@@ -155,10 +155,10 @@ bool icubWholeBodyActuators::init()
                 ok = false;
             }
             else {
-                
+
                 _torqueModuleConnection = new paramHelp::ParamHelperClient(jointTorqueControl::jointTorqueControlParamDescr, jointTorqueControl::PARAM_ID_SIZE,
                                                                            jointTorqueControl::jointTorqueControlCommandDescr, jointTorqueControl::COMMAND_ID_SIZE);
-                
+
                 Bottle initMsg;
                 if (!_torqueModuleConnection || !_torqueModuleConnection->init(name, found.asString().c_str(), initMsg)) {
                     ok = false;
@@ -207,9 +207,9 @@ bool icubWholeBodyActuators::close()
         Network::disconnect(_rpcLocalName, _rpcRemoteName);
         _torqueModuleRPCClientPort.close();
     }
-    
+
 #endif
-    
+
     return ok;
 }
 
@@ -238,14 +238,14 @@ bool icubWholeBodyActuators::setConfigurationParameter(const std::string &parame
         }
         return false;
     }
-    
+
     return false;
 }
 
 bool icubWholeBodyActuators::removeActuator(const LocalId &j)
 {
     if (initDone) return false;
-    
+
     if(!jointIdList.removeId(j))
         return false;
     dof--;
@@ -258,7 +258,7 @@ bool icubWholeBodyActuators::addActuator(const LocalId &j)
 
     if(!jointIdList.addId(j))
         return false;
-    
+
     dof++;
     return true;
 }
@@ -277,7 +277,7 @@ bool icubWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
 {
     if(joint>=dof)
         return false;
-    
+
     bool ok = true;
     if(joint<0)     ///< set all joints to the specified control mode
     {
@@ -299,7 +299,7 @@ bool icubWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
                     }
                 }
                 break;
-               
+
             case CTRL_MODE_VEL:
                 FOR_ALL(itBp, itJ) {
                     if(currentCtrlModes[LocalId(itBp->first,*itJ)]!=controlMode) {
@@ -311,7 +311,7 @@ bool icubWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
                     }
                 }
                 break;
-                
+
             case CTRL_MODE_TORQUE:
                 FOR_ALL(itBp, itJ) {
                     if(currentCtrlModes[LocalId(itBp->first,*itJ)]!=controlMode) {
@@ -333,7 +333,7 @@ bool icubWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
                     }
                 }
                 break;
-                
+
             case CTRL_MODE_MOTOR_PWM:
                 if(!isICubSimulator(robot)) ///< iCub simulator does not implement PWM motor control
                     FOR_ALL(itBp, itJ) {
@@ -370,12 +370,12 @@ bool icubWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
                 startCmd.addString("stop");
                 ok = ok && _torqueModuleRPCClientPort.write(startCmd);
             }
-            
+
         }
 #endif
         return ok;
     }
-    
+
     ///< Set the specified joint to the specified control mode
     LocalId li = jointIdList.globalToLocalId(joint);
     if(currentCtrlModes[li]!=controlMode)   ///< check that joint is not already in the specified control mode
@@ -409,7 +409,7 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
 {
     if(joint> (int)dof)
         return false;
-    
+
     bool ok = true;
     if(joint>=0)    // set control reference for the specified joint
     {
@@ -447,7 +447,11 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
                     return itrq[li.bodyPart]->setRefTorque(i, *ref);
             }
             ///< iCub simulator does not implement PWM motor control
+#ifdef YARP_INTERACTION_MODE_MOTOR_INTERFACE
+            case CTRL_MODE_MOTOR_PWM:   return isICubSimulator(robot) ? true : iopl[li.bodyPart]->setRefOutput(i, *ref);
+#else /* YARP_INTERACTION_MODE_MOTOR_INTERFACE */
             case CTRL_MODE_MOTOR_PWM:   return isICubSimulator(robot) ? true : iopl[li.bodyPart]->setOutput(i, *ref);
+#endif /* YARP_INTERACTION_MODE_MOTOR_INTERFACE */
             default: break;
         }
         return false;
@@ -461,9 +465,9 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
         memset(torqueReferences, 0, sizeof(double) * MAX_NJ); //set to zero all the references torques
         double positionReferences[MAX_NJ]; //vector of reference positions
         memset(positionReferences, 0, sizeof(double) * MAX_NJ); //set to zero all the references positions
-    
+
         memset(m_commandedParts, 0, sizeof(unsigned char) * dof); //reset the command map
-        
+
         int velocityJointIDs[MAX_NJ];   // vector of joint ids for velocity move (implementing more advanced velocity function)
         unsigned int i = 0;                // counter of controlled joints
         FOR_ALL_BODY_PARTS(itBp)
@@ -477,7 +481,7 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
             {
                 LocalId localId = LocalId(itBp->first, itBp->second[j]);
                 wbi::ControlMode currentControlMode = currentCtrlModes[localId];
-                
+
                 if (partControlMode != CTRL_MODE_UNKNOWN
                     && partControlMode != currentControlMode) {
                     //a different control mode for a joint in the part
@@ -486,12 +490,12 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
                     break;
                     //should save parts done
                 }
-                
+
                 jointIndex = j;
                 if (reverse_torso_joints) {
                     jointIndex = itBp->first == TORSO ? 2 - j : j; // icub's torso joints are in reverse order
                 }
-                
+
                 if(currentControlMode == CTRL_MODE_VEL)
                 {
                     partControlMode = CTRL_MODE_VEL;
@@ -544,7 +548,7 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
             }
         }
 //    }
-    
+
 #ifdef WBI_ICUB_COMPILE_PARAM_HELP
     //TEMP
     if (_torqueModuleConnection) {
@@ -552,7 +556,7 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
     }
     //END TEMP
 #endif
-    
+
     i = 0;
     FOR_ALL(itBp, itJ)
     {
@@ -570,15 +574,15 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
         printf("[%s:%d]Setting single-part mode for part-joint %d-%d\n", __FILE__, __LINE__, itBp->first, *itJ);
         switch(currentCtrlModes[localID])
         {
-            case CTRL_MODE_POS:         
-                ok = ok && ipos[itBp->first]->positionMove(j, CTRL_RAD2DEG*ref[i]); 
+            case CTRL_MODE_POS:
+                ok = ok && ipos[itBp->first]->positionMove(j, CTRL_RAD2DEG*ref[i]);
                 break;
-            case CTRL_MODE_DIRECT_POSITION:         
-                ok = ok && positionDirectInterface[itBp->first]->setPosition(j, CTRL_RAD2DEG*ref[i]); 
+            case CTRL_MODE_DIRECT_POSITION:
+                ok = ok && positionDirectInterface[itBp->first]->setPosition(j, CTRL_RAD2DEG*ref[i]);
                 break;
-            case CTRL_MODE_VEL:         
+            case CTRL_MODE_VEL:
                 if(isRobotSimulator(robot)) ///< velocity controlled joints have already been managed (for the real robot)
-                    ok = ok && ivel[itBp->first]->velocityMove(j, CTRL_RAD2DEG*ref[i]); 
+                    ok = ok && ivel[itBp->first]->velocityMove(j, CTRL_RAD2DEG*ref[i]);
                 break;
             case CTRL_MODE_TORQUE:
             {
@@ -600,17 +604,21 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
                     ok = ok && itrq[itBp->first]->setRefTorque(j, ref[i]);
             }
                 break;
-            case CTRL_MODE_MOTOR_PWM:   
+            case CTRL_MODE_MOTOR_PWM:
                 if(!isICubSimulator(robot)) ///< iCub simulator does not implement PWM motor control
-                    ok = ok && iopl[itBp->first]->setOutput(j, ref[i]); 
+#ifdef YARP_INTERACTION_MODE_MOTOR_INTERFACE
+                    ok = ok && iopl[itBp->first]->setRefOutput(j, ref[i]);
+#else /* #ifdef YARP_INTERACTION_MODE_MOTOR_INTERFACE */
+                    ok = ok && iopl[itBp->first]->setOutput(j, ref[i]);
+#endif
                 break;
-            default: 
-                printf("[icubWholeBodyActuators::setControlReference] ERROR: unmanaged control mode.\n"); 
+            default:
+                printf("[icubWholeBodyActuators::setControlReference] ERROR: unmanaged control mode.\n");
                 return false;
         }
         i++;
     }
-    
+
 #ifdef WBI_ICUB_COMPILE_PARAM_HELP
     //TEMP
     if (_torqueModuleConnection) {
@@ -618,10 +626,10 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
     }
     //END TEMP
 #endif
-    
+
     return ok;
 }
-        
+
 bool icubWholeBodyActuators::setControlParam(ControlParam paramId, const void *value, int joint)
 {
     switch(paramId)
@@ -640,7 +648,7 @@ bool icubWholeBodyActuators::setReferenceSpeed(double *rspd, int joint)
 {
     if(joint>=dof)
         return false;
-    
+
     if(joint>=0)
     {
         LocalId li = jointIdList.globalToLocalId(joint);
@@ -652,7 +660,7 @@ bool icubWholeBodyActuators::setReferenceSpeed(double *rspd, int joint)
         }
         return ipos[li.bodyPart]->setRefSpeed(i, CTRL_RAD2DEG*(*rspd));
     }
-    
+
     bool ok = true;
     unsigned int i=0;
     FOR_ALL(itBp, itJ)
@@ -666,7 +674,7 @@ bool icubWholeBodyActuators::setReferenceSpeed(double *rspd, int joint)
         ok = ok && ipos[itBp->first]->setRefSpeed(j, CTRL_RAD2DEG*rspd[i]);
         i++;
     }
-    
+
     return ok;
 }
 
@@ -740,7 +748,7 @@ bool icubWholeBodyActuators::setControlOffset(const double *value, int joint)
 {
     //The FOR_ALL atomicity is debated in github.. currently do the same as the rest of the library
     if (!value) return false;
-    
+
     bool result = true;
     if (joint < 0) {
         //todo

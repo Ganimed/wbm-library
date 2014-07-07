@@ -29,6 +29,15 @@ find_package(ICUB REQUIRED)
 find_package(iDynTree REQUIRED)
 find_package(wholeBodyInterface REQUIRED)
 
+#take in account the new pwm interface
+if(YARP_VERSION VERSION_LESS 2.3.62.3)
+    message(STATUS "found YARP (${YARP_VERSION}) has the old motor interface")
+else()
+    message(STATUS "found YARP (${YARP_VERSION}) has the new interaction mode motor interface interface")
+    add_definitions(-DYARP_INTERACTION_MODE_MOTOR_INTERFACE)
+endif()
+
+
 SET(folder_source src/wbiIcubUtil.cpp
                   src/icubWholeBodyInterface.cpp
                   src/icubWholeBodyModel.cpp
@@ -71,6 +80,7 @@ if(COMPILE_AS_SHARED_LIBRARY)
 else()
     set(LIB_TYPE STATIC)
 endif()
+
 
 add_library(${LIBRARY_NAME}  ${LIB_TYPE} ${folder_source} ${folder_header})
 
