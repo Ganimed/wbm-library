@@ -458,8 +458,8 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
     }
     // set control references for all joints
     ///< on robot use new method which set all joint vel of one body part at the same time (much faster!)
-//    if(!isRobotSimulator(robot)) //Why not on robot simulator? Shouldn't iCub_SIM implement these methods?
-//    {
+    if(!isRobotSimulator(robot))
+    {
         double speedReferences[MAX_NJ];     // vector of reference joint speeds
         double torqueReferences[MAX_NJ]; //vector of reference joint torques
         memset(torqueReferences, 0, sizeof(double) * MAX_NJ); //set to zero all the references torques
@@ -547,7 +547,9 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
                     break;
             }
         }
-//    }
+
+    }
+    
 
 #ifdef WBI_ICUB_COMPILE_PARAM_HELP
     //TEMP
@@ -556,8 +558,9 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
     }
     //END TEMP
 #endif
+    
+    int i = 0;
 
-    i = 0;
     FOR_ALL(itBp, itJ)
     {
         if (m_commandedParts[i]) { //skip if joint is already controlled
