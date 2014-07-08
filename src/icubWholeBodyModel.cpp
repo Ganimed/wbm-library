@@ -72,7 +72,7 @@ icubWholeBodyModel::icubWholeBodyModel(const char* _name, const char* _robotName
 
     a_base = omega_base = domega_base = v_base;
 
-    v_six_elems_base.resize(3,0.0);
+    v_six_elems_base.resize(6,0.0);
     a_six_elems_base.resize(6,0.0);
 
     if( initial_q != 0 ) {
