@@ -340,6 +340,11 @@ bool icubWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
                         if(currentCtrlModes[LocalId(itBp->first,*itJ)]!=controlMode) {
                             if( reverse_torso_joints ) {
                                 ok = ok && icmd[itBp->first]->setOpenLoopMode(itBp->first==TORSO ? 2-(*itJ) : *itJ);
+                                std::cout << "setOpenLoopMode for bodypart " << itBp->first << " " << *itJ << std::endl;
+                                if(!ok)
+                                {
+                                    std::cout << "setOpenLoopMode failed!!!" << std::endl;
+                                }
                             } else {
                                 ok = ok && icmd[itBp->first]->setOpenLoopMode(*itJ);
                             }

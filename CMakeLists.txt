@@ -28,6 +28,7 @@ find_package(YARP REQUIRED)
 find_package(ICUB REQUIRED)
 find_package(iDynTree REQUIRED)
 find_package(wholeBodyInterface REQUIRED)
+find_package(paramHelp REQUIRED)
 
 #take in account the new pwm interface
 if(YARP_VERSION VERSION_LESS 2.3.62.3)
@@ -96,7 +97,8 @@ target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOU
 
 target_link_libraries(${LIBRARY_NAME}  ${YARP_LIBRARIES}
                                        ${iDynTree_LIBRARIES}
-                                       ${wholeBodyInterface_LIBRARIES})
+                                       ${wholeBodyInterface_LIBRARIES}
+                                       ${paramHelp_LIBRARIES})
 
 install(TARGETS ${LIBRARY_NAME}
         EXPORT  ${PROJECT_NAME}
