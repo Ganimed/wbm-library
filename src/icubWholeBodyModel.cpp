@@ -346,7 +346,7 @@ int icubWholeBodyModel::bodyPartJointMapping(int bodypart_id, int local_id)
 
 bool icubWholeBodyModel::getJointLimits(double *qMin, double *qMax, int joint)
 {
-    if( !this->initDriversDone ) return false; 
+    if( !this->initDriversDone ) return false;
     if( (joint < 0 || joint >= (int)jointIdList.size()) && joint != -1 ) { return false; }
 
     if(joint>=0)
@@ -732,6 +732,7 @@ bool icubWholeBodyModel::computeCentroidalMomentum(double *q, const Frame &xBase
     convertBasePose(xBase,world_base_transformation);
     convertQ(q,all_q);
 
+    YARP_ASSERT(v_six_elems_base.size() == 6);
     convertBaseVelocity(dxB, v_six_elems_base);
     convertDQ(dq,all_dq);
 
@@ -739,10 +740,11 @@ bool icubWholeBodyModel::computeCentroidalMomentum(double *q, const Frame &xBase
 
     //Setting iDynTree variables
     p_model->setWorldBasePose(world_base_transformation);
+    YARP_ASSERT(v_six_elems_base.size() == 6);
+    YARP_ASSERT(a_six_elems_base.size() == 6);
     p_model->setKinematicBaseVelAcc(v_six_elems_base,a_six_elems_base);
     p_model->setAng(all_q);
     p_model->setDAng(all_dq);
-    p_model->setD2Ang(all_ddq);
 
     //Computing centroidal momentum
     if( six_elem_buffer.size() != 6 ) {
