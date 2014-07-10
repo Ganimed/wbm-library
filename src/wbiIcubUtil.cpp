@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details
  */
- 
+
 #include <iostream>
 #include <algorithm>
 
@@ -45,7 +45,7 @@ bool loadBodyPartsFromConfig(yarp::os::Property & wbi_yarp_properties, std::vect
                 return false;
             }
             body_parts_vector[bp] = parts_config.find(bodyPart).asString().c_str();
-        }   
+        }
         std::cout << "wbiIcub::loadBodyPartsFromConfig: Loaded body parts: ";
         for(int i=0; i < body_parts_vector.size(); i++ ) { std::cout << " " << body_parts_vector[i] << std::endl; }
         std::cout << std::endl;
@@ -62,7 +62,7 @@ bool loadReverseTorsoJointsFromConfig(yarp::os::Property & wbi_yarp_properties, 
     return true;
 }
 
-bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties, 
+bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
                                const std::vector<std::string> & body_parts_vector,
                                std::vector<id_2_PortName> &ports,
                                const std::string group_name)
@@ -95,15 +95,15 @@ bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
     return true;
 }
 
-bool loadFTSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties, 
+bool loadFTSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
                                  const std::vector<std::string> & body_parts_vector,
                                  std::vector<id_2_PortName> &ft_ports)
 {
     return loadSensorPortsFromConfig(wbi_yarp_properties,body_parts_vector,ft_ports,"WBI_YARP_FT_PORTS");
 }
 
-bool loadIMUSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties, 
-                                      const std::vector<std::string> & body_parts_vector, 
+bool loadIMUSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
+                                      const std::vector<std::string> & body_parts_vector,
                                       std::vector<id_2_PortName> &imu_ports)
 {
     return loadSensorPortsFromConfig(wbi_yarp_properties,body_parts_vector,imu_ports,"WBI_YARP_IMU_PORTS");
@@ -118,31 +118,31 @@ bool loadTreeSerializationFromConfig(yarp::os::Property & wbi_yarp_properties,
 
     if( !wbi_yarp_properties.check(dofSerializationParamName) ) { return false; }
     if( !wbi_yarp_properties.check(linkSerializationParamName) ) { return false; }
-        
+
     yarp::os::Bottle * dofs_bot = wbi_yarp_properties.find(dofSerializationParamName).asList();
     yarp::os::Bottle * links_bot = wbi_yarp_properties.find(linkSerializationParamName).asList();
 
     if( !dofs_bot || !links_bot ) { return false; }
-    
+
     int serializationDOFs = dofs_bot->size()-1;
     int serializationLinks = links_bot->size()-1;
-    
+
     std::vector<std::string> links;
     links.resize(serializationLinks);
-    
+
     std::vector<std::string> dofs;
     dofs.resize(serializationDOFs);
-    
+
     for(int link=0; link < serializationLinks; link++) {
         links[link] = links_bot[link+1].toString().c_str();
     }
-    
+
     for(int dof=0; dof < serializationDOFs; dof++) {
         dofs[dof] = dofs_bot[dof+1].toString().c_str();
     }
-    
+
     serialization = KDL::CoDyCo::TreeSerialization(tree,links,dofs);
-    
+
     return serialization.is_consistent(tree);
 }
 
@@ -153,5 +153,26 @@ bool loadTreePartitionFromConfig(yarp::os::Property & wbi_yarp_properties,
     return false;
 }
 
+bool openPolyDriver(const std::string &localName, const std::string &robotName, yarp::dev::PolyDriver *&pd, const std::string &bodyPartName)
+{
+    std::string localPort  = "/" + localName + "/" + bodyPartName;
+    std::string remotePort = "/" + robotName + "/" + bodyPartName;
+    yarp::os::Property options;
+    options.put("robot",robotName.c_str());
+    options.put("part",bodyPartName.c_str());
+    options.put("device","remote_controlboard");
+    options.put("local",localPort.c_str());
+    options.put("remote",remotePort.c_str());
+#ifdef YARP_INTERACTION_MODE_MOTOR_INTERFACE
+    options.put("writeStrict","on");
+#endif
+    pd = new yarp::dev::PolyDriver(options);
+    if(!pd || !(pd->isValid()))
+    {
+        std::fprintf(stderr,"Problems instantiating the device driver %s\n", bodyPartName.c_str());
+        return false;
+    }
+    return true;
+}
 
 }
