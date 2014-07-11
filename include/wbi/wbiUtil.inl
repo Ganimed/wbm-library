@@ -113,7 +113,40 @@ void Rotation::rotate(double *v) const
     v[2] = data[6]*v0 + data[7]*v1 + data[8]*v[2];
 }
 
-void Rotation::rotateInverse(const double *v, double *out) const 
+Rotation Rotation::rotate(const Rotation &R) const
+{
+    return Rotation(
+    data[0]*R.data[0] + data[1]*R.data[3] + data[2]*R.data[6],
+    data[0]*R.data[1] + data[1]*R.data[4] + data[2]*R.data[7],
+    data[0]*R.data[2] + data[1]*R.data[5] + data[2]*R.data[8],
+    data[3]*R.data[0] + data[4]*R.data[3] + data[5]*R.data[6],
+    data[3]*R.data[1] + data[4]*R.data[4] + data[5]*R.data[7],
+    data[3]*R.data[2] + data[4]*R.data[5] + data[5]*R.data[8],
+    data[6]*R.data[0] + data[7]*R.data[3] + data[8]*R.data[6],
+    data[6]*R.data[1] + data[7]*R.data[4] + data[8]*R.data[7],
+    data[6]*R.data[2] + data[7]*R.data[5] + data[8]*R.data[8] );
+}
+
+void Rotation::rotateInPlace(Rotation &R) const
+{
+    double R0 = R.data[0];
+    double R1 = R.data[1];
+    double R2 = R.data[2];
+    double R3 = R.data[3];
+    double R4 = R.data[4];
+    double R5 = R.data[5];
+    R.data[0] = data[0]*R0 + data[1]*R3 + data[2]*R.data[6];
+    R.data[1] = data[0]*R1 + data[1]*R4 + data[2]*R.data[7],
+    R.data[2] = data[0]*R2 + data[1]*R5 + data[2]*R.data[8],
+    R.data[3] = data[3]*R0 + data[4]*R3 + data[5]*R.data[6],
+    R.data[4] = data[3]*R1 + data[4]*R4 + data[5]*R.data[7],
+    R.data[5] = data[3]*R2 + data[4]*R5 + data[5]*R.data[8],
+    R.data[6] = data[6]*R0 + data[7]*R3 + data[8]*R.data[6],
+    R.data[7] = data[6]*R1 + data[7]*R4 + data[8]*R.data[7],
+    R.data[8] = data[6]*R2 + data[7]*R5 + data[8]*R.data[8];
+}
+
+void Rotation::rotateInverse(const double *v, double *out) const
 {
     out[0] = data[0]*v[0] + data[3]*v[1] + data[6]*v[2];
     out[1] = data[1]*v[0] + data[4]*v[1] + data[7]*v[2];
