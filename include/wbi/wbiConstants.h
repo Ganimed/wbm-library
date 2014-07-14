@@ -100,6 +100,7 @@ namespace wbi
         ESTIMATE_JOINT_ACC,                 // joint acceleration
         ESTIMATE_JOINT_TORQUE,              // joint torque
         ESTIMATE_JOINT_TORQUE_DERIVATIVE,   // joint torque derivative
+        ESTIMATE_JOINT_FORCE_TORQUE,        // joint force torque
         // MOTOR SPACE ESTIMATES
         ESTIMATE_MOTOR_POS,                 // motor position
         ESTIMATE_MOTOR_VEL,                 // motor velocity
@@ -117,7 +118,7 @@ namespace wbi
         ESTIMATE_BASE_ACC,                  // acceleration of the base of the robot
         ESTIMATE_EXTERNAL_FORCE_TORQUE      // 6-axis external force/torque acting on a link
     };
-    const int ESTIMATE_TYPE_SIZE = 19; //number of elements in EstimateType enum
+    const int ESTIMATE_TYPE_SIZE = 20; //number of elements in EstimateType enum
 
     /** List of parameters of estimation algorithms. */
     enum EstimationParameter
