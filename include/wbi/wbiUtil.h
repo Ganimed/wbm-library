@@ -249,6 +249,12 @@ namespace wbi
 
         /** Rotate the specified vector with this rotation. Modify the input vector. */
         inline void rotate(double v[3]) const;
+        
+        /** The same as this*R. */
+        inline Rotation rotate(const Rotation &R) const;
+        
+        /** Rotate the specified matrix and overwrite it with the result. */
+        inline void rotateInPlace(Rotation &R) const;
 
         /** The same as this->getInverse().rotate(v, out) but more efficient. */
         inline void rotateInverse(const double v[3], double out[3]) const;
