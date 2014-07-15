@@ -463,7 +463,7 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
     }
     // set control references for all joints
     ///< on robot use new method which set all joint vel of one body part at the same time (much faster!)
-    if(!isRobotSimulator(robot))
+    if(!isICubSimulator(robot))
     {
         double speedReferences[MAX_NJ];     // vector of reference joint speeds
         double torqueReferences[MAX_NJ]; //vector of reference joint torques
