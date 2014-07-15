@@ -144,6 +144,7 @@ int icubWholeBodyStatesLocal::addEstimates(const EstimateType et, const LocalIdL
     case ESTIMATE_MOTOR_PWM:                return lockAndAddSensors(SENSOR_PWM, sids);
     case ESTIMATE_IMU:                      return lockAndAddSensors(SENSOR_IMU, sids);
     case ESTIMATE_FORCE_TORQUE_SENSOR:      return lockAndAddSensors(SENSOR_FORCE_TORQUE, sids);
+    case ESTIMATE_JOINT_FORCE_TORQUE:       return true;
     default: break;
     }
     return false;
@@ -247,6 +248,8 @@ bool icubWholeBodyStatesLocal::getEstimate(const EstimateType et, const LocalId 
         return estimator->lockAndCopyElementVectorFromVector(sensors->getSensorList(SENSOR_FORCE_TORQUE).localToGlobalId(sid), estimator->estimates.lastForceTorques, data);
     case ESTIMATE_EXTERNAL_FORCE_TORQUE:
         return estimator->lockAndCopyExternalForceTorque(sid,data);
+    case ESTIMATE_JOINT_FORCE_TORQUE:
+        return estimator->lockAndCopyJointForceTorque(sid,data);
     default: break;
     }
     return false;
@@ -299,6 +302,11 @@ bool icubWholeBodyStatesLocal::getEstimationOffset(const EstimateType et, const 
 bool icubWholeBodyStatesLocal::getEstimatedExternalForces(iCub::skinDynLib::skinContactList & external_forces_list)
 {
     return lockAndReadExternalForces(external_forces_list);
+}
+
+bool icubWholeBodyStatesLocal::getEstimateJointForceTorque(int joint_index, double * data,int frame_id)
+{
+    return estimator->lockAndCopyJointForceTorque(joint_index,data,frame_id);
 }
 
 // *********************************************************************************************************************
@@ -1348,6 +1356,27 @@ bool icubWholeBodyDynamicsEstimator::lockAndCopyExternalForceTorque(const LocalI
         break;
     }
     return external_ft_available;
+}
+
+
+bool icubWholeBodyDynamicsEstimator::lockAndCopyJointForceTorque(const LocalId & sid, double * dest)
+{
+    mutex.wait();
+    int joint_index = icub_model->getDOFIndex(sid.bodyPart,sid.index);
+    int base_link_index = icub_model->getFloatingBaseLink();
+    yarp::sig::Vector joint_force_torque = icub_model->getJointForceTorque(joint_index,base_link_index);
+    copyVector(joint_force_torque,dest);
+    mutex.post();
+    return true;
+}
+
+bool icubWholeBodyDynamicsEstimator::lockAndCopyJointForceTorque(const int joint_index, double * dest, int frame_id)
+{
+    mutex.wait();
+    yarp::sig::Vector joint_force_torque = icub_model->getJointForceTorque(joint_index,frame_id);
+    copyVector(joint_force_torque,dest);
+    mutex.post();
+    return true;
 }
 
 bool icubWholeBodyDynamicsEstimator::lockAndSetEstimationParameter(const EstimateType et, const EstimationParameter ep, const void *value)

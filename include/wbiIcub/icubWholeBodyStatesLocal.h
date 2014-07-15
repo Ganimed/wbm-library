@@ -284,6 +284,9 @@ namespace wbiIcub
         bool lockAndCopyElementVectorFromVector(int i, const std::vector<yarp::sig::Vector> &src, double *dest);
         /** Take the mutex and copy the external force/torque acting on link sid */
         bool lockAndCopyExternalForceTorque(const wbi::LocalId & sid, double * dest);
+        /** Take the mutex and copy the joint force/torque acting through joint sid */
+        bool lockAndCopyJointForceTorque(const wbi::LocalId & sid, double * dest);
+        bool lockAndCopyJointForceTorque(const int joint_index, double * dest, int frame_id);
 
 
 
@@ -418,6 +421,8 @@ namespace wbiIcub
          * @return True if the operation succeeded, false otherwise.
          */
         bool getEstimatedExternalForces(iCub::skinDynLib::skinContactList & external_forces_list);
+
+        bool getEstimateJointForceTorque(int joint_index, double * data, int frame_id);
 
     };
 }
