@@ -34,7 +34,7 @@
 
 namespace wbiIcub
 {
-  /**
+    /**
      * Interface to the kinematic/dynamic model of iCub.
      */
     class icubWholeBodyModel: public wbi::iWholeBodyModel
@@ -84,6 +84,8 @@ namespace wbiIcub
 
         bool initDriversDone;
 
+        bool LimitsAreObtainedFromControlBoard;
+
         bool openDrivers(int bp);
 
         int bodyPartJointMapping(int bodypart_id, int local_id);
@@ -101,6 +103,7 @@ namespace wbiIcub
         bool convertDDQ(const double *ddq_input, yarp::sig::Vector & ddq_complete_output);
 
         bool convertGeneralizedTorques(yarp::sig::Vector idyntree_base_force, yarp::sig::Vector idyntree_torques, double * tau);
+
 
     public:
          // *** CONSTRUCTORS ***
@@ -135,6 +138,25 @@ namespace wbiIcub
         #endif
 
         inline virtual ~icubWholeBodyModel(){ close(); }
+
+        /**
+         * By calling this function you ensure that
+         * the limits obtained from getJointLimits() are obtained by
+         * querying the controlboard interface (default behaviour)
+         *
+         * @return true if the behaviour is properly set, false otherwise (if init was already called)
+         */
+        bool getLimitsFromControlBoard();
+
+        /**
+         * By calling this function you ensure that
+         * the limits obtained from getJointLimits() are obtained by
+         * querying the model (optional behaviour)
+         *
+         * @return true if the behaviour is properly set, false otherwise (if init was already called)
+         */
+        bool getLimitsFromModel();
+
         virtual bool init();
         virtual bool close();
 
