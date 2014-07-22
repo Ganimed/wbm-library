@@ -83,7 +83,7 @@ namespace wbiIcub
         bool reverse_torso_joints;
 
         bool initDriversDone;
-        
+
         bool openDrivers(int bp);
 
         int bodyPartJointMapping(int bodypart_id, int local_id);
@@ -119,23 +119,6 @@ namespace wbiIcub
 
 
         #ifdef CODYCO_USES_URDFDOM
-         /**
-          * @param _name Local name of the interface (used as stem of port names)
-          * @param _robotName Name of the robot
-          * @param icub_version version of the iCub (default: head 2 legs 2 feet_ft true)
-          * @param urdf_file urdf file representing the icub model
-          * @param initial_q the initial value for all the 32 joint angles (default: all 0)
-          * @param _bodyPartNames Vector of names of the body part (used when opening the polydrivers)
-          */
-        icubWholeBodyModel(const char* _name,
-                           const char* _robotName,
-                           const iCub::iDynTree::iCubTree_version_tag icub_version,
-                           const std::string urdf_file,
-                           double* initial_q=0,
-                           const std::vector<std::string> &_bodyPartNames=std::vector<std::string>(iCub::skinDynLib::BodyPart_s,iCub::skinDynLib::BodyPart_s+sizeof(iCub::skinDynLib::BodyPart_s)/sizeof(std::string)));
-
-
-
          /**
           * @param _name Local name of the interface (used as stem of port names)
           * @param _robotName Name of the robot

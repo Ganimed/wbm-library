@@ -636,11 +636,11 @@ bool icubWholeBodyDynamicsEstimator::threadInit()
     {
         if( !assume_fixed_base )
         {
-            icub_model = new iCub::iDynTree::iCubTree(urdf_file_name,icub_version);
+            icub_model = new iCub::iDynTree::iCubTree(icub_version);
         }
         else
         {
-            icub_model = new iCub::iDynTree::iCubTree(urdf_file_name,icub_version,fixed_link_name);
+            icub_model = new iCub::iDynTree::iCubTree(icub_version,fixed_link_name);
         }
     }
     else
