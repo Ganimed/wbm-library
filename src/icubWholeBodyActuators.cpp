@@ -579,7 +579,7 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
             j = *itJ;
         }
         LocalId localID = LocalId(itBp->first,*itJ);
-        printf("[%s:%d]Setting single-part mode for part-joint %d-%d\n", __FILE__, __LINE__, itBp->first, *itJ);
+//         printf("[%s:%d]Setting single-part mode for part-joint %d-%d\n", __FILE__, __LINE__, itBp->first, *itJ);
         switch(currentCtrlModes[localID])
         {
             case CTRL_MODE_POS:
