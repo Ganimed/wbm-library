@@ -51,9 +51,17 @@ using namespace iCub::skinDynLib;
 //                                          ICUB WHOLE BODY MODEL
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-icubWholeBodyModel::icubWholeBodyModel(const char* _name, const char* _robotName, const iCub::iDynTree::iCubTree_version_tag version,
-    double* initial_q, const std::vector<std::string> &_bodyPartNames)
-    : dof(0), six_elem_buffer(6,0.0), three_elem_buffer(3,0.0), name(_name), robot(_robotName), bodyPartNames(_bodyPartNames), initDriversDone(false)
+icubWholeBodyModel::icubWholeBodyModel(const char* _name,
+                                       const char* _robotName,
+                                       const iCub::iDynTree::iCubTree_version_tag version,
+                                       double* initial_q,
+                                       const std::vector<std::string> &_bodyPartNames)
+    : dof(0),
+      six_elem_buffer(6,0.0),
+      three_elem_buffer(3,0.0),
+      name(_name), robot(_robotName),
+      bodyPartNames(_bodyPartNames), initDriversDone(false),
+      LimitsAreObtainedFromControlBoard(true)
 {
     reverse_torso_joints = true;
 
@@ -118,7 +126,8 @@ icubWholeBodyModel::icubWholeBodyModel(const char* _name,
                                        const char* urdf_file,
                                        yarp::os::Property & wbi_yarp_conf,
                                        double* initial_q)
-    : dof(0), six_elem_buffer(6,0.0), three_elem_buffer(3,0.0), name(_name), robot(_robotName), initDriversDone(false)
+    : dof(0), six_elem_buffer(6,0.0), three_elem_buffer(3,0.0),
+      name(_name), robot(_robotName), initDriversDone(false), LimitsAreObtainedFromControlBoard(true)
 {
     std::string kinematic_base_link_name = ""; //Default value interpreted by DynTree constructor as "the base of the urdf file"
     std::vector<std::string> joint_names;
@@ -153,12 +162,18 @@ bool icubWholeBodyModel::init()
 {
     this->initDriversDone = false;
     bool initDone = true;
-    FOR_ALL_BODY_PARTS(itBp)
-        initDone = initDone && openDrivers(itBp->first);
-    if( initDone && (p_model->getNrOfDOFs() > 0) )
-    {
+
+    if( LimitsAreObtainedFromControlBoard ) {
+        FOR_ALL_BODY_PARTS(itBp)
+            initDone = initDone && openDrivers(itBp->first);
+        if( initDone && (p_model->getNrOfDOFs() > 0) )
+        {
+            this->initDriversDone = true;
+        }
+    } else {
         this->initDriversDone = true;
     }
+
     return this->initDriversDone;
 }
 
@@ -344,23 +359,68 @@ int icubWholeBodyModel::bodyPartJointMapping(int bodypart_id, int local_id)
     }
 }
 
+bool icubWholeBodyModel::getLimitsFromControlBoard()
+{
+    if( this->initDriversDone ) {
+        return false;
+    } else {
+        this->LimitsAreObtainedFromControlBoard = true;
+        return true;
+    }
+}
+
+bool icubWholeBodyModel::getLimitsFromModel()
+{
+    if( this->initDriversDone ) {
+        return false;
+    } else {
+        this->LimitsAreObtainedFromControlBoard = false;
+        return true;
+    }
+}
+
 bool icubWholeBodyModel::getJointLimits(double *qMin, double *qMax, int joint)
 {
-    if( !this->initDriversDone ) return false;
-    if( (joint < 0 || joint >= (int)jointIdList.size()) && joint != -1 ) { return false; }
+    if( this->LimitsAreObtainedFromControlBoard ) {
+        if( !this->initDriversDone ) return false;
+        if( (joint < 0 || joint >= (int)jointIdList.size()) && joint != -1 ) { return false; }
 
-    if(joint>=0)
-    {
-        LocalId lid = jointIdList.globalToLocalId(joint);
-        int index = bodyPartJointMapping(lid.bodyPart,lid.index);
-        assert(ilim[lid.bodyPart]!=NULL);
-        bool res = ilim[lid.bodyPart]->getLimits(index, qMin, qMax);
-        if(res)
+        if(joint>=0)
         {
-            *qMin = (*qMin) * CTRL_DEG2RAD;   // convert from deg to rad
-            *qMax = (*qMax) * CTRL_DEG2RAD;   // convert from deg to rad
+            LocalId lid = jointIdList.globalToLocalId(joint);
+            int index = bodyPartJointMapping(lid.bodyPart,lid.index);
+            assert(ilim[lid.bodyPart]!=NULL);
+            //std::cout << "Getting limits for bp " << lid.bodyPart << " " << lid.index <<  std::endl;
+            bool res = ilim[lid.bodyPart]->getLimits(index, qMin, qMax);
+            if(res)
+            {
+                *qMin = (*qMin) * CTRL_DEG2RAD;   // convert from deg to rad
+                *qMax = (*qMax) * CTRL_DEG2RAD;   // convert from deg to rad
+            }
+            return res;
         }
+
+        bool res = true;
+        int n = jointIdList.size();
+        for(int i=0; i<n; i++)
+            res = res && getJointLimits(qMin+i, qMax+i, i);
         return res;
+    } else {
+      // OLD IMPLEMENTATION
+      all_q_min = p_model->getJointBoundMin();
+      all_q_max = p_model->getJointBoundMax();
+
+      if( joint == -1 ) {
+         //Get all joint limits
+          convertQ(all_q_min,qMin);
+          convertQ(all_q_max,qMax);
+      } else {
+         //Get only a joint
+          LocalId loc_id = jointIdList.globalToLocalId(joint);
+          *qMin = all_q_min[p_model->getDOFIndex(loc_id.bodyPart,loc_id.index)];
+          *qMax = all_q_max[p_model->getDOFIndex(loc_id.bodyPart,loc_id.index)];
+        }
+        return true;
     }
 
     bool res = true;

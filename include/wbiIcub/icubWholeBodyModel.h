@@ -34,7 +34,7 @@
 
 namespace wbiIcub
 {
-  /**
+    /**
      * Interface to the kinematic/dynamic model of iCub.
      */
     class icubWholeBodyModel: public wbi::iWholeBodyModel
@@ -83,7 +83,9 @@ namespace wbiIcub
         bool reverse_torso_joints;
 
         bool initDriversDone;
-        
+
+        bool LimitsAreObtainedFromControlBoard;
+
         bool openDrivers(int bp);
 
         int bodyPartJointMapping(int bodypart_id, int local_id);
@@ -101,6 +103,7 @@ namespace wbiIcub
         bool convertDDQ(const double *ddq_input, yarp::sig::Vector & ddq_complete_output);
 
         bool convertGeneralizedTorques(yarp::sig::Vector idyntree_base_force, yarp::sig::Vector idyntree_torques, double * tau);
+
 
     public:
          // *** CONSTRUCTORS ***
@@ -122,23 +125,6 @@ namespace wbiIcub
          /**
           * @param _name Local name of the interface (used as stem of port names)
           * @param _robotName Name of the robot
-          * @param icub_version version of the iCub (default: head 2 legs 2 feet_ft true)
-          * @param urdf_file urdf file representing the icub model
-          * @param initial_q the initial value for all the 32 joint angles (default: all 0)
-          * @param _bodyPartNames Vector of names of the body part (used when opening the polydrivers)
-          */
-        icubWholeBodyModel(const char* _name,
-                           const char* _robotName,
-                           const iCub::iDynTree::iCubTree_version_tag icub_version,
-                           const std::string urdf_file,
-                           double* initial_q=0,
-                           const std::vector<std::string> &_bodyPartNames=std::vector<std::string>(iCub::skinDynLib::BodyPart_s,iCub::skinDynLib::BodyPart_s+sizeof(iCub::skinDynLib::BodyPart_s)/sizeof(std::string)));
-
-
-
-         /**
-          * @param _name Local name of the interface (used as stem of port names)
-          * @param _robotName Name of the robot
           * @param urdf_file path to the urdf file describing the dynamics model
           * @param initial_q the initial value for all the 32 joint angles (default: all 0)
           * @param wbi_yarp_conf the yarp::os::Property containg the options for wbi
@@ -152,6 +138,25 @@ namespace wbiIcub
         #endif
 
         inline virtual ~icubWholeBodyModel(){ close(); }
+
+        /**
+         * By calling this function you ensure that
+         * the limits obtained from getJointLimits() are obtained by
+         * querying the controlboard interface (default behaviour)
+         *
+         * @return true if the behaviour is properly set, false otherwise (if init was already called)
+         */
+        bool getLimitsFromControlBoard();
+
+        /**
+         * By calling this function you ensure that
+         * the limits obtained from getJointLimits() are obtained by
+         * querying the model (optional behaviour)
+         *
+         * @return true if the behaviour is properly set, false otherwise (if init was already called)
+         */
+        bool getLimitsFromModel();
+
         virtual bool init();
         virtual bool close();
 
