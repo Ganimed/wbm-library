@@ -22,6 +22,10 @@ FILE(GLOB folder_header ./src/*.h)
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})
 
+# new "data" installation - available with yarp2.4
+include(YarpInstallationHelpers)
+yarp_configure_external_installation(codyco)
+
 ADD_EXECUTABLE(${PROJECTNAME} ${folder_source} ${folder_header})
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/src
