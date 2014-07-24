@@ -21,6 +21,7 @@ ycm_default_dirs(${VARS_PREFIX})
 option(CODYCO_USES_URDFDOM "Compile yarpWholeBodyInterface with URDF support" TRUE)
 option(ICUBWBI_USE_EXTERNAL_TORQUE_CONTROL "Compile yarpwholebodyinterface to use JTC external torque control" FALSE)
 option(COMPILE_AS_SHARED_LIBRARY "Compile ${PROJECT_NAME} as a shared library" TRUE)
+option(COMPILE_EXAMPLES "Compile examples for ${PROJECT_NAME}" TRUE
 
 add_definitions(-DIDYNTREE_USES_ICUB)
 
@@ -118,3 +119,4 @@ install_basic_package_files(${PROJECT_NAME} VARS_PREFIX ${VARS_PREFIX}
 
 include(AddUninstallTarget)
 
+if
