@@ -17,6 +17,8 @@ set (${PROJECTNAME}_VERSION ${${PROJECTNAME}_VERSION_MAJOR}.${${PROJECTNAME}_VER
 
 message (STATUS "${PROJECT_NAME} version ${${PROJECTNAME}_VERSION}")
 
+option(WBI_DISABLE_RPATH "Disable RPATH for the library" FALSE)
+
 SET( PROJ_SOURCE_DIR ${${PROJECTNAME}_SOURCE_DIR} )
 SET( PROJ_BINARY_DIR ${${PROJECTNAME}_BINARY_DIR} )
 
@@ -64,7 +66,31 @@ else()
     set(LIB_TYPE SHARED)
 endif()
 
+#Configure RPATH
+set(CMAKE_MACOSX_RPATH 1) #enable RPATH on OSX. This also suppress warnings on CMake >= 3.0
+# when building, don't use the install RPATH already
+# (but later on when installing)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
+# set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+#This is relative RPATH for libraries built in the same project
+#I assume that the directory is 
+# - install_dir/something for binaries
+# - install_dir/lib for libraries
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_INSTALL_RPATH "@loader_path/../lib")
+else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib")
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE) #very important!
 
+
+if(WBI_DISABLE_RPATH)
+    set(CMAKE_SKIP_BUILD_RPATH TRUE)
+else(WBI_DISABLE_RPATH)
+    set(CMAKE_SKIP_BUILD_RPATH FALSE)
+endif(WBI_DISABLE_RPATH)
 
 add_library(${LIBRARYNAME} ${LIB_TYPE} ${folder_source} ${folder_header})
 
@@ -72,9 +98,20 @@ SET_TARGET_PROPERTIES(${LIBRARYNAME} PROPERTIES
   SOVERSION "${${PROJECTNAME}_VERSION_MAJOR}.${${PROJECTNAME}_VERSION_MINOR}"
   VERSION "${${PROJECTNAME}_VERSION}"
   COMPILE_FLAGS "${CMAKE_CXX_FLAGS_ADD}"
-  INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
   PUBLIC_HEADER "${folder_header}"
   )
+  
+  
+if(${CMAKE_MINIMUM_REQUIRED_VERSION} VERSION_GREATER "2.8.12")
+    message(AUTHOR_WARNING "CMAKE_MINIMUM_REQUIRED_VERSION is now ${CMAKE_MINIMUM_REQUIRED_VERSION}. This check can be removed.")
+endif()
+if(CMAKE_VERSION VERSION_LESS 2.8.12)
+    if(NOT WBI_DISABLE_RPATH)
+        set_target_properties(${LIBRARYNAME} PROPERTIES
+            INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
+        )
+    endif(NOT WBI_DISABLE_RPATH)
+endif(CMAKE_VERSION VERSION_LESS 2.8.12)
 
 target_include_directories(${LIBRARYNAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
                                                  "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${${VARS_PREFIX}_INSTALL_INCLUDEDIR}>")
