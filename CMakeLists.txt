@@ -39,14 +39,14 @@ else()
 endif()
 
 
-SET(folder_source src/wbiIcubUtil.cpp
+set(folder_source src/wbiIcubUtil.cpp
                   src/icubWholeBodyInterface.cpp
                   src/icubWholeBodyModel.cpp
                   src/icubWholeBodyStates.cpp
                   src/icubWholeBodyStatesLocal.cpp
                   src/icubWholeBodyActuators.cpp
                   src/icubWholeBodySensors.cpp)
-SET(folder_header include/wbiIcub/wholeBodyInterfaceIcub.h
+set(folder_header include/wbiIcub/wholeBodyInterfaceIcub.h
                   include/wbiIcub/icubWholeBodyModel.h
                   include/wbiIcub/icubWholeBodyStates.h
                   include/wbiIcub/icubWholeBodyStatesLocal.h
@@ -54,15 +54,16 @@ SET(folder_header include/wbiIcub/wholeBodyInterfaceIcub.h
                   include/wbiIcub/icubWholeBodySensors.h
                   include/wbiIcub/wbiIcubUtil.h)
 
-SOURCE_GROUP("Source Files" FILES ${folder_source})
-SOURCE_GROUP("Header Files" FILES ${folder_header})
+source_group("Source Files" FILES ${folder_source})
+source_group("Header Files" FILES ${folder_header})
 
-OPTION(ICUBWBI_USE_EXTERNAL_TORQUE_CONTROL "Set if iCub WBI implementation uses external torque control. False to use YARP Torque Control." FALSE)
+option(ICUBWBI_USE_EXTERNAL_TORQUE_CONTROL "Set if iCub WBI implementation uses external torque control. False to use YARP Torque Control." FALSE)
+option(YARPWBI_DISABLE_RPATH "Disable RPATH for the library" FALSE)
 
 if(CODYCO_USES_URDFDOM)
-    SET(folder_source ${folder_source}
+    set(folder_source ${folder_source}
                       src/yarpWholeBodyInterface.cpp)
-    SET(folder_header ${folder_header}
+    set(folder_header ${folder_header}
                       include/wbiIcub/yarpWholeBodyInterface.h)
     add_definitions(-DCODYCO_USES_URDFDOM)
 endif()
@@ -81,6 +82,32 @@ if(COMPILE_AS_SHARED_LIBRARY)
 else()
     set(LIB_TYPE STATIC)
 endif()
+
+#Configure RPATH
+set(CMAKE_MACOSX_RPATH 1) #enable RPATH on OSX. This also suppress warnings on CMake >= 3.0
+# when building, don't use the install RPATH already
+# (but later on when installing)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
+# set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+#This is relative RPATH for libraries built in the same project
+#I assume that the directory is 
+# - install_dir/something for binaries
+# - install_dir/lib for libraries
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_INSTALL_RPATH "@loader_path/../lib")
+else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib")
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE) #very important!
+
+
+if(YARPWBI_DISABLE_RPATH)
+    set(CMAKE_SKIP_BUILD_RPATH TRUE)
+else(YARPWBI_DISABLE_RPATH)
+    set(CMAKE_SKIP_BUILD_RPATH FALSE)
+endif(YARPWBI_DISABLE_RPATH)
 
 
 add_library(${LIBRARY_NAME}  ${LIB_TYPE} ${folder_source} ${folder_header})
