@@ -219,7 +219,7 @@ namespace wbiIcub
           * @param q Joint angles.
           * @param xBase Rototranslation from world frame to robot base frame
           * @param linkId Id of the link.
-          * @param x Output 7-dim pose vector (3 for pos, 4 for quaternion orientation).
+          * @param x Output 7-dim pose vector (3 for pos, 4 for orientation expressed in axis/angle).
           * @return True if the operation succeeded, false otherwise. */
         virtual bool forwardKinematics(double *q, const wbi::Frame &xBase, int linkId, double *x);
 
