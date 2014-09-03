@@ -174,12 +174,26 @@ namespace wbiIcub
 
         virtual bool getJointLimits(double *qMin, double *qMax, int joint=-1);
 
-        /** Get the id of the link with the specified name.
+        /** 
+         * Get the id of the link with the specified name.
           * @param linkName Name of the link.
-          * @param linkId Id of the link (if found).
-          * @return True if the link name was found, false otherwise. */
+          * @param linkId Id of the link (if found) or COM_LINK_ID if the "com" string is passed.
+          * @return True if the link name was found, false otherwise.
+          */
         inline virtual bool getLinkId(const char *linkName, int &linkId)
-        { linkId = p_icub_model->getLinkIndex(linkName); return linkId>=0; }
+        { 
+            std::string linkNameStd(linkName);
+            if( linkNameStd == "com" ) 
+            {
+                linkId = COM_LINK_ID;
+                return true;
+            } 
+            else
+            {  
+                linkId = p_icub_model->getLinkIndex(linkName); 
+                return linkId>=0;
+            }
+        }
 
         /** Compute rototranslation matrix from root reference frame to reference frame associated to the specified link.
           * @param q Joint angles
