@@ -593,7 +593,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
             }
             ///< iCub simulator does not implement PWM motor control
             case CTRL_MODE_MOTOR_PWM:
-                return isICubSimulator(robot) ? true : iopl[bodyPart]->setOutput(controlBoardAxis, *ref);
+                return isICubSimulator(robot) ? true : iopl[bodyPart]->setRefOutput(controlBoardAxis, *ref);
             default: break;
         }
         return false;
@@ -792,7 +792,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                     int yarp_controlboard_axis =  controlledJointsForControlBoard.pwmControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
                     buf_references[yarp_controlboard_axis] = ref[wbi_id];
                 }
-                ok = iopl[wbi_controlboard_id]->setOutputs(buf_references);
+                ok = iopl[wbi_controlboard_id]->setRefOutputs(buf_references);
                 if(!ok)
                 {
                     std::cerr << "yarpWholeBodyActuators::setControlReference error:"
@@ -807,7 +807,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                 {
                     int wbi_id = controlledJointsForControlBoard.pwmControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
                     int yarp_controlboard_axis =  controlledJointsForControlBoard.pwmControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
-                    ok = iopl[wbi_controlboard_id]->setOutput(yarp_controlboard_axis,ref[wbi_id]);
+                    ok = iopl[wbi_controlboard_id]->setRefOutput(yarp_controlboard_axis,ref[wbi_id]);
                 }
             }
         }

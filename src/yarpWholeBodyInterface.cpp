@@ -23,7 +23,7 @@
 
 using namespace std;
 using namespace wbi;
-using namespace wbiIcub;
+using namespace yarpWbi;
 using namespace yarp::os;
 using namespace yarp::dev;
 using namespace yarp::sig;
@@ -43,21 +43,19 @@ using namespace iCub::skinDynLib;
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 yarpWholeBodyInterface::yarpWholeBodyInterface(const char* _name,
-                                               const char* _robotName,
-                                               const char* _urdfFile,
                                                yarp::os::Property & _yarp_wbi_properties)
 {
-    actuatorInt = new yarpWholeBodyActuators((_name+string("actuator")).c_str(), _robotName,_yarp_wbi_properties);
-    //stateInt = new icubWholeBodyStates((_name+string("state")).c_str(), _robotName, 0.0);
-    modelInt = new yarpWholeBodyModel((_name+string("model")).c_str(), _robotName, _urdfFile, _yarp_wbi_properties);
+    actuatorInt = new yarpWholeBodyActuators((_name+string("actuator")).c_str(),_yarp_wbi_properties);
+    stateInt = new yarpWholeBodyStates((_name+string("state")).c_str(), _yarp_wbi_properties);
+    modelInt = new yarpWholeBodyModel((_name+string("model")).c_str(), _yarp_wbi_properties);
 }
 
 bool yarpWholeBodyInterface::init()
 {
     bool ok = actuatorInt->init();
     if(!ok) printf("Error while initializing actuator interface.\n");
-    //if(ok) ok = stateInt->init();
-    //if(!ok) printf("Error while initializing state interface.\n");
+    if(ok) ok = stateInt->init();
+    if(!ok) printf("Error while initializing state interface.\n");
     if(ok) ok = modelInt->init();
     if(!ok) printf("Error while initializing model interface.\n");
     return ok;
@@ -89,7 +87,7 @@ bool yarpWholeBodyInterface::close()
     return ok;
 }
 
-bool yarpWholeBodyInterface::removeJoint(const LocalId &j)
+bool yarpWholeBodyInterface::removeJoint(const wbiId &j)
 {
     bool ok = actuatorInt->removeActuator(j);
     //for(int i=0; ok && i<JOINT_ESTIMATE_TYPES_SIZE; i++)
@@ -98,7 +96,7 @@ bool yarpWholeBodyInterface::removeJoint(const LocalId &j)
     return ok ? modelInt->removeJoint(j) : false;
 }
 
-bool yarpWholeBodyInterface::addJoint(const LocalId &j)
+bool yarpWholeBodyInterface::addJoint(const wbiId &j)
 {
     bool ok = actuatorInt->addActuator(j);
     //for(int i=0; ok && i<JOINT_ESTIMATE_TYPES_SIZE; i++)
@@ -106,7 +104,7 @@ bool yarpWholeBodyInterface::addJoint(const LocalId &j)
     return ok ? modelInt->addJoint(j) : false;
 }
 
-int yarpWholeBodyInterface::addJoints(const LocalIdList &jList)
+int yarpWholeBodyInterface::addJoints(const wbiIdList &jList)
 {
     int res1 = actuatorInt->addActuators(jList);
     //for(int i=0; i<JOINT_ESTIMATE_TYPES_SIZE; i++)
