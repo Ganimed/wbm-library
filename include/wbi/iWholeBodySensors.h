@@ -22,7 +22,6 @@
 #include <wbi/wbiConstants.h>
 
 namespace wbi {
-
     class wbiId;
     class wbiIdList;
 
