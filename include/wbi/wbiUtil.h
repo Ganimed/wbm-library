@@ -145,6 +145,10 @@ namespace wbi
 
         /**
          * Add the specified ids to the list.
+         *
+         * \note this function has a computational complexity of O(n^2),
+         *       where n is the maximum between the size of the two used lists.
+         *
          * @param appendedList id list to add
          * @return the number of ids added to the list
          *        (0 if all the elements in the appendedList were already in the list,
@@ -270,10 +274,10 @@ namespace wbi
 
         /** Rotate the specified vector with this rotation. Modify the input vector. */
         inline void rotate(double v[3]) const;
-        
+
         /** The same as this*R. */
         inline Rotation rotate(const Rotation &R) const;
-        
+
         /** Rotate the specified matrix and overwrite it with the result. */
         inline void rotateInPlace(Rotation &R) const;
 

@@ -64,6 +64,9 @@ namespace wbi
     };
     const int SENSOR_TYPE_SIZE = 7; //number of elements in SensorType enum
 
+    //TODO FIXME when we support C++11, add here a static_assert SENSOR_ACCELEROMETER + 1 = SENSOR_TYPE_SIZE
+
+
     /** Collection of data to describe a sensor type. */
     class SensorTypeDescription
     {
@@ -119,6 +122,8 @@ namespace wbi
         ESTIMATE_EXTERNAL_FORCE_TORQUE      // 6-axis external force/torque acting on a link
     };
     const int ESTIMATE_TYPE_SIZE = 20; //number of elements in EstimateType enum
+
+    //TODO FIXME when we support C++11, add here a static_assert ESTIMATE_EXTERNAL_FORCE_TORQUE + 1 = ESTIMATE_TYPE_SIZE
 
     /** List of parameters of estimation algorithms. */
     enum EstimationParameter
