@@ -34,12 +34,7 @@ using namespace iCub::skinDynLib;
 using namespace iCub::ctrl;
 using namespace yarp::math;
 
-#define ESTIMATOR_PERIOD 10
-
-// iterate over all body parts
-#define FOR_ALL_BODY_PARTS(itBp)            FOR_ALL_BODY_PARTS_OF(itBp, jointIdList)
-// iterate over all joints of all body parts
-#define FOR_ALL(itBp, itJ)                  FOR_ALL_OF(itBp, itJ, jointIdList)
+#define ESTIMATOR_PERIOD 10 // <------- FIXME TODO UUUUUUUUUGGGGGGGLYYYYYYY
 
 
 // *********************************************************************************************************************
@@ -50,10 +45,13 @@ using namespace yarp::math;
 yarpWholeBodyStates::yarpWholeBodyStates(const char* _name, const yarp::os::Property & opt):
 initDone(false), name(_name), wbi_yarp_properties(opt)
 {
+    estimateIdList.resize(wbi::ESTIMATE_TYPE_SIZE);
 }
 
 bool yarpWholeBodyStates::setYarpWbiProperties(const yarp::os::Property & yarp_wbi_properties)
 {
+    if( initDone ) return false;
+
     wbi_yarp_properties = yarp_wbi_properties;
     return true;
 }
@@ -71,19 +69,89 @@ yarpWholeBodyStates::~yarpWholeBodyStates()
 
 bool yarpWholeBodyStates::init()
 {
+    if( initDone ) return false;
+
     if( !wbi_yarp_properties.check("robotName") )
     {
-        std::cerr << "yarpWholeBodySensors error: robotName not found in configuration files" << std::endl;
+        std::cerr << "[ERR] yarpWholeBodyStates::init : robotName not found in configuration files" << std::endl;
+        std::cerr << "[ERR] yarpWholeBodyStates::init : halting initialization routine" << std::endl;
         return false;
     }
 
     std::string robot = wbi_yarp_properties.find("robotName").asString().c_str();
 
-
     sensors = new yarpWholeBodySensors(name.c_str(), wbi_yarp_properties);              // sensor interface
     estimator = new yarpWholeBodyEstimator(ESTIMATOR_PERIOD, sensors);  // estimation thread
+
+    //Add required sensors given the estimate list
+    // TODO FIXME ugly, we should probably have a way to iterate on estimate type
+    // indipendent from enum values
+    for(int et_i=0; et_i < wbi::ESTIMATE_TYPE_SIZE; et_i++)
+    {
+        EstimateType et = static_cast<EstimateType>(et_i);
+        bool SensorAddOk = true;
+        int addedSensors = 0;
+        // this is the perfect example of switch that should be avoided
+        switch(et)
+        {
+            case ESTIMATE_JOINT_POS:
+            case ESTIMATE_JOINT_VEL:
+            case ESTIMATE_JOINT_ACC:
+            case ESTIMATE_MOTOR_POS:
+            case ESTIMATE_MOTOR_VEL:
+            case ESTIMATE_MOTOR_ACC:
+                sensors->addSensors(SENSOR_ENCODER, estimateIdList[et]);
+                break;
+            case ESTIMATE_JOINT_TORQUE:
+            case ESTIMATE_JOINT_TORQUE_DERIVATIVE:
+            case ESTIMATE_MOTOR_TORQUE:
+            case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:
+                sensors->addSensors(SENSOR_TORQUE, estimateIdList[et]);
+                break;
+            case ESTIMATE_MOTOR_PWM:
+                sensors->addSensors(SENSOR_PWM,  estimateIdList[et]);
+                break;
+            //case ESTIMATE_IMU:
+            //  SensorAddOk = lockAndAddSensors(SENSOR_IMU, sids);
+            //  break;
+            case ESTIMATE_FORCE_TORQUE_SENSOR:
+                sensors->addSensors(SENSOR_FORCE_TORQUE, estimateIdList[et]);
+                break;
+            case ESTIMATE_EXTERNAL_FORCE_TORQUE:
+                ///< \todo TODO properly account for external forque torque
+                break;
+            default:
+                break;
+        }
+    }
+
+    // Initialized sensor interface
     bool ok = sensors->init();              // initialize sensor interface
-    return ok ? estimator->start() : false; // start estimation thread
+    if( !ok )
+    {
+        std::cerr << "[ERR] yarpWholeBodyStates::init : sensor interface initialization failed" << std::endl;
+        std::cerr << "[ERR] yarpWholeBodyStates::init : halting initialization routine" << std::endl;
+        delete sensors;
+        sensors = 0;
+        return false;
+    }
+
+
+    ok = estimator->start();
+
+    if(ok)
+    {
+        std::cout << "[DEBUG] yarpWholeBodyStates correctly initialized " << std::endl;
+        initDone = true;
+        return true;
+    }
+    else
+    {
+        sensors->close();
+        delete sensors;
+        sensors = 0;
+        return false; // start estimation thread
+    }
 }
 
 bool yarpWholeBodyStates::close()
@@ -103,6 +171,8 @@ bool yarpWholeBodyStates::setWorldBasePosition(const wbi::Frame & xB)
 
 bool yarpWholeBodyStates::addEstimate(const EstimateType et, const wbiId &sid)
 {
+    if( initDone ) return false;
+    /*
     switch(et)
     {
     case ESTIMATE_JOINT_POS:                return lockAndAddSensor(SENSOR_ENCODER, sid);
@@ -123,10 +193,14 @@ bool yarpWholeBodyStates::addEstimate(const EstimateType et, const wbiId &sid)
     default: break;
     }
     return false;
+    */
+    estimateIdList[et].addId(sid);
 }
 
 int yarpWholeBodyStates::addEstimates(const EstimateType et, const wbiIdList &sids)
 {
+    if( initDone ) return false;
+    /*
     switch(et)
     {
     case ESTIMATE_JOINT_POS:                return lockAndAddSensors(SENSOR_ENCODER, sids);
@@ -147,10 +221,15 @@ int yarpWholeBodyStates::addEstimates(const EstimateType et, const wbiIdList &si
     default: break;
     }
     return false;
+    */
+    estimateIdList[et].addIdList(sids);
 }
 
 bool yarpWholeBodyStates::removeEstimate(const EstimateType et, const wbiId &sid)
 {
+    if( initDone ) return false;
+
+    /*
     switch(et)
     {
     case ESTIMATE_JOINT_POS:                return lockAndRemoveSensor(SENSOR_ENCODER, sid);
@@ -169,10 +248,13 @@ bool yarpWholeBodyStates::removeEstimate(const EstimateType et, const wbiId &sid
     default: break;
     }
     return false;
+    */
+   estimateIdList[et].removeId(sid);
 }
 
 const wbiIdList& yarpWholeBodyStates::getEstimateList(const EstimateType et)
 {
+    /*
     switch(et)
     {
     case ESTIMATE_JOINT_POS:                return sensors->getSensorList(SENSOR_ENCODER);
@@ -188,14 +270,18 @@ const wbiIdList& yarpWholeBodyStates::getEstimateList(const EstimateType et)
     case ESTIMATE_MOTOR_PWM:                return sensors->getSensorList(SENSOR_PWM);
     //case ESTIMATE_IMU:                    return sensors->getSensorList(SENSOR_IMU);
     case ESTIMATE_FORCE_TORQUE_SENSOR:      return sensors->getSensorList(SENSOR_FORCE_TORQUE);
-    /* ESTIMATE_EXTERNAL_FORCE_TORQUE: return list of links where is possible to get contact */
+    // ESTIMATE_EXTERNAL_FORCE_TORQUE: return list of links where is possible to get contact
     default: break;
     }
     return emptyList;
+    */
+    return estimateIdList[et];
 }
 
 int yarpWholeBodyStates::getEstimateNumber(const EstimateType et)
 {
+    if( initDone ) return false;
+    /*
     switch(et)
     {
     case ESTIMATE_JOINT_POS:                return sensors->getSensorNumber(SENSOR_ENCODER);
@@ -211,14 +297,17 @@ int yarpWholeBodyStates::getEstimateNumber(const EstimateType et)
     case ESTIMATE_MOTOR_PWM:                return sensors->getSensorNumber(SENSOR_PWM);
     //case ESTIMATE_IMU:                      return sensors->getSensorNumber(SENSOR_IMU);
     case ESTIMATE_FORCE_TORQUE_SENSOR:      return sensors->getSensorNumber(SENSOR_FORCE_TORQUE);
-    /* ESTIMATE_EXTERNAL_FORCE_TORQUE: return number of links where is possible to get contact */
+    ESTIMATE_EXTERNAL_FORCE_TORQUE: return number of links where is possible to get contact
     default: break;
     }
     return 0;
+    */
+    return estimateIdList[et].size();
 }
 
 bool yarpWholeBodyStates::getEstimate(const EstimateType et, const int numeric_id, double *data, double time, bool blocking)
 {
+    if( !initDone ) return false;
     switch(et)
     {
     case ESTIMATE_JOINT_POS:
@@ -256,6 +345,8 @@ bool yarpWholeBodyStates::getEstimate(const EstimateType et, const int numeric_i
 
 bool yarpWholeBodyStates::getEstimates(const EstimateType et, double *data, double time, bool blocking)
 {
+    if( !initDone ) return false;
+
     switch(et)
     {
     case ESTIMATE_JOINT_POS:                return estimator->lockAndCopyVector(estimator->estimates.lastQ, data);

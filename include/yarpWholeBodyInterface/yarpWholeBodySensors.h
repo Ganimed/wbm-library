@@ -55,15 +55,18 @@ namespace yarpWbi
         //List of controlboard related sensors
         ///< empty list of IDs to return in case of error
         wbi::wbiIdList            emptyList;
+
         ///< list of encoder IDs
         wbi::wbiIdList            encoderIdList;
         ///< list of controlboard numeric IDs (i.e. indeces of controlBoardNames vector) for which encoder are added
         std::vector<int>          encoderControlBoardList;
         ///< map from encoder numeric IDs (i.e. indeces of encoderIdList vector) to a pair of int that are: (controlboard id,axis)
         std::vector< std::pair<int,int> >  encoderControlBoardAxisList;
+
         wbi::wbiIdList            pwmSensIdList;  // list of the motor PWM sensor ids
         std::vector<int>          pwmControlBoardList;
         std::vector< std::pair<int,int> > pwmControlBoardAxisList;
+
         wbi::wbiIdList            torqueSensorIdList; //list of the torque sensor ids
         std::vector<int>          torqueControlBoardList;
         std::vector< std::pair<int,int> > torqueControlBoardAxisList;

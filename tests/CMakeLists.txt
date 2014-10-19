@@ -77,8 +77,8 @@ target_link_libraries(yarpWbiActuactorsUnitTest ${YARP_LIBRARIES}
 
 add_test(NAME test_yarpWbiActuactorsUnitTest COMMAND yarpWbiActuactorsUnitTest)
 
-add_executable(yarpWbiModelUnitTest yarpWbiModelUnitTest.cpp)
-target_link_libraries(yarpWbiModelUnitTest ${YARP_LIBRARIES}
+add_executable(yarpWbiUnitTest yarpWbiUnitTest.cpp)
+target_link_libraries(yarpWbiUnitTest ${YARP_LIBRARIES}
                                                 ${Gazebo_LIBRARIES}
                                                 ${SDFORMAT_LIBRARIES}
                                                 ${GAZEBO_LIBRARIES}
@@ -88,4 +88,4 @@ target_link_libraries(yarpWbiModelUnitTest ${YARP_LIBRARIES}
                                                 ${wholeBodyInterface_LIBRARIES}
                                                 ${LIBRARY_NAME})
 
-add_test(NAME test_yarpWbiModelUnitTest COMMAND yarpWbiModelUnitTest)
+add_test(NAME test_yarpWbiUnitTest COMMAND yarpWbiUnitTest)

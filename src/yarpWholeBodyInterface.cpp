@@ -39,15 +39,35 @@ using namespace iCub::skinDynLib;
 
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-//                                          ICUB WHOLE BODY INTERFACE
+//                                          YARP WHOLE BODY INTERFACE
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 yarpWholeBodyInterface::yarpWholeBodyInterface(const char* _name,
-                                               yarp::os::Property & _yarp_wbi_properties)
+                                               const yarp::os::Property & _yarp_wbi_properties)
 {
     actuatorInt = new yarpWholeBodyActuators((_name+string("actuator")).c_str(),_yarp_wbi_properties);
     stateInt = new yarpWholeBodyStates((_name+string("state")).c_str(), _yarp_wbi_properties);
     modelInt = new yarpWholeBodyModel((_name+string("model")).c_str(), _yarp_wbi_properties);
+}
+
+bool yarpWholeBodyInterface::setYarpWbiProperties(const yarp::os::Property & yarp_wbi_properties)
+{
+    actuatorInt->setYarpWbiProperties(yarp_wbi_properties);
+    stateInt->setYarpWbiProperties(yarp_wbi_properties);
+    modelInt->setYarpWbiProperties(yarp_wbi_properties);
+    return true;
+}
+
+bool yarpWholeBodyInterface::getYarpWbiProperties(yarp::os::Property & yarp_wbi_properties)
+{
+    yarp::os::Property buffer;
+    actuatorInt->getYarpWbiProperties(buffer);
+    yarp_wbi_properties.fromString(buffer.toString(),false);
+    stateInt->getYarpWbiProperties(buffer);
+    yarp_wbi_properties.fromString(buffer.toString(),false);
+    modelInt->getYarpWbiProperties(buffer);
+    yarp_wbi_properties.fromString(buffer.toString(),false);
+    return true;
 }
 
 bool yarpWholeBodyInterface::init()
@@ -90,8 +110,8 @@ bool yarpWholeBodyInterface::close()
 bool yarpWholeBodyInterface::removeJoint(const wbiId &j)
 {
     bool ok = actuatorInt->removeActuator(j);
-    //for(int i=0; ok && i<JOINT_ESTIMATE_TYPES_SIZE; i++)
-    //    ok = stateInt->removeEstimate(jointEstimateTypes[i], j);
+    for(int i=0; ok && i<JOINT_ESTIMATE_TYPES_SIZE; i++)
+        ok = stateInt->removeEstimate(jointEstimateTypes[i], j);
     // removing pos removes also vel and acc estimation
     return ok ? modelInt->removeJoint(j) : false;
 }
@@ -99,16 +119,16 @@ bool yarpWholeBodyInterface::removeJoint(const wbiId &j)
 bool yarpWholeBodyInterface::addJoint(const wbiId &j)
 {
     bool ok = actuatorInt->addActuator(j);
-    //for(int i=0; ok && i<JOINT_ESTIMATE_TYPES_SIZE; i++)
-    //    ok = stateInt->addEstimate(jointEstimateTypes[i], j);
+    for(int i=0; ok && i<JOINT_ESTIMATE_TYPES_SIZE; i++)
+        ok = stateInt->addEstimate(jointEstimateTypes[i], j);
     return ok ? modelInt->addJoint(j) : false;
 }
 
 int yarpWholeBodyInterface::addJoints(const wbiIdList &jList)
 {
     int res1 = actuatorInt->addActuators(jList);
-    //for(int i=0; i<JOINT_ESTIMATE_TYPES_SIZE; i++)
-    //    stateInt->addEstimates(jointEstimateTypes[i], jList);
+    for(int i=0; i<JOINT_ESTIMATE_TYPES_SIZE; i++)
+        stateInt->addEstimates(jointEstimateTypes[i], jList);
     // adding pos adds also vel and acc estimation
     int res4 = modelInt->addJoints(jList);
     assert(res1==res4);

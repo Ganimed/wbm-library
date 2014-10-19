@@ -120,13 +120,13 @@ namespace yarpWbi
         /**
          * Set the properties of the yarpWbiActuactors interface
          * Note: this function must be called before init, otherwise it takes no effect
-         * @param yarp_wbi_properties the properties of the yarpWholeBodyActuators object
+         * @param yarp_wbi_properties the properties of the yarpWholeBodyModel object
          */
         virtual bool setYarpWbiProperties(const yarp::os::Property & yarp_wbi_properties);
 
         /**
          * Get the properties of the yarpWbiActuactors interface
-         * @param yarp_wbi_properties the properties of the yarpWholeBodyActuators object
+         * @param yarp_wbi_properties the properties of the yarpWholeBodyModel object
          */
         virtual bool getYarpWbiProperties(yarp::os::Property & yarp_wbi_properties);
 

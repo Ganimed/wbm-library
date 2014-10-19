@@ -168,6 +168,9 @@ namespace yarpWbi
         wbi::wbiIdList               emptyList;      ///< empty list of IDs to return in case of error
         //double                      estWind;      // time window for the estimation
 
+        //List of wbiIdList for each estimate
+        std::vector<wbi::wbiIdList> estimateIdList;
+
         virtual bool lockAndReadSensor(const wbi::SensorType st, const int numeric_id, double *data, double time, bool blocking);
         virtual bool lockAndReadSensors(const wbi::SensorType st, double *data, double time, bool blocking);
         virtual bool lockAndAddSensor(const wbi::SensorType st, const wbi::wbiId &sid);
@@ -236,13 +239,13 @@ namespace yarpWbi
 
         /** Get the estimate of the specified quantity at the specified time.
          * @param et Type of estimate to get.
-         * @param sid Id of the estimate
+         * @param estimate_numeric_id Id of the estimate
          * @param data Output data vector.
          * @param time Time at which to estimate the quantity.
          * @param blocking If true, perform a blocking read before estimating, otherwise the estimate is based on the last reading.
          * @return True if all the estimate succeeded, false otherwise.
          */
-        virtual bool getEstimate(const wbi::EstimateType et, const int estimate, double *data, double time=-1.0, bool blocking=true);
+        virtual bool getEstimate(const wbi::EstimateType et, const int estimate_numeric_id, double *data, double time=-1.0, bool blocking=true);
 
         /** Get all the estimates of the specified estimate type at the specified time.
          * @param et Type of estimate to get.

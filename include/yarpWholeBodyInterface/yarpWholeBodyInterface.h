@@ -43,7 +43,7 @@
 namespace yarpWbi
 {
 
-    /*
+
     const int JOINT_ESTIMATE_TYPES_SIZE = 3;
     ///< estimate types that are automatically added when calling addJoint(s) and automatically removed when calling removeJoint
     const wbi::EstimateType jointEstimateTypes[JOINT_ESTIMATE_TYPES_SIZE] =
@@ -55,10 +55,10 @@ namespace yarpWbi
         //wbi::ESTIMATE_MOTOR_VEL,         // motor velocity
         //wbi::ESTIMATE_MOTOR_TORQUE,      // motor torque
         wbi::ESTIMATE_MOTOR_PWM,         // motor PWM (proportional to motor voltage)
-    };*/
+    };
 
     /**
-     * Class to communicate with iCub.
+     * Class to communicate with yarp-powered robot.
      */
     class yarpWholeBodyInterface : public wbi::wholeBodyInterface
     {
@@ -72,7 +72,21 @@ namespace yarpWbi
     public:
         // *** CONSTRUCTORS ***
         yarpWholeBodyInterface(const char* _interfaceName,
-                               yarp::os::Property & _yarp_wbi_properties);
+                               const yarp::os::Property & _yarp_wbi_properties=yarp::os::Property());
+
+
+         /**
+         * Set the properties of the yarpWholeBodyInterface
+         * Note: this function must be called before init, otherwise it has no effect
+         * @param yarp_wbi_properties the properties of the yarpWholeBodyInterface object
+         */
+        virtual bool setYarpWbiProperties(const yarp::os::Property & yarp_wbi_properties);
+
+        /**
+         * Get the properties of the yarpWholeBodyInterface
+         * @param yarp_wbi_properties the properties of the yarpWholeBodyInterface object
+         */
+        virtual bool getYarpWbiProperties(yarp::os::Property & yarp_wbi_properties);
 
 
         inline virtual ~yarpWholeBodyInterface(){ close(); }
@@ -101,7 +115,7 @@ namespace yarpWbi
         virtual bool removeEstimate(const wbi::EstimateType st, const wbi::wbiId &sid){   return false; }
         virtual const wbi::wbiIdList& getEstimateList(const wbi::EstimateType st){        return empty_id_list; }
         virtual int getEstimateNumber(const wbi::EstimateType st){                          return 0; }
-        virtual bool getEstimate(const wbi::EstimateType et, const wbi::wbiId &sid, double *data, double time=-1.0, bool blocking=true)
+        virtual bool getEstimate(const wbi::EstimateType et, const int estimate_numeric_id, double *data, double time=-1.0, bool blocking=true)
         { return false; }
         virtual bool getEstimates(const wbi::EstimateType et, double *data, double time=-1.0, bool blocking=true)
         { return false; }
