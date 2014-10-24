@@ -15,8 +15,8 @@
  * Public License for more details
  */
 
-#include "wbiIcub/icubWholeBodyStatesLocal.h"
-#include "wbiIcub/icubWholeBodySensors.h"
+#include "yarpWbi/yarpWholeBodyStatesLocal.h"
+#include "yarpWbi/yarpWholeBodySensors.h"
 #include <iCub/skinDynLib/common.h>
 #include <yarp/os/Time.h>
 #include <yarp/os/Log.h>
