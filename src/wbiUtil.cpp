@@ -130,7 +130,7 @@ bool wbiIdList::removeId(const wbiId &j)
 bool wbiIdList::addId(const wbiId &i)
 {
     if(containsId(i))
-        return false;
+        return true;
     pushId(i);
     return true;
 }
@@ -157,7 +157,7 @@ bool wbiIdList::containsId(const wbiId &i) const
     if(it==storage.end()) {
         return false;
     } else {
-        return false;
+        return true;
     }
 }
 

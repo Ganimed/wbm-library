@@ -139,7 +139,7 @@ namespace wbi
         /**
          * Add the specified id to the list.
          * @param id id to add
-         * @return true if the id has been added, false if it was already present
+         * @return true if the id has been added
          */
         virtual bool addId(const wbiId &id);
 
