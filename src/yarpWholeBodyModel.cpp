@@ -26,6 +26,8 @@
 #include <yarp/math/Math.h>
 #include <yarp/os/Log.h>
 
+#include <yarp/os/ResourceFinder.h>
+
 #include <Eigen/Core>
 
 using namespace std;
@@ -68,6 +70,8 @@ yarpWholeBodyModel::~yarpWholeBodyModel()
 
 bool yarpWholeBodyModel::init()
 {
+    if( this->initDone ) return true;
+
     //Load configuration
     if( !wbi_yarp_properties.check("robotName") )
     {
@@ -84,12 +88,15 @@ bool yarpWholeBodyModel::init()
     }
 
     std::string urdf_file = wbi_yarp_properties.find("urdf_file").asString().c_str();
+    yarp::os::ResourceFinder rf;
+    std::string urdf_file_path = rf.findFile(urdf_file.c_str());
+
 
     std::string kinematic_base_link_name = "";
     std::vector<std::string> joint_names;
     joint_names.resize(0,"");
     assert((int)jointIdList.size() == dof);
-    p_model = new iCub::iDynTree::DynTree(std::string(urdf_file),joint_names,kinematic_base_link_name);
+    p_model = new iCub::iDynTree::DynTree(std::string(urdf_file_path),joint_names,kinematic_base_link_name);
     all_q.resize(p_model->getNrOfDOFs(),0.0);
     all_q_min = all_q_max = all_ddq = all_dq = all_q;
     floating_base_mass_matrix.resize(p_model->getNrOfDOFs(),p_model->getNrOfDOFs());

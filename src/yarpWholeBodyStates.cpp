@@ -89,8 +89,8 @@ bool yarpWholeBodyStates::init()
     for(int et_i=0; et_i < wbi::ESTIMATE_TYPE_SIZE; et_i++)
     {
         EstimateType et = static_cast<EstimateType>(et_i);
-        bool SensorAddOk = true;
-        int addedSensors = 0;
+        //bool SensorAddOk = true;
+        //int addedSensors = 0;
         // this is the perfect example of switch that should be avoided
         switch(et)
         {
@@ -142,11 +142,13 @@ bool yarpWholeBodyStates::init()
     if(ok)
     {
         std::cout << "[DEBUG] yarpWholeBodyStates correctly initialized " << std::endl;
-        initDone = true;
+        this->initDone = true;
         return true;
     }
     else
     {
+        std::cerr << "[ERR] yarpWholeBodyStates::init : estimator thread initialization failed" << std::endl;
+
         sensors->close();
         delete sensors;
         sensors = 0;
@@ -195,6 +197,7 @@ bool yarpWholeBodyStates::addEstimate(const EstimateType et, const wbiId &sid)
     return false;
     */
     estimateIdList[et].addId(sid);
+    return true;
 }
 
 int yarpWholeBodyStates::addEstimates(const EstimateType et, const wbiIdList &sids)
@@ -223,6 +226,7 @@ int yarpWholeBodyStates::addEstimates(const EstimateType et, const wbiIdList &si
     return false;
     */
     estimateIdList[et].addIdList(sids);
+    return true;
 }
 
 bool yarpWholeBodyStates::removeEstimate(const EstimateType et, const wbiId &sid)
@@ -250,6 +254,7 @@ bool yarpWholeBodyStates::removeEstimate(const EstimateType et, const wbiId &sid
     return false;
     */
    estimateIdList[et].removeId(sid);
+   return true;
 }
 
 const wbiIdList& yarpWholeBodyStates::getEstimateList(const EstimateType et)
@@ -345,11 +350,17 @@ bool yarpWholeBodyStates::getEstimate(const EstimateType et, const int numeric_i
 
 bool yarpWholeBodyStates::getEstimates(const EstimateType et, double *data, double time, bool blocking)
 {
-    if( !initDone ) return false;
+    if( !initDone )
+    {
+        printf("[ERR] yarpWholeBodyStates::getEstimates error, called before init\n");
+        return false;
+    }
 
     switch(et)
     {
-    case ESTIMATE_JOINT_POS:                return estimator->lockAndCopyVector(estimator->estimates.lastQ, data);
+    case ESTIMATE_JOINT_POS:
+        printf("[DEBUG] yarpWholeBodyStates::getEstimates: called getEstimates ESTIMATE_JOINT_POS\n");
+        return estimator->lockAndCopyVector(estimator->estimates.lastQ, data);
     case ESTIMATE_JOINT_VEL:                return estimator->lockAndCopyVector(estimator->estimates.lastDq, data);
     case ESTIMATE_JOINT_ACC:                return estimator->lockAndCopyVector(estimator->estimates.lastD2q, data);
     case ESTIMATE_JOINT_TORQUE:             return estimator->lockAndCopyVector(estimator->estimates.lastTauJ, data);
@@ -770,7 +781,10 @@ void yarpWholeBodyEstimator::resizeAll(int n)
 bool yarpWholeBodyEstimator::lockAndCopyVector(const Vector &src, double *dest)
 {
     if(dest==0)
+    {
+        printf("[ERR] yarpWholeBodyEstimator::lockAndCopyVector called with NULL dest");
         return false;
+    }
     mutex.wait();
     memcpy(dest, src.data(), sizeof(double)*src.size());
     mutex.post();

@@ -116,11 +116,11 @@ namespace yarpWbi
         virtual const wbi::wbiIdList& getEstimateList(const wbi::EstimateType st){        return empty_id_list; }
         virtual int getEstimateNumber(const wbi::EstimateType st){                          return 0; }
         virtual bool getEstimate(const wbi::EstimateType et, const int estimate_numeric_id, double *data, double time=-1.0, bool blocking=true)
-        { return false; }
+        { return stateInt->getEstimate(et,estimate_numeric_id,data,time,blocking); }
         virtual bool getEstimates(const wbi::EstimateType et, double *data, double time=-1.0, bool blocking=true)
-        { return false; }
+        { return stateInt->getEstimates(et,data,time,blocking); }
         virtual bool setEstimationParameter(const wbi::EstimateType et, const wbi::EstimationParameter ep, const void *value)
-        { return false; }
+        { return stateInt->setEstimationParameter(et,ep,value); }
 
         // MODEL
         virtual int getDoFs(){ return modelInt->getDoFs(); }

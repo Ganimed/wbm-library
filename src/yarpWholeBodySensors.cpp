@@ -68,6 +68,8 @@ bool yarpWholeBodySensors::getYarpWbiProperties(yarp::os::Property & yarp_wbi_pr
 
 bool yarpWholeBodySensors::init()
 {
+    if( initDone ) return true;
+
     //Get encoders
     #ifndef NDEBUG
     std::cout << "yarpWholeBodySensors: initializing with " << encoderIdList.size() << " encoders " <<
@@ -75,8 +77,6 @@ bool yarpWholeBodySensors::init()
                                                                ftSensIdList.size() << " F/T sensors " <<
                                                                imuIdList.size() << " IMUs " << std::endl;
     #endif
-
-    bool initDone = true;
 
     if( !wbi_yarp_properties.check("robotName") )
     {
@@ -611,7 +611,7 @@ int yarpWholeBodySensors::addTorqueSensors(const wbi::wbiIdList &jList)
 
 bool yarpWholeBodySensors::readEncoders(double *q, double *stamps, bool wait)
 {
-    std::cout << "|||||||||| Read encoders " << std::endl;
+    //std::cout << "|||||||||| Read encoders " << std::endl;
     double qTemp[MAX_NJ], tTemp[MAX_NJ];
     bool res = true, update=false;
 
@@ -620,12 +620,12 @@ bool yarpWholeBodySensors::readEncoders(double *q, double *stamps, bool wait)
         ctrlBoard != encoderControlBoardList.end(); ctrlBoard++ )
     {
         // read data
-            std::cout << "|||||||||| getEncodersTimed " << std::endl;
+        // std::cout << "|||||||||| getEncodersTimed " << std::endl;
         qTemp[0] = -10.0;
         qTemp[1] = -10.0;
         while( !(update=ienc[*ctrlBoard]->getEncodersTimed(qTemp, tTemp)) && wait)
         {
-            std::cout << "waitign " << qTemp[0] << " " << qTemp[1] << std::endl;
+            //std::cout << "waitign " << qTemp[0] << " " << qTemp[1] << std::endl;
             Time::delay(WAIT_TIME);
         }
 
@@ -634,7 +634,7 @@ bool yarpWholeBodySensors::readEncoders(double *q, double *stamps, bool wait)
         {
             for(int axis=0; axis < (int)qLastRead[*ctrlBoard].size(); axis++ )
             {
-                std::cout << "read qTemp : " << qTemp[axis] << std::endl;
+                //std::cout << "read qTemp : " << qTemp[axis] << std::endl;
                 qLastRead[*ctrlBoard][axis] = CTRL_DEG2RAD*qTemp[axis];
                 qStampLastRead[*ctrlBoard][axis] = tTemp[axis];
             }
@@ -764,8 +764,7 @@ bool yarpWholeBodySensors::readTorqueSensors(double *jointSens, double *stamps, 
     }
 
     bool res = true, update=false;
-   //Do not support stamps on pwm
-    assert(stamps == 0);
+   //Do not support stamps on torque sensors
 
     //Read data from all controlboards
     for(std::vector<int>::iterator ctrlBoard=torqueControlBoardList.begin();
@@ -784,6 +783,15 @@ bool yarpWholeBodySensors::readTorqueSensors(double *jointSens, double *stamps, 
         int torqueControlBoard = torqueControlBoardAxisList[torqueNumericId].first;
         int torqueAxis = torqueControlBoardAxisList[torqueNumericId].second;
         jointSens[torqueNumericId] = torqueSensorsLastRead[torqueControlBoard][torqueAxis];
+    }
+
+    if(stamps != 0)
+    {
+        double now = yarp::os::Time::now();
+        for(int torqueNumericId = 0; torqueNumericId < (int)torqueSensorIdList.size(); torqueNumericId++)
+        {
+            stamps[torqueNumericId] = now;
+        }
     }
 
     return res || wait;
@@ -805,7 +813,7 @@ bool yarpWholeBodySensors::readEncoder(const int encoder_numeric_id, double *q, 
     {
           for(int axis=0; axis < (int)qLastRead[encoderCtrlBoard].size(); axis++ )
           {
-                std::cout << "read qTemp : " << qTemp[axis] << std::endl;
+                //std::cout << "read qTemp : " << qTemp[axis] << std::endl;
                 qLastRead[encoderCtrlBoard][axis] = CTRL_DEG2RAD*qTemp[axis];
                 qStampLastRead[encoderCtrlBoard][axis] = tTemp[axis];
           }

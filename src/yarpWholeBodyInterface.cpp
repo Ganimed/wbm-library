@@ -73,11 +73,11 @@ bool yarpWholeBodyInterface::getYarpWbiProperties(yarp::os::Property & yarp_wbi_
 bool yarpWholeBodyInterface::init()
 {
     bool ok = actuatorInt->init();
-    if(!ok) printf("Error while initializing actuator interface.\n");
+    if(!ok) printf("[ERR] Error while initializing yarpWholeBodyActuators interface.\n");
     if(ok) ok = stateInt->init();
-    if(!ok) printf("Error while initializing state interface.\n");
+    if(!ok) printf("[ERR] Error while initializing yarpWholeBodyStates interface.\n");
     if(ok) ok = modelInt->init();
-    if(!ok) printf("Error while initializing model interface.\n");
+    if(!ok) printf("[ERR] Error while initializing yarpWholeBodyModel interface.\n");
     return ok;
 }
 

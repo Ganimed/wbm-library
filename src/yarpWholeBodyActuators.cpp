@@ -123,13 +123,15 @@ bool yarpWholeBodyActuators::openControlBoardDrivers(int bp)
 
 bool yarpWholeBodyActuators::init()
 {
+    if( this->initDone ) return true;
+
     //Function return value
     bool ok = false;
 
     //Loading configuration
     if( !wbi_yarp_properties.check("robotName") )
     {
-        std::cerr << "yarpWholeBodySensors error: robotName not found in configuration files" << std::endl;
+        std::cerr << "[ERR] yarpWholeBodySensors error: robotName not found in configuration files" << std::endl;
         return false;
     }
 
@@ -148,7 +150,7 @@ bool yarpWholeBodyActuators::init()
     totalAxesInControlBoard.resize(controlBoardNames.size(),0);
     for(int wbi_jnt=0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++ )
     {
-        std::cout << "-------------wbi_jnt " << wbi_jnt << " " << controlBoardAxisList[wbi_jnt].first  << " " << controlBoardAxisList[wbi_jnt].second << std::endl;
+        //std::cout << "-------------wbi_jnt " << wbi_jnt << " " << controlBoardAxisList[wbi_jnt].first  << " " << controlBoardAxisList[wbi_jnt].second << std::endl;
         totalAxesInControlBoard[ controlBoardAxisList[wbi_jnt].first ]++;
     }
 
@@ -254,15 +256,15 @@ bool yarpWholeBodyActuatorsControlledJoints::reset(const int nrOfControlBoards)
         return false;
     }
     positionControlledJoints.clear();
-    positionControlledJoints.resize(nrOfControlBoards);
+    positionControlledJoints.resize(nrOfControlBoards,std::vector<yarpWBAControlledJoint>(0));
     positionDirectedControlledJoints.clear();
-    positionDirectedControlledJoints.resize(nrOfControlBoards);
+    positionDirectedControlledJoints.resize(nrOfControlBoards,std::vector<yarpWBAControlledJoint>(0));
     velocityControlledJoints.clear();
-    velocityControlledJoints.resize(nrOfControlBoards);
+    velocityControlledJoints.resize(nrOfControlBoards,std::vector<yarpWBAControlledJoint>(0));
     torqueControlledJoints.clear();
-    torqueControlledJoints.resize(nrOfControlBoards);
+    torqueControlledJoints.resize(nrOfControlBoards,std::vector<yarpWBAControlledJoint>(0));
     pwmControlledJoints.clear();
-    pwmControlledJoints.resize(nrOfControlBoards);
+    pwmControlledJoints.resize(nrOfControlBoards,std::vector<yarpWBAControlledJoint>(0));
     return true;
 }
 
@@ -271,8 +273,25 @@ bool yarpWholeBodyActuators::updateControlledJointsForEachControlBoard()
 {
     controlledJointsForControlBoard.reset(controlBoardNames.size());
 
+    //#ifndef NDEBUG
     for(int wbi_jnt = 0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++ )
     {
+        int wbi_jnt_controlboard_id = controlBoardAxisList[wbi_jnt].first;
+
+        assert(controlledJointsForControlBoard.positionControlledJoints[wbi_jnt_controlboard_id].size() == 0);
+        assert(controlledJointsForControlBoard.positionDirectedControlledJoints[wbi_jnt_controlboard_id].size() == 0);
+        assert(controlledJointsForControlBoard.velocityControlledJoints[wbi_jnt_controlboard_id].size() == 0);
+        assert(controlledJointsForControlBoard.torqueControlledJoints[wbi_jnt_controlboard_id].size() == 0);
+        assert(controlledJointsForControlBoard.pwmControlledJoints[wbi_jnt_controlboard_id].size() == 0);
+
+    }
+    //#endif
+
+    for(int wbi_jnt = 0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++ )
+    {
+        //std::cout << "wbi_jnt : " << wbi_jnt << std::endl;
+        //std::cout << "jointIdList " << jointIdList.toString() << std::endl;
+
         wbi::ControlMode wbi_jnt_ctrl_mode = currentCtrlModes[wbi_jnt];
 
         int wbi_jnt_controlboard_id = controlBoardAxisList[wbi_jnt].first;
@@ -551,7 +570,7 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
 
 bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
 {
-                    std::cout << "~~~~~~~~~~~~ setControlReference called " << std::endl;
+    //std::cout << "~~~~~~~~~~~~ setControlReference called " << std::endl;
     if(joint> (int)jointIdList.size())
         return false;
 
@@ -564,7 +583,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
         switch(currentCtrlModes[joint])
         {
             case CTRL_MODE_POS:
-                std::cout << "~~~~~~~~~~~~ Setting control position reference " << std::endl;
+                //std::cout << "~~~~~~~~~~~~ Setting control position reference " << std::endl;
                 return ipos[bodyPart]->positionMove(controlBoardAxis, CTRL_RAD2DEG*(*ref));
             case CTRL_MODE_DIRECT_POSITION:
                 return positionDirectInterface[bodyPart]->setPosition(controlBoardAxis, CTRL_RAD2DEG*(*ref));
@@ -623,11 +642,11 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                      buf_references[yarp_controlboard_axis] = CTRL_RAD2DEG*ref[wbi_id];
                 }
                 std::cout << "~~~~~~~~~~~~ Setting control position reference " << std::endl;
-                ok = ipos[wbi_controlboard_id]->positionMove(buf_references);
+                //ok = ipos[wbi_controlboard_id]->positionMove(buf_references);
                 if(!ok)
                 {
-                    std::cerr << "yarpWholeBodyActuators::setControlReference error:"
-                              << " unable to setPositions for controlboard " << controlBoardNames[wbi_controlboard_id] << std::endl;
+                    std::cerr << "[ERR] yarpWholeBodyActuators::setControlReference error:"
+                              << "[ERR]  unable to setPositions for controlboard " << controlBoardNames[wbi_controlboard_id] << std::endl;
                     return false;
                 }
             }

@@ -62,19 +62,26 @@ TEST_F(yarpWbInterfaceUnitTest, basicWbInterfaceLoadingTest)
 
   yarp::os::Property wbiInterfaceProperties;
   wbiInterfaceProperties.fromConfigFile(std::string(YARP_CONF_PATH)+"/"+"wbi_double_pendulum.ini",true);
+  wbiInterfaceProperties.put("urdf_file",std::string(YARP_CONF_PATH)+"/double_pendulum/model.urdf");
 
   doublePendulumWbi.setYarpWbiProperties(wbiInterfaceProperties);
 
-  ASSERT_TRUE(doublePendulumWbi.addActuator(wbi::wbiId("first_joint")));
-  ASSERT_TRUE(doublePendulumWbi.addActuator(wbi::wbiId("second_joint")));
+  ASSERT_TRUE(doublePendulumWbi.addActuator(wbi::wbiId("upper_joint")));
+  ASSERT_TRUE(doublePendulumWbi.addActuator(wbi::wbiId("lower_joint")));
   //ASSERT_FALSE(doublePendulumWbi.addActuator(wbi::wbiId("third_joint")));
 
-  ASSERT_TRUE(doublePendulumWbi.addJoint(wbi::wbiId("first_joint")));
-  ASSERT_TRUE(doublePendulumWbi.addJoint(wbi::wbiId("second_joint")));
+  ASSERT_TRUE(doublePendulumWbi.addJoint(wbi::wbiId("upper_joint")));
+  ASSERT_TRUE(doublePendulumWbi.addJoint(wbi::wbiId("lower_joint")));
   //ASSERT_FALSE(doublePendulumWbi.addSensor(wbi::SENSOR_ENCODER,wbi::wbiId("third_joint")));
 
   //std::cout << "doublePendulumActuactors.init()" << std::endl;
   ASSERT_TRUE(doublePendulumWbi.init());
+
+  ASSERT_TRUE(doublePendulumWbi.getJointList().containsId(wbi::wbiId("upper_joint")));
+  ASSERT_TRUE(doublePendulumWbi.getJointList().containsId(wbi::wbiId("lower_joint")));
+
+  ASSERT_EQ(doublePendulumWbi.getActuatorList().size(),2);
+  ASSERT_EQ(doublePendulumWbi.getJointList().size(),2);
 
 
   yarp::sig::Vector real_q(doublePendulumWbi.getDoFs(),-10);
