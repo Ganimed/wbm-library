@@ -42,8 +42,8 @@ bool appendNewControlBoardsToVector(yarp::os::Bottle & joints_config,
 
         if( !joints_config.check(jnt_name.toString().c_str()) )
         {
-            std::cout << "wholeBodyInterface error: joint " << jnt_name.toString() <<
-                         " not found in WBI_YARP_JOINTS section of configuration file " << std::endl;
+            std::cout << "[ERR] wholeBodyInterface error: joint " << jnt_name.toString() <<
+                         "[ERR]  not found in WBI_YARP_JOINTS section of configuration file " << std::endl;
             return false;
         }
 
@@ -295,11 +295,13 @@ bool loadTreeSerializationFromConfig(yarp::os::Property & wbi_yarp_properties,
     std::vector<std::string> dofs;
     dofs.resize(serializationDOFs);
 
-    for(int link=0; link < serializationLinks; link++) {
+    for(int link=0; link < serializationLinks; link++)
+    {
         links[link] = links_bot[link+1].toString().c_str();
     }
 
-    for(int dof=0; dof < serializationDOFs; dof++) {
+    for(int dof=0; dof < serializationDOFs; dof++)
+    {
         dofs[dof] = dofs_bot[dof+1].toString().c_str();
     }
 
@@ -314,6 +316,85 @@ bool loadTreePartitionFromConfig(yarp::os::Property & wbi_yarp_properties,
     wbi_yarp_properties.find("idyntree_serialization");
     return false;
 }
+
+bool loadIdListsFromConfigRecursiveHelper(std::string & requested_list,
+                                          std::vector<std::string> & lists_names_stack,
+                                          std::vector<std::string> & id_list_elements,
+                                          yarp::os::Bottle & list_bots)
+{
+    yarp::os::Bottle * requested_list_bot = list_bots.find(requested_list).asList();
+    std::cout << "Requested list bot: " << requested_list_bot->toString() << std::endl;
+    if( requested_list_bot == NULL )
+    {
+        return false;
+    }
+    //This is needed to check for a circular inclusion in the lists
+    if (std::find(lists_names_stack.begin(), lists_names_stack.end(), requested_list) != lists_names_stack.end())
+    {
+        // List already include once, error
+        return false;
+    }
+
+    lists_names_stack.push_back(requested_list);
+
+    for( int el = 0; el < requested_list_bot->size(); el++ )
+    {
+        std::string id_to_add = requested_list_bot->get(el).asString();
+        if( !(list_bots.find(id_to_add).isNull()) )
+        {
+            //Composite list, expand the element
+            bool ok = loadIdListsFromConfigRecursiveHelper(id_to_add,lists_names_stack,id_list_elements,list_bots);
+
+            if( !ok )
+            {
+                return false;
+            }
+        }
+        else
+        {
+            id_list_elements.push_back(id_to_add);
+        }
+    }
+
+
+    return true;
+}
+
+bool loadIdListFromConfig(std::string requested_list,
+                          yarp::os::Property & wbi_yarp_properties,
+                          wbi::wbiIdList & requestedIdList)
+{
+    yarp::os::Bottle & list_bot = wbi_yarp_properties.findGroup("WBI_ID_LISTS");
+    yarp::os::Value & requested_list_val = list_bot.find(requested_list.c_str());
+    yarp::os::Bottle * requested_list_bot = requested_list_val.asList();
+
+    if( requested_list_val.isNull() || (requested_list_bot == NULL) )
+    {
+        std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " not found" << std::endl;
+        return false;
+    }
+
+    std::vector<std::string> ids;
+    std::vector<std::string> lists_names_stack;
+
+    bool ret = loadIdListsFromConfigRecursiveHelper(requested_list,lists_names_stack,ids,list_bot);
+
+    if( !ret )
+    {
+        std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " is malformed" << std::endl;
+        return false;
+    }
+
+    requestedIdList = wbi::wbiIdList();
+
+    for(int id = 0; id < (int)ids.size(); id++ )
+    {
+        requestedIdList.addId(wbi::wbiId(ids[id]));
+    }
+
+    return ret;
+}
+
 
 
 }

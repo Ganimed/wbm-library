@@ -68,12 +68,12 @@ TEST_F(yarpWbiActuatorsUnitTest, basicWbiLoadingTest)
   doublePendulumActuactors.setYarpWbiProperties(wbiInterfaceProperties);
   doublePendulumSensors.setYarpWbiProperties(wbiInterfaceProperties);
 
-  ASSERT_TRUE(doublePendulumActuactors.addActuator(wbi::wbiId("first_joint")));
-  ASSERT_TRUE(doublePendulumActuactors.addActuator(wbi::wbiId("second_joint")));
+  ASSERT_TRUE(doublePendulumActuactors.addActuator(wbi::wbiId("upper_joint")));
+  ASSERT_TRUE(doublePendulumActuactors.addActuator(wbi::wbiId("lower_joint")));
   //ASSERT_FALSE(doublePendulumActuactors.addActuator(wbi::wbiId("third_joint")));
 
-  ASSERT_TRUE(doublePendulumSensors.addSensor(wbi::SENSOR_ENCODER,wbi::wbiId("first_joint")));
-  ASSERT_TRUE(doublePendulumSensors.addSensor(wbi::SENSOR_ENCODER,wbi::wbiId("second_joint")));
+  ASSERT_TRUE(doublePendulumSensors.addSensor(wbi::SENSOR_ENCODER,wbi::wbiId("upper_joint")));
+  ASSERT_TRUE(doublePendulumSensors.addSensor(wbi::SENSOR_ENCODER,wbi::wbiId("lower_joint")));
   //ASSERT_FALSE(doublePendulumSensors.addSensor(wbi::SENSOR_ENCODER,wbi::wbiId("third_joint")));
 
   //std::cout << "doublePendulumActuactors.init()" << std::endl;

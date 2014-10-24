@@ -121,8 +121,22 @@ namespace yarpWbi
                                  std::vector<std::string> & ports);
 
     bool loadIMUSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
-                                 wbi::wbiIdList & sensorIdList,
-                                 std::vector<std::string> & ports);
+                                      wbi::wbiIdList & sensorIdList,
+                                      std::vector<std::string> & ports);
+
+    /**
+     * Get the requested joint id list from a yarp os Property
+     *
+     * The Property object should contain a WBI_ID_LISTS group
+     * under which the list are defined as Yarp lists.
+     *
+     * It is also possible to define a list as a sequence of lists,
+     *  as long as the list are defined in the same property.
+     *
+     */
+    bool loadIdListFromConfig(std::string requested_list,
+                              yarp::os::Property & wbi_yarp_properties,
+                              wbi::wbiIdList & requestedIdList);
 
 
 

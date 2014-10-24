@@ -95,7 +95,7 @@ bool yarpWholeBodyModel::init()
     std::string kinematic_base_link_name = "";
     std::vector<std::string> joint_names;
     joint_names.resize(0,"");
-    assert((int)jointIdList.size() == dof);
+    dof = jointIdList.size();
     p_model = new iCub::iDynTree::DynTree(std::string(urdf_file_path),joint_names,kinematic_base_link_name);
     all_q.resize(p_model->getNrOfDOFs(),0.0);
     all_q_min = all_q_max = all_ddq = all_dq = all_q;
@@ -216,14 +216,12 @@ bool yarpWholeBodyModel::addJoint(const wbi::wbiId &j)
         return false;
     }
 
-    dof++;
     return true;
 }
 
 int yarpWholeBodyModel::addJoints(const wbi::wbiIdList &j)
 {
     int count = jointIdList.addIdList(j);
-    dof += count;
     return count;
 }
 

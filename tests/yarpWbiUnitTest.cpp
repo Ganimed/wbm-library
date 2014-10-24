@@ -26,6 +26,8 @@
 
 #include <wbi/wbiUtil.h>
 
+#include "../include/yarpWholeBodyInterface/yarpWbiUtil.h"
+
 #include "../include/yarpWholeBodyInterface/yarpWholeBodyInterface.h"
 
 class yarpWbInterfaceUnitTest : public GazeboYarpServerFixture
@@ -64,6 +66,16 @@ TEST_F(yarpWbInterfaceUnitTest, basicWbInterfaceLoadingTest)
   wbiInterfaceProperties.fromConfigFile(std::string(YARP_CONF_PATH)+"/"+"wbi_double_pendulum.ini",true);
   wbiInterfaceProperties.put("urdf_file",std::string(YARP_CONF_PATH)+"/double_pendulum/model.urdf");
 
+  //Test getting lists
+  wbi::wbiIdList main_joints_lists;
+  ASSERT_TRUE(yarpWbi::loadIdListFromConfig("DOUBLE_PENDULUM_JOINTS",wbiInterfaceProperties,main_joints_lists));
+
+  ASSERT_FALSE(main_joints_lists.containsId(wbi::wbiId("medium_joint")));
+  ASSERT_TRUE(main_joints_lists.containsId(wbi::wbiId("upper_joint")));
+  ASSERT_TRUE(main_joints_lists.containsId(wbi::wbiId("lower_joint")));
+  ASSERT_TRUE(main_joints_lists.size() == 2);
+
+
   doublePendulumWbi.setYarpWbiProperties(wbiInterfaceProperties);
 
   ASSERT_TRUE(doublePendulumWbi.addActuator(wbi::wbiId("upper_joint")));
@@ -73,6 +85,8 @@ TEST_F(yarpWbInterfaceUnitTest, basicWbInterfaceLoadingTest)
   ASSERT_TRUE(doublePendulumWbi.addJoint(wbi::wbiId("upper_joint")));
   ASSERT_TRUE(doublePendulumWbi.addJoint(wbi::wbiId("lower_joint")));
   //ASSERT_FALSE(doublePendulumWbi.addSensor(wbi::SENSOR_ENCODER,wbi::wbiId("third_joint")));
+
+  //ASSERT_TRUE(doublePendulumWbi.addJoints(main_joints_lists));
 
   //std::cout << "doublePendulumActuactors.init()" << std::endl;
   ASSERT_TRUE(doublePendulumWbi.init());
