@@ -42,11 +42,6 @@ using namespace iCub::ctrl;
 /// < \todo TODO make it a proper parameter
 #define ESTIMATOR_PERIOD 10
 
-// iterate over all body parts
-#define FOR_ALL_BODY_PARTS(itBp)            FOR_ALL_BODY_PARTS_OF(itBp, jointIdList)
-// iterate over all joints of all body parts
-#define FOR_ALL(itBp, itJ)                  FOR_ALL_OF(itBp, itJ, jointIdList)
-
 
 // *********************************************************************************************************************
 // *********************************************************************************************************************
@@ -54,16 +49,12 @@ using namespace iCub::ctrl;
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 yarpWholeBodyStatesLocal::yarpWholeBodyStatesLocal(const char* _name,
-                                                   const char* _robotName,
-                                                   iCub::iDynTree::iCubTree_version_tag icub_version,
-                                                   bool assume_fixed_base,
-                                                   std::string fixed_link
-                                                  )
+                                                   yarp::os::Property & _wbi_yarp_conf)
 {
-    sensors = new yarpWholeBodySensors(_name, _robotName);              // sensor interface
+    sensors = new yarpWholeBodySensors(_name, _wbi_yarp_conf);              // sensor interface
     skin_contacts_port = new yarp::os::BufferedPort<iCub::skinDynLib::skinContactList>;
     skin_contacts_port->open(string("/"+string(_name)+"/skin_contacts:i").c_str());
-    estimator = new yarpWholeBodyDynamicsEstimator(ESTIMATOR_PERIOD, sensors, skin_contacts_port, icub_version, assume_fixed_base,fixed_link);  // estimation thread
+    estimator = new yarpWholeBodyDynamicsEstimator(ESTIMATOR_PERIOD, sensors, skin_contacts_port, _wbi_yarp_conf);  // estimation thread
 }
 
 bool yarpWholeBodyStatesLocal::init()
@@ -199,47 +190,39 @@ int yarpWholeBodyStatesLocal::getEstimateNumber(const EstimateType et)
     return 0;
 }
 
-bool yarpWholeBodyStatesLocal::getEstimate(const EstimateType et, const wbiId &sid, double *data, double time, bool blocking)
+bool yarpWholeBodyStatesLocal::getEstimate(const EstimateType et, const int numeric_id, double *data, double time, bool blocking)
 {
-    int numeric_id;
+    wbi::wbiId sid;
     switch(et)
     {
     case ESTIMATE_JOINT_POS:
-        sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(sid,numeric_id);
         return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastQ, data);
     case ESTIMATE_JOINT_VEL:
-         sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(sid,numeric_id);
         return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastDq, data);
     case ESTIMATE_JOINT_ACC:
-        sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(sid,numeric_id);
         return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastD2q, data);
     case ESTIMATE_JOINT_TORQUE:
-        sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(sid,numeric_id);
         return estimator->lockAndCopyVectorElement(numeric_id,estimator->estimates.lastTauJ, data);
     case ESTIMATE_JOINT_TORQUE_DERIVATIVE:
-        sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(sid,numeric_id);
         return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastDtauJ, data);
     case ESTIMATE_MOTOR_POS:
         return false;
     case ESTIMATE_MOTOR_VEL:
-        return getMotorVel(sid, data, time, blocking);
+        return getMotorVel(numeric_id, data, time, blocking);
     case ESTIMATE_MOTOR_ACC:
         return false;
     case ESTIMATE_MOTOR_TORQUE:
-        sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(sid,numeric_id);
         return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastTauM, data);
     case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:
-        sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(sid,numeric_id);
         return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastDtauM, data);
     case ESTIMATE_MOTOR_PWM:
-        return lockAndReadSensor(SENSOR_PWM, sid, data, time, blocking);
+        return lockAndReadSensor(SENSOR_PWM, numeric_id, data, time, blocking);
     case ESTIMATE_IMU:
-        sensors->getSensorList(SENSOR_IMU).wbiIdToNumericId(sid,numeric_id);
         return estimator->lockAndCopyElementVectorFromVector(numeric_id, estimator->estimates.lastIMUs, data);
     case ESTIMATE_FORCE_TORQUE_SENSOR:
-         sensors->getSensorList(wbi::SENSOR_FORCE_TORQUE).wbiIdToNumericId(sid,numeric_id);
         return estimator->lockAndCopyElementVectorFromVector(numeric_id, estimator->estimates.lastForceTorques, data);
     case ESTIMATE_EXTERNAL_FORCE_TORQUE:
+        this->getEstimateList(wbi::ESTIMATE_EXTERNAL_FORCE_TORQUE).numericIdToWbiId(numeric_id,sid);
         return estimator->lockAndCopyExternalForceTorque(sid,data);
     default: break;
     }
@@ -332,11 +315,9 @@ bool yarpWholeBodyStatesLocal::getMotorVel(double *data, double time, bool block
     return true;
 }
 
-bool yarpWholeBodyStatesLocal::getMotorVel(const wbiId &lid, double *data, double time, bool blocking)
+bool yarpWholeBodyStatesLocal::getMotorVel(const int numeric_id, double *data, double time, bool blocking)
 {
     ///< read joint vel
-    int numeric_id;
-    sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(lid,numeric_id);
     return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastDq, data);
 }
 
@@ -348,11 +329,9 @@ bool yarpWholeBodyStatesLocal::lockAndReadSensors(const SensorType st, double *d
     return res;
 }
 
-bool yarpWholeBodyStatesLocal::lockAndReadSensor(const SensorType st, const wbiId sid, double *data, double time, bool blocking)
+bool yarpWholeBodyStatesLocal::lockAndReadSensor(const SensorType st, const int numeric_id, double *data, double time, bool blocking)
 {
     estimator->mutex.wait();
-    int numeric_id;
-    sensors->getSensorList(st).wbiIdToNumericId(sid,numeric_id);
     bool res = sensors->readSensor(st, numeric_id, data, 0, blocking);
     estimator->mutex.post();
     return res;
@@ -414,18 +393,14 @@ int yarpWholeBodyStatesLocal::lockAndGetSensorNumber(const SensorType st)
 yarpWholeBodyDynamicsEstimator::yarpWholeBodyDynamicsEstimator(int _period,
                                                                yarpWholeBodySensors *_sensors,
                                                                yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> * _port_skin_contacts,
-                                                               iCub::iDynTree::iCubTree_version_tag _icub_version,
-                                                               bool _assume_fixed_base,
-                                                               std::string _fixed_link
+                                                               yarp::os::Property & _wbi_yarp_conf
                                                               )
 : RateThread(_period),
    sensors(_sensors),
    port_skin_contacts(_port_skin_contacts),
    dqFilt(0), d2qFilt(0),
    enable_omega_domega_IMU(false),
-   min_taxel(0),
-   assume_fixed_base(_assume_fixed_base),
-   icub_version(_icub_version)
+   min_taxel(0)
 {
 
     resizeAll(sensors->getSensorNumber(SENSOR_ENCODER));
@@ -458,8 +433,11 @@ yarpWholeBodyDynamicsEstimator::yarpWholeBodyDynamicsEstimator(int _period,
     ///< Skin timestamp
     last_reading_skin_contact_list_Stamp = -1000.0;
 
-    if( assume_fixed_base )
+    if( _wbi_yarp_conf.check("fixed_base") )
     {
+        assume_fixed_base = true;
+        std::string _fixed_link;
+        _fixed_link = _wbi_yarp_conf.find("fixed_base").asString();
         if( _fixed_link == "root_link" )
         {
             fixed_link = FIXED_ROOT_LINK;
@@ -477,76 +455,16 @@ yarpWholeBodyDynamicsEstimator::yarpWholeBodyDynamicsEstimator(int _period,
             YARP_ASSERT(false);
         }
     }
-}
-
-#ifdef CODYCO_USES_URDFDOM
-yarpWholeBodyDynamicsEstimator::yarpWholeBodyDynamicsEstimator(int _period,
-                                                               yarpWholeBodySensors *_sensors,
-                                                               yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> * _port_skin_contacts,
-                                                               iCub::iDynTree::iCubTree_version_tag _icub_version,
-                                                               bool _assume_fixed_base,
-                                                               std::string _fixed_link,
-                                                               std::string urdf_file )
-: RateThread(_period),
-   sensors(_sensors),
-   port_skin_contacts(_port_skin_contacts),
-   dqFilt(0), d2qFilt(0),
-   enable_omega_domega_IMU(false),
-   min_taxel(0),
-   assume_fixed_base(_assume_fixed_base),
-   icub_version(_icub_version)
-{
-    resizeAll(sensors->getSensorNumber(SENSOR_ENCODER));
-    resizeFTs(sensors->getSensorNumber(SENSOR_FORCE_TORQUE));
-    resizeIMUs(sensors->getSensorNumber(SENSOR_IMU));
-
-    ///< Window lengths of adaptive window filters
-    dqFiltWL            = 16;
-    d2qFiltWL           = 25;
-    dTauJFiltWL         = 30;
-    dTauMFiltWL         = 30;
-    imuAngularAccelerationFiltWL = 25;
-
-    ///< Threshold of adaptive window filters
-    dqFiltTh            = 1.0;
-    d2qFiltTh           = 1.0;
-    dTauJFiltTh         = 0.2;
-    dTauMFiltTh         = 0.2;
-    imuAngularAccelerationFiltTh = 1.0;
-
-    ///< Cut frequencies
-    tauJCutFrequency    =   3.0;
-    tauMCutFrequency    =   3.0;
-    pwmCutFrequency     =   3.0;
-    imuLinearAccelerationCutFrequency = 3.0;
-    imuAngularVelocityCutFrequency    = 3.0;
-    imuMagnetometerCutFrequency       = 3.0;
-    forcetorqueCutFrequency           = 3.0;
-
-    ///< Skin timestamp
-    last_reading_skin_contact_list_Stamp = -1000.0;
+    else
+    {
+        assume_fixed_base = false;
+    }
 
     if( assume_fixed_base )
     {
-        if( _fixed_link == "root_link" )
-        {
-            fixed_link = FIXED_ROOT_LINK;
-        }
-        else if( _fixed_link == "l_sole" )
-        {
-            fixed_link = FIXED_L_SOLE;
-        }
-        else if( _fixed_link == "r_sole" )
-        {
-            fixed_link = FIXED_R_SOLE;
-        }
-        else
-        {
-            YARP_ASSERT(false);
-        }
+
     }
 }
-#endif
 
 bool yarpWholeBodyDynamicsEstimator::threadInit()
 {
