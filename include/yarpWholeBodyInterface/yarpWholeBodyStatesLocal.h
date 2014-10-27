@@ -28,13 +28,13 @@
 #include <iCub/ctrl/filters.h>
 #include <iCub/iDynTree/iCubTree.h>
 #include <iCub/skinDynLib/skinContactList.h>
-#include <wbiIcub/wbiIcubUtil.h>
+#include <yarpWholeBodyInterface/yarpWbiUtil.h>
 #include <map>
 
 
-#include "wbiIcub/icubWholeBodySensors.h"
+#include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
 
-namespace wbiIcub
+namespace yarpWbi
 {
     /**
      * Enum of iCub subtrees
@@ -56,10 +56,10 @@ namespace wbiIcub
      /**
      * Thread that estimates the dynamic state of the iCub robot.
      */
-    class icubWholeBodyDynamicsEstimator: public yarp::os::RateThread
+    class yarpWholeBodyDynamicsEstimator: public yarp::os::RateThread
     {
     protected:
-        icubWholeBodySensors        *sensors;
+        yarpWholeBodySensors        *sensors;
         yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> * port_skin_contacts;
         iCub::iDynTree::iCubTree * icub_model;
 
@@ -94,11 +94,6 @@ namespace wbiIcub
         double imuAngularAccelerationFiltTh;
         int imuAngularAccelerationFiltWL;
 
-        #ifdef CODYCO_USES_URDFDOM
-        bool use_urdf;
-        std::string urdf_file_name;
-        #endif
-
         yarp::sig::Vector           q, qStamps;         // last joint position estimation
         yarp::sig::Vector           tauJ, tauJStamps;
         yarp::sig::Vector           pwm, pwmStamps;
@@ -129,15 +124,15 @@ namespace wbiIcub
         yarp::sig::Vector left_foot_ee_wrench;
         yarp::sig::Vector right_foot_ee_wrench;
 
-        int left_hand_link_id;
-        int right_hand_link_id;
-        int left_foot_link_id;
-        int right_foot_link_id;
+        wbi::wbiId left_hand_link_id;
+        wbi::wbiId right_hand_link_id;
+        wbi::wbiId left_foot_link_id;
+        wbi::wbiId right_foot_link_id;
 
-        int left_gripper_frame_id;
-        int right_gripper_frame_id;
-        int left_sole_frame_id;
-        int right_sole_frame_id;
+        wbi::wbiId left_gripper_frame_id;
+        wbi::wbiId right_gripper_frame_id;
+        wbi::wbiId left_sole_frame_id;
+        wbi::wbiId right_sole_frame_id;
 
         int left_hand_link_idyntree_id;
         int right_hand_link_idyntree_id;
@@ -149,11 +144,22 @@ namespace wbiIcub
         int left_sole_frame_idyntree_id;
         int right_sole_frame_idyntree_id;
 
+        int left_hand_link_old_id;
+        int right_hand_link_old_id;
+        int left_foot_link_old_id;
+        int right_foot_link_old_id;
+
+        int left_gripper_frame_old_id;
+        int right_gripper_frame_old_id;
+        int left_sole_frame_old_id;
+        int right_sole_frame_old_id;
+
         bool left_arm_ee_contact_found;
         bool right_arm_ee_contact_found;
         bool left_leg_ee_contact_found;
         bool right_leg_ee_contact_found;
 
+        wbi::wbiId linkOldIdToNewId(const int bodyPart, const int link_index);
 
         //Estimation options
         bool enable_omega_domega_IMU;
@@ -245,8 +251,8 @@ namespace wbiIcub
          * @param port_skin_contacts pointer to a port reading a skinContactList from the robot skin
          * \todo TODO skin_contacts should be read from the WholeBodySensors interface
          */
-        icubWholeBodyDynamicsEstimator(int _period,
-                                       icubWholeBodySensors *_sensors,
+        yarpWholeBodyDynamicsEstimator(int _period,
+                                       yarpWholeBodySensors *_sensors,
                                        yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> * _port_skin_contacts,
 
                                        iCub::iDynTree::iCubTree_version_tag icub_version,
@@ -255,8 +261,8 @@ namespace wbiIcub
                                       );
 
         #ifdef CODYCO_USES_URDFDOM
-        icubWholeBodyDynamicsEstimator(int _period,
-                                       icubWholeBodySensors *_sensors,
+        yarpWholeBodyDynamicsEstimator(int _period,
+                                       yarpWholeBodySensors *_sensors,
                                        yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> * _port_skin_contacts,
                                        iCub::iDynTree::iCubTree_version_tag icub_version,
                                        bool assume_fixed_base,
@@ -266,8 +272,8 @@ namespace wbiIcub
 
         bool lockAndSetEstimationParameter(const wbi::EstimateType et, const wbi::EstimationParameter ep, const void *value);
 
-        bool lockAndSetEstimationOffset(const wbi::EstimateType et, const wbi::LocalId & sid, const double *value);
-        bool lockAndGetEstimationOffset(const wbi::EstimateType et, const wbi::LocalId & sid, double *value);
+        bool lockAndSetEstimationOffset(const wbi::EstimateType et, const wbi::wbiId & sid, const double *value);
+        bool lockAndGetEstimationOffset(const wbi::EstimateType et, const wbi::wbiId & sid, double *value);
 
 
         bool threadInit();
@@ -283,7 +289,7 @@ namespace wbiIcub
         /** Take the mutex and copy the i-th Vector of a vector<Vector> of src into dest */
         bool lockAndCopyElementVectorFromVector(int i, const std::vector<yarp::sig::Vector> &src, double *dest);
         /** Take the mutex and copy the external force/torque acting on link sid */
-        bool lockAndCopyExternalForceTorque(const wbi::LocalId & sid, double * dest);
+        bool lockAndCopyExternalForceTorque(const wbi::wbiId & sid, double * dest);
 
 
 
@@ -295,21 +301,21 @@ namespace wbiIcub
      /**
      * Class to access the estimates, by doing a local estimation
      */
-    class icubWholeBodyStatesLocal : public wbi::iWholeBodyStates
+    class yarpWholeBodyStatesLocal : public wbi::iWholeBodyStates
     {
     protected:
-        icubWholeBodySensors                *sensors;       // interface to access the robot sensors
-        icubWholeBodyDynamicsEstimator      *estimator;     // estimation thread
+        yarpWholeBodySensors                *sensors;       // interface to access the robot sensors
+        yarpWholeBodyDynamicsEstimator      *estimator;     // estimation thread
         yarp::os::BufferedPort<iCub::skinDynLib::skinContactList>                *skin_contacts_port; //port to the skin contacts
-        wbi::LocalIdList                    emptyList;      ///< empty list of IDs to return in case of error
+        wbi::wbiIdList                    emptyList;      ///< empty list of IDs to return in case of error
         //double                      estWind;      // time window for the estimation
 
-        virtual bool lockAndReadSensor(const wbi::SensorType st, const wbi::LocalId sid, double *data, double time, bool blocking);
+        virtual bool lockAndReadSensor(const wbi::SensorType st, const wbi::wbiId sid, double *data, double time, bool blocking);
         virtual bool lockAndReadSensors(const wbi::SensorType st, double *data, double time, bool blocking);
-        virtual bool lockAndAddSensor(const wbi::SensorType st, const wbi::LocalId &sid);
-        virtual int lockAndAddSensors(const wbi::SensorType st, const wbi::LocalIdList &sids);
-        virtual bool lockAndRemoveSensor(const wbi::SensorType st, const wbi::LocalId &sid);
-        virtual wbi::LocalIdList lockAndGetSensorList(const wbi::SensorType st);
+        virtual bool lockAndAddSensor(const wbi::SensorType st, const wbi::wbiId &sid);
+        virtual int lockAndAddSensors(const wbi::SensorType st, const wbi::wbiIdList &sids);
+        virtual bool lockAndRemoveSensor(const wbi::SensorType st, const wbi::wbiId &sid);
+        virtual wbi::wbiIdList lockAndGetSensorList(const wbi::SensorType st);
         virtual int lockAndGetSensorNumber(const wbi::SensorType st);
 
         bool lockAndReadExternalForces(iCub::skinDynLib::skinContactList & external_forces_list);
@@ -317,31 +323,21 @@ namespace wbiIcub
 
 
         /** Get the velocity of the specified motor. */
-        bool getMotorVel(const wbi::LocalId &sid, double *data, double time, bool blocking);
+        bool getMotorVel(const wbi::wbiId &sid, double *data, double time, bool blocking);
         /** Get the velocities of all the robot motors. */
         bool getMotorVel(double *data, double time, bool blocking);
 
 
     public:
         // *** CONSTRUCTORS ***
-        icubWholeBodyStatesLocal(const char* _name,
+        yarpWholeBodyStatesLocal(const char* _name,
                                  const char* _robotName,
                                  iCub::iDynTree::iCubTree_version_tag icub_version,
                                  bool assume_fixed_base,
                                  std::string fixed_link
                                 );
 
-        #ifdef CODYCO_USES_URDFDOM
-        icubWholeBodyStatesLocal(const char* _name,
-                                 const char* _robotName,
-                                 iCub::iDynTree::iCubTree_version_tag icub_version,
-                                 bool assume_fixed_base,
-                                 std::string fixed_link,
-                                 const std::string urdf_file);
-
-        #endif
-
-        inline virtual ~icubWholeBodyStatesLocal(){ close(); }
+        inline virtual ~yarpWholeBodyStatesLocal(){ close(); }
 
         virtual bool init();
         virtual bool close();
@@ -351,26 +347,26 @@ namespace wbiIcub
          * @param sid Id of the estimate.
          * @return True if the estimate has been added, false otherwise (e.g. the estimate has been already added).
          */
-        virtual bool addEstimate(const wbi::EstimateType st, const wbi::LocalId &sid);
+        virtual bool addEstimate(const wbi::EstimateType st, const wbi::wbiId &sid);
 
         /** Add the specified estimates so that they can be read.
          * @param st Type of estimates.
          * @param sids Ids of the estimates.
          * @return True if the estimate has been added, false otherwise (e.g. the estimate has been already added).
          */
-        virtual int addEstimates(const wbi::EstimateType st, const wbi::LocalIdList &sids);
+        virtual int addEstimates(const wbi::EstimateType st, const wbi::wbiIdList &sids);
 
         /** Remove the specified estimate.
          * @param st Type of the estimate to remove.
          * @param j Id of the estimate to remove.
          * @return True if the estimate has been removed, false otherwise.
          */
-        virtual bool removeEstimate(const wbi::EstimateType st, const wbi::LocalId &sid);
+        virtual bool removeEstimate(const wbi::EstimateType st, const wbi::wbiId &sid);
 
         /** Get a copy of the estimate list of the specified estimate type.
          * @param st Type of estimate.
          * @return A copy of the estimate list. */
-        virtual const wbi::LocalIdList& getEstimateList(const wbi::EstimateType st);
+        virtual const wbi::wbiIdList& getEstimateList(const wbi::EstimateType st);
 
         /** Get the number of estimates of the specified type.
          * @return The number of estimates of the specified type. */
@@ -384,7 +380,7 @@ namespace wbiIcub
          * @param blocking If true, perform a blocking read before estimating, otherwise the estimate is based on the last reading.
          * @return True if all the estimate succeeded, false otherwise.
          */
-        virtual bool getEstimate(const wbi::EstimateType et, const wbi::LocalId &sid, double *data, double time=-1.0, bool blocking=true);
+        virtual bool getEstimate(const wbi::EstimateType et, const wbi::wbiId &sid, double *data, double time=-1.0, bool blocking=true);
 
         /** Get all the estimates of the specified estimate type at the specified time.
          * @param et Type of estimate to get.
@@ -406,9 +402,9 @@ namespace wbiIcub
         /////////////////////////////////////////////////////
         ///< Implementation specific methods
         /////////////////////////////////////////////////////
-        bool setEstimationOffset(const wbi::EstimateType et, const wbi::LocalId & sid, const double *value);
+        bool setEstimationOffset(const wbi::EstimateType et, const wbi::wbiId & sid, const double *value);
 
-        bool getEstimationOffset(const wbi::EstimateType et, const wbi::LocalId & sid, double *value);
+        bool getEstimationOffset(const wbi::EstimateType et, const wbi::wbiId & sid, double *value);
 
 
         /** Get the estimated external force/torques

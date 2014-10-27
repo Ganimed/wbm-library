@@ -15,8 +15,8 @@
  * Public License for more details
  */
 
-#include "yarpWbi/yarpWholeBodyStatesLocal.h"
-#include "yarpWbi/yarpWholeBodySensors.h"
+#include "yarpWholeBodyInterface/yarpWholeBodyStatesLocal.h"
+#include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
 #include <iCub/skinDynLib/common.h>
 #include <yarp/os/Time.h>
 #include <yarp/os/Log.h>
@@ -31,7 +31,7 @@
 
 using namespace std;
 using namespace wbi;
-using namespace wbiIcub;
+using namespace yarpWbi;
 using namespace yarp::os;
 using namespace yarp::dev;
 using namespace yarp::sig;
@@ -53,58 +53,42 @@ using namespace iCub::ctrl;
 //                                          ICUB WHOLE BODY STATES
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-icubWholeBodyStatesLocal::icubWholeBodyStatesLocal(const char* _name,
+yarpWholeBodyStatesLocal::yarpWholeBodyStatesLocal(const char* _name,
                                                    const char* _robotName,
                                                    iCub::iDynTree::iCubTree_version_tag icub_version,
                                                    bool assume_fixed_base,
                                                    std::string fixed_link
                                                   )
 {
-    sensors = new icubWholeBodySensors(_name, _robotName);              // sensor interface
+    sensors = new yarpWholeBodySensors(_name, _robotName);              // sensor interface
     skin_contacts_port = new yarp::os::BufferedPort<iCub::skinDynLib::skinContactList>;
     skin_contacts_port->open(string("/"+string(_name)+"/skin_contacts:i").c_str());
-    estimator = new icubWholeBodyDynamicsEstimator(ESTIMATOR_PERIOD, sensors, skin_contacts_port, icub_version, assume_fixed_base,fixed_link);  // estimation thread
+    estimator = new yarpWholeBodyDynamicsEstimator(ESTIMATOR_PERIOD, sensors, skin_contacts_port, icub_version, assume_fixed_base,fixed_link);  // estimation thread
 }
 
-#ifdef CODYCO_USES_URDFDOM
-icubWholeBodyStatesLocal::icubWholeBodyStatesLocal(const char* _name,
-                                                   const char* _robotName,
-                                                   iCub::iDynTree::iCubTree_version_tag icub_version,
-                                                   bool assume_fixed_base,
-                                                   std::string fixed_link,
-                                                   std::string urdf_file)
-{
-    sensors = new icubWholeBodySensors(_name, _robotName);              // sensor interface
-    skin_contacts_port = new yarp::os::BufferedPort<iCub::skinDynLib::skinContactList>;
-    skin_contacts_port->open(string("/"+string(_name)+"/skin_contacts:i").c_str());
-    estimator = new icubWholeBodyDynamicsEstimator(ESTIMATOR_PERIOD, sensors, skin_contacts_port,icub_version,assume_fixed_base,urdf_file);  // estimation thread
-}
-
-#endif
-
-bool icubWholeBodyStatesLocal::init()
+bool yarpWholeBodyStatesLocal::init()
 {
     bool ok = sensors->init();              // initialize sensor interface
-    if( !ok ) { std::cerr << "icubWholeBodyStatesLocal::init() failed: error in sensor initialization." << std::endl; return false; }
+    if( !ok ) { std::cerr << "yarpWholeBodyStatesLocal::init() failed: error in sensor initialization." << std::endl; return false; }
     ok = estimator->start();
-    if( !ok ) { std::cerr << "icubWholeBodyStatesLocal::init() failed: error in estimator initialization." << std::endl; return false; }
+    if( !ok ) { std::cerr << "yarpWholeBodyStatesLocal::init() failed: error in estimator initialization." << std::endl; return false; }
     return ok; // start estimation thread
 }
 
-bool icubWholeBodyStatesLocal::close()
+bool yarpWholeBodyStatesLocal::close()
 {
-    std::cout << "icubWholeBodyStatesLocal::close() : closing estimator thread" << std::endl;
+    std::cout << "yarpWholeBodyStatesLocal::close() : closing estimator thread" << std::endl;
     if(estimator) estimator->stop();  // stop estimator BEFORE closing sensor interface
-    std::cout << "icubWholeBodyStatesLocal::close() : closing sensor interface" << std::endl;
+    std::cout << "yarpWholeBodyStatesLocal::close() : closing sensor interface" << std::endl;
     bool ok = (sensors ? sensors->close() : true);
-    std::cout << "icubWholeBodyStatesLocal::close() : deleting sensor interface" << std::endl;
+    std::cout << "yarpWholeBodyStatesLocal::close() : deleting sensor interface" << std::endl;
     if(sensors) { delete sensors; sensors = 0; }
-    std::cout << "icubWholeBodyStatesLocal::close() : deleting estimator thread" << std::endl;
+    std::cout << "yarpWholeBodyStatesLocal::close() : deleting estimator thread" << std::endl;
     if(estimator) { delete estimator; estimator = 0; }
     return ok;
 }
 
-bool icubWholeBodyStatesLocal::addEstimate(const EstimateType et, const LocalId &sid)
+bool yarpWholeBodyStatesLocal::addEstimate(const EstimateType et, const wbiId &sid)
 {
     switch(et)
     {
@@ -126,7 +110,7 @@ bool icubWholeBodyStatesLocal::addEstimate(const EstimateType et, const LocalId 
     return false;
 }
 
-int icubWholeBodyStatesLocal::addEstimates(const EstimateType et, const LocalIdList &sids)
+int yarpWholeBodyStatesLocal::addEstimates(const EstimateType et, const wbiIdList &sids)
 {
     //\todo TODO properly handle dependencies
     switch(et)
@@ -149,7 +133,7 @@ int icubWholeBodyStatesLocal::addEstimates(const EstimateType et, const LocalIdL
     return false;
 }
 
-bool icubWholeBodyStatesLocal::removeEstimate(const EstimateType et, const LocalId &sid)
+bool yarpWholeBodyStatesLocal::removeEstimate(const EstimateType et, const wbiId &sid)
 {
     switch(et)
     {
@@ -171,7 +155,7 @@ bool icubWholeBodyStatesLocal::removeEstimate(const EstimateType et, const Local
     return false;
 }
 
-const LocalIdList& icubWholeBodyStatesLocal::getEstimateList(const EstimateType et)
+const wbiIdList& yarpWholeBodyStatesLocal::getEstimateList(const EstimateType et)
 {
     switch(et)
     {
@@ -193,7 +177,7 @@ const LocalIdList& icubWholeBodyStatesLocal::getEstimateList(const EstimateType 
     return emptyList;
 }
 
-int icubWholeBodyStatesLocal::getEstimateNumber(const EstimateType et)
+int yarpWholeBodyStatesLocal::getEstimateNumber(const EstimateType et)
 {
     switch(et)
     {
@@ -215,20 +199,26 @@ int icubWholeBodyStatesLocal::getEstimateNumber(const EstimateType et)
     return 0;
 }
 
-bool icubWholeBodyStatesLocal::getEstimate(const EstimateType et, const LocalId &sid, double *data, double time, bool blocking)
+bool yarpWholeBodyStatesLocal::getEstimate(const EstimateType et, const wbiId &sid, double *data, double time, bool blocking)
 {
+    int numeric_id;
     switch(et)
     {
     case ESTIMATE_JOINT_POS:
-        return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_ENCODER).localToGlobalId(sid), estimator->estimates.lastQ, data);
+        sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(sid,numeric_id);
+        return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastQ, data);
     case ESTIMATE_JOINT_VEL:
-        return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_ENCODER).localToGlobalId(sid), estimator->estimates.lastDq, data);
+         sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(sid,numeric_id);
+        return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastDq, data);
     case ESTIMATE_JOINT_ACC:
-        return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_ENCODER).localToGlobalId(sid), estimator->estimates.lastD2q, data);
+        sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(sid,numeric_id);
+        return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastD2q, data);
     case ESTIMATE_JOINT_TORQUE:
-        return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_ENCODER).localToGlobalId(sid), estimator->estimates.lastTauJ, data);
+        sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(sid,numeric_id);
+        return estimator->lockAndCopyVectorElement(numeric_id,estimator->estimates.lastTauJ, data);
     case ESTIMATE_JOINT_TORQUE_DERIVATIVE:
-        return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_ENCODER).localToGlobalId(sid), estimator->estimates.lastDtauJ, data);
+        sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(sid,numeric_id);
+        return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastDtauJ, data);
     case ESTIMATE_MOTOR_POS:
         return false;
     case ESTIMATE_MOTOR_VEL:
@@ -236,15 +226,19 @@ bool icubWholeBodyStatesLocal::getEstimate(const EstimateType et, const LocalId 
     case ESTIMATE_MOTOR_ACC:
         return false;
     case ESTIMATE_MOTOR_TORQUE:
-        return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_ENCODER).localToGlobalId(sid), estimator->estimates.lastTauM, data);
+        sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(sid,numeric_id);
+        return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastTauM, data);
     case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:
-        return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_ENCODER).localToGlobalId(sid), estimator->estimates.lastDtauM, data);
+        sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(sid,numeric_id);
+        return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastDtauM, data);
     case ESTIMATE_MOTOR_PWM:
         return lockAndReadSensor(SENSOR_PWM, sid, data, time, blocking);
     case ESTIMATE_IMU:
-        return estimator->lockAndCopyElementVectorFromVector(sensors->getSensorList(SENSOR_IMU).localToGlobalId(sid), estimator->estimates.lastIMUs, data);
+        sensors->getSensorList(SENSOR_IMU).wbiIdToNumericId(sid,numeric_id);
+        return estimator->lockAndCopyElementVectorFromVector(numeric_id, estimator->estimates.lastIMUs, data);
     case ESTIMATE_FORCE_TORQUE_SENSOR:
-        return estimator->lockAndCopyElementVectorFromVector(sensors->getSensorList(SENSOR_FORCE_TORQUE).localToGlobalId(sid), estimator->estimates.lastForceTorques, data);
+         sensors->getSensorList(wbi::SENSOR_FORCE_TORQUE).wbiIdToNumericId(sid,numeric_id);
+        return estimator->lockAndCopyElementVectorFromVector(numeric_id, estimator->estimates.lastForceTorques, data);
     case ESTIMATE_EXTERNAL_FORCE_TORQUE:
         return estimator->lockAndCopyExternalForceTorque(sid,data);
     default: break;
@@ -252,7 +246,7 @@ bool icubWholeBodyStatesLocal::getEstimate(const EstimateType et, const LocalId 
     return false;
 }
 
-bool icubWholeBodyStatesLocal::getEstimates(const EstimateType et, double *data, double time, bool blocking)
+bool yarpWholeBodyStatesLocal::getEstimates(const EstimateType et, double *data, double time, bool blocking)
 {
     switch(et)
     {
@@ -274,17 +268,17 @@ bool icubWholeBodyStatesLocal::getEstimates(const EstimateType et, double *data,
     return false;
 }
 
-bool icubWholeBodyStatesLocal::setEstimationParameter(const EstimateType et, const EstimationParameter ep, const void *value)
+bool yarpWholeBodyStatesLocal::setEstimationParameter(const EstimateType et, const EstimationParameter ep, const void *value)
 {
     return estimator->lockAndSetEstimationParameter(et, ep, value);
 }
 
-bool icubWholeBodyStatesLocal::setEstimationOffset(const EstimateType et, const LocalId & sid, const double *value)
+bool yarpWholeBodyStatesLocal::setEstimationOffset(const EstimateType et, const wbiId & sid, const double *value)
 {
     return estimator->lockAndSetEstimationOffset(et,sid,value);
 }
 
-bool icubWholeBodyStatesLocal::getEstimationOffset(const EstimateType et, const LocalId & sid, double *value)
+bool yarpWholeBodyStatesLocal::getEstimationOffset(const EstimateType et, const wbiId & sid, double *value)
 {
     return estimator->lockAndGetEstimationOffset(et,sid,value);
 }
@@ -296,7 +290,7 @@ bool icubWholeBodyStatesLocal::getEstimationOffset(const EstimateType et, const 
 // *********************************************************************************************************************
 
 
-bool icubWholeBodyStatesLocal::getEstimatedExternalForces(iCub::skinDynLib::skinContactList & external_forces_list)
+bool yarpWholeBodyStatesLocal::getEstimatedExternalForces(iCub::skinDynLib::skinContactList & external_forces_list)
 {
     return lockAndReadExternalForces(external_forces_list);
 }
@@ -307,12 +301,14 @@ bool icubWholeBodyStatesLocal::getEstimatedExternalForces(iCub::skinDynLib::skin
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 
-bool icubWholeBodyStatesLocal::getMotorVel(double *data, double time, bool blocking)
+bool yarpWholeBodyStatesLocal::getMotorVel(double *data, double time, bool blocking)
 {
     bool res = estimator->lockAndCopyVector(estimator->estimates.lastDq, data);    ///< read joint vel
     if(!res) return false;
-    LocalIdList idList = lockAndGetSensorList(SENSOR_ENCODER);
-    int i=0;
+    wbiIdList idList = lockAndGetSensorList(SENSOR_ENCODER);
+    //int i=0;
+    /*
+     \todo TODO FIXME
     FOR_ALL_OF(itBp, itJ, idList)   ///< manage coupled joints
     {
         if(itBp->first == LEFT_ARM && *itJ==0)          // left arm shoulder
@@ -332,17 +328,19 @@ bool icubWholeBodyStatesLocal::getMotorVel(double *data, double time, bool block
         else if(itBp->first == TORSO && *itJ==2)        // torso
             data[i] = data[i];
         i++;
-    }
+    }*/
     return true;
 }
 
-bool icubWholeBodyStatesLocal::getMotorVel(const LocalId &lid, double *data, double time, bool blocking)
+bool yarpWholeBodyStatesLocal::getMotorVel(const wbiId &lid, double *data, double time, bool blocking)
 {
     ///< read joint vel
-    return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_ENCODER).localToGlobalId(lid), estimator->estimates.lastDq, data);
+    int numeric_id;
+    sensors->getSensorList(SENSOR_ENCODER).wbiIdToNumericId(lid,numeric_id);
+    return estimator->lockAndCopyVectorElement(numeric_id, estimator->estimates.lastDq, data);
 }
 
-bool icubWholeBodyStatesLocal::lockAndReadSensors(const SensorType st, double *data, double time, bool blocking)
+bool yarpWholeBodyStatesLocal::lockAndReadSensors(const SensorType st, double *data, double time, bool blocking)
 {
     estimator->mutex.wait();
     bool res = sensors->readSensors(st, data, 0, blocking);
@@ -350,15 +348,17 @@ bool icubWholeBodyStatesLocal::lockAndReadSensors(const SensorType st, double *d
     return res;
 }
 
-bool icubWholeBodyStatesLocal::lockAndReadSensor(const SensorType st, const LocalId sid, double *data, double time, bool blocking)
+bool yarpWholeBodyStatesLocal::lockAndReadSensor(const SensorType st, const wbiId sid, double *data, double time, bool blocking)
 {
     estimator->mutex.wait();
-    bool res = sensors->readSensor(st, sid, data, 0, blocking);
+    int numeric_id;
+    sensors->getSensorList(st).wbiIdToNumericId(sid,numeric_id);
+    bool res = sensors->readSensor(st, numeric_id, data, 0, blocking);
     estimator->mutex.post();
     return res;
 }
 
-bool icubWholeBodyStatesLocal::lockAndReadExternalForces(iCub::skinDynLib::skinContactList & external_forces_list)
+bool yarpWholeBodyStatesLocal::lockAndReadExternalForces(iCub::skinDynLib::skinContactList & external_forces_list)
 {
     estimator->mutex.wait();
     external_forces_list = estimator->estimatedLastSkinDynContacts;
@@ -366,7 +366,7 @@ bool icubWholeBodyStatesLocal::lockAndReadExternalForces(iCub::skinDynLib::skinC
     return true;
 }
 
-bool icubWholeBodyStatesLocal::lockAndAddSensor(const SensorType st, const LocalId &sid)
+bool yarpWholeBodyStatesLocal::lockAndAddSensor(const SensorType st, const wbiId &sid)
 {
     estimator->mutex.wait();
     bool res = sensors->addSensor(st, sid);
@@ -374,7 +374,7 @@ bool icubWholeBodyStatesLocal::lockAndAddSensor(const SensorType st, const Local
     return res;
 }
 
-int icubWholeBodyStatesLocal::lockAndAddSensors(const SensorType st, const LocalIdList &sids)
+int yarpWholeBodyStatesLocal::lockAndAddSensors(const SensorType st, const wbiIdList &sids)
 {
     estimator->mutex.wait();
     int res = sensors->addSensors(st, sids);
@@ -382,7 +382,7 @@ int icubWholeBodyStatesLocal::lockAndAddSensors(const SensorType st, const Local
     return res;
 }
 
-bool icubWholeBodyStatesLocal::lockAndRemoveSensor(const SensorType st, const LocalId &sid)
+bool yarpWholeBodyStatesLocal::lockAndRemoveSensor(const SensorType st, const wbiId &sid)
 {
     estimator->mutex.wait();
     bool res = sensors->removeSensor(st, sid);
@@ -390,15 +390,15 @@ bool icubWholeBodyStatesLocal::lockAndRemoveSensor(const SensorType st, const Lo
     return res;
 }
 
-LocalIdList icubWholeBodyStatesLocal::lockAndGetSensorList(const SensorType st)
+wbiIdList yarpWholeBodyStatesLocal::lockAndGetSensorList(const SensorType st)
 {
     estimator->mutex.wait();
-    LocalIdList res = sensors->getSensorList(st);
+    wbiIdList res = sensors->getSensorList(st);
     estimator->mutex.post();
     return res;
 }
 
-int icubWholeBodyStatesLocal::lockAndGetSensorNumber(const SensorType st)
+int yarpWholeBodyStatesLocal::lockAndGetSensorNumber(const SensorType st)
 {
     estimator->mutex.wait();
     int res = sensors->getSensorNumber(st);
@@ -411,8 +411,8 @@ int icubWholeBodyStatesLocal::lockAndGetSensorNumber(const SensorType st)
 //                                          ICUB WHOLE BODY DYNAMICS ESTIMATOR
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-icubWholeBodyDynamicsEstimator::icubWholeBodyDynamicsEstimator(int _period,
-                                                               icubWholeBodySensors *_sensors,
+yarpWholeBodyDynamicsEstimator::yarpWholeBodyDynamicsEstimator(int _period,
+                                                               yarpWholeBodySensors *_sensors,
                                                                yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> * _port_skin_contacts,
                                                                iCub::iDynTree::iCubTree_version_tag _icub_version,
                                                                bool _assume_fixed_base,
@@ -422,14 +422,11 @@ icubWholeBodyDynamicsEstimator::icubWholeBodyDynamicsEstimator(int _period,
    sensors(_sensors),
    port_skin_contacts(_port_skin_contacts),
    dqFilt(0), d2qFilt(0),
-   icub_version(_icub_version),
    enable_omega_domega_IMU(false),
    min_taxel(0),
-   assume_fixed_base(_assume_fixed_base)
+   assume_fixed_base(_assume_fixed_base),
+   icub_version(_icub_version)
 {
-    #ifdef CODYCO_USES_URDFDOM
-    use_urdf = false;
-    #endif
 
     resizeAll(sensors->getSensorNumber(SENSOR_ENCODER));
     resizeFTs(sensors->getSensorNumber(SENSOR_FORCE_TORQUE));
@@ -483,8 +480,8 @@ icubWholeBodyDynamicsEstimator::icubWholeBodyDynamicsEstimator(int _period,
 }
 
 #ifdef CODYCO_USES_URDFDOM
-icubWholeBodyDynamicsEstimator::icubWholeBodyDynamicsEstimator(int _period,
-                                                               icubWholeBodySensors *_sensors,
+yarpWholeBodyDynamicsEstimator::yarpWholeBodyDynamicsEstimator(int _period,
+                                                               yarpWholeBodySensors *_sensors,
                                                                yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> * _port_skin_contacts,
                                                                iCub::iDynTree::iCubTree_version_tag _icub_version,
                                                                bool _assume_fixed_base,
@@ -494,12 +491,10 @@ icubWholeBodyDynamicsEstimator::icubWholeBodyDynamicsEstimator(int _period,
    sensors(_sensors),
    port_skin_contacts(_port_skin_contacts),
    dqFilt(0), d2qFilt(0),
-   icub_version(_icub_version),
    enable_omega_domega_IMU(false),
    min_taxel(0),
    assume_fixed_base(_assume_fixed_base),
-   use_urdf(true),
-   urdf_file_name(urdf_file)
+   icub_version(_icub_version)
 {
     resizeAll(sensors->getSensorNumber(SENSOR_ENCODER));
     resizeFTs(sensors->getSensorNumber(SENSOR_FORCE_TORQUE));
@@ -553,7 +548,7 @@ icubWholeBodyDynamicsEstimator::icubWholeBodyDynamicsEstimator(int _period,
 }
 #endif
 
-bool icubWholeBodyDynamicsEstimator::threadInit()
+bool yarpWholeBodyDynamicsEstimator::threadInit()
 {
     resizeAll(sensors->getSensorNumber(SENSOR_ENCODER));
     resizeFTs(sensors->getSensorNumber(SENSOR_FORCE_TORQUE));
@@ -573,23 +568,23 @@ bool icubWholeBodyDynamicsEstimator::threadInit()
     tauMFilt    = new FirstOrderLowPassFilter(tauMCutFrequency, getRate()*1e-3, estimates.lastTauJ);
     pwmFilt     = new FirstOrderLowPassFilter(pwmCutFrequency, getRate()*1e-3, estimates.lastPwm);
 
-    LocalIdList available_ft_sensors = sensors->getSensorList(SENSOR_FORCE_TORQUE);
-    FOR_ALL_OF(itBp, itS, available_ft_sensors)
+    wbiIdList available_ft_sensors = sensors->getSensorList(SENSOR_FORCE_TORQUE);
+    for(int ft_numeric = 0; ft_numeric < (int)available_ft_sensors.size(); ft_numeric++ )
     {
-        LocalId loc_id(itBp->first,*itS);
-        int ft_index = available_ft_sensors.localToGlobalId(loc_id);
-        bool ret = sensors->readSensor(SENSOR_FORCE_TORQUE, loc_id, forcetorques[ft_index].data(), &(forcetorquesStamps[ft_index]),true );
+        wbiId wbi_id;
+        available_ft_sensors.numericIdToWbiId(ft_numeric,wbi_id);
+        int ft_index = ft_numeric;
+        sensors->readSensor(SENSOR_FORCE_TORQUE, ft_index, forcetorques[ft_index].data(), &(forcetorquesStamps[ft_index]),true );
         forcetorqueFilters[ft_index] = new FirstOrderLowPassFilter(forcetorqueCutFrequency,getRate()*1e-3,forcetorques[ft_index]); ///< low pass filter
     }
 
-     LocalIdList available_imu_sensors = sensors->getSensorList(SENSOR_IMU);
-     FOR_ALL_OF(itBp, itS, available_imu_sensors)
+     wbiIdList available_imu_sensors = sensors->getSensorList(SENSOR_IMU);
+     for(int numeric_imu_id = 0; numeric_imu_id < (int)available_imu_sensors.size(); numeric_imu_id++)
      {
-         LocalId loc_id(itBp->first,*itS);
-         int imu_index = available_imu_sensors.localToGlobalId(loc_id);
+         int imu_index = numeric_imu_id;
          //std::cout << "readSensor for IMU " << imu_index << std::endl;
-         assert(IMUs.size() > imu_index && IMUs[imu_index].size() == sensorTypeDescriptions[SENSOR_IMU].dataSize );
-         if( sensors->readSensor(SENSOR_IMU, loc_id, IMUs[imu_index].data(), &(IMUStamps[imu_index]),true ) ) {
+         assert((int)IMUs.size() > imu_index && (int)IMUs[imu_index].size() == sensorTypeDescriptions[SENSOR_IMU].dataSize );
+         if( sensors->readSensor(SENSOR_IMU, numeric_imu_id, IMUs[imu_index].data(), &(IMUStamps[imu_index]),true ) ) {
              imuLinearAccelerationFilters[imu_index] = new FirstOrderLowPassFilter(imuLinearAccelerationCutFrequency,getRate()*1e-3,IMUs[imu_index].subVector(4,6));  ///< linear acceleration is filtered with a low pass filter
              imuAngularVelocityFilters[imu_index] = new FirstOrderLowPassFilter(imuAngularVelocityCutFrequency,getRate()*1e-3,IMUs[imu_index].subVector(7,9));  ///< angular velocity is filtered with a low pass filter
              imuMagnetometerFilters[imu_index] = new FirstOrderLowPassFilter(imuMagnetometerCutFrequency,getRate()*1e-3,IMUs[imu_index].subVector(10,12));  ///< magnetometer readings are filtered with a low pass filter
@@ -623,19 +618,6 @@ bool icubWholeBodyDynamicsEstimator::threadInit()
         }
     }
     model_mutex.wait();
-    #ifdef CODYCO_USES_URDFDOM
-    if( use_urdf )
-    {
-        if( !assume_fixed_base )
-        {
-            icub_model = new iCub::iDynTree::iCubTree(urdf_file_name,icub_version);
-        }
-        else
-        {
-            icub_model = new iCub::iDynTree::iCubTree(urdf_file_name,icub_version,fixed_link_name);
-        }
-    }
-    else
     {
         if( !assume_fixed_base )
         {
@@ -644,68 +626,65 @@ bool icubWholeBodyDynamicsEstimator::threadInit()
             icub_model = new iCub::iDynTree::iCubTree(icub_version,fixed_link_name);
         }
     }
-    #else
-    if( !assume_fixed_base )
-    {
-        icub_model = new iCub::iDynTree::iCubTree(icub_version);
-    } else {
-        icub_model = new iCub::iDynTree::iCubTree(icub_version,fixed_link_name);
-    }
-    #endif
     model_mutex.post();
 
+    left_hand_link_id = "l_hand";
+    right_hand_link_id = "r_hand";
+    left_foot_link_id = "l_foot";
+    right_foot_link_id = "r_foot";
+
+    left_gripper_frame_id = "l_gripper";
+    right_gripper_frame_id = "r_gripper";
+    left_sole_frame_id = "l_sole";
+    right_sole_frame_id = "r_sole";
+
     //Find end effector ids
-    left_hand_link_idyntree_id = icub_model->getLinkIndex("r_hand");
+    left_hand_link_idyntree_id = icub_model->getLinkIndex(left_hand_link_id.toString());
     YARP_ASSERT(left_hand_link_idyntree_id >= 0);
-    right_hand_link_idyntree_id = icub_model->getLinkIndex("r_hand");
+    right_hand_link_idyntree_id = icub_model->getLinkIndex(right_hand_link_id.toString());
     YARP_ASSERT(right_hand_link_idyntree_id >= 0);
-    left_foot_link_idyntree_id = icub_model->getLinkIndex("l_foot");
+    left_foot_link_idyntree_id = icub_model->getLinkIndex(left_foot_link_id.toString());
     YARP_ASSERT(left_foot_link_idyntree_id >= 0);
-    right_foot_link_idyntree_id = icub_model->getLinkIndex("r_foot");
+    right_foot_link_idyntree_id = icub_model->getLinkIndex(right_foot_link_id.toString());
     YARP_ASSERT(right_foot_link_idyntree_id >= 0);
 
-    left_gripper_frame_idyntree_id = icub_model->getLinkIndex("l_gripper");
+    left_gripper_frame_idyntree_id = icub_model->getLinkIndex(left_gripper_frame_id.toString());
     YARP_ASSERT(left_gripper_frame_idyntree_id >= 0);
-    right_gripper_frame_idyntree_id = icub_model->getLinkIndex("r_gripper");
+    right_gripper_frame_idyntree_id = icub_model->getLinkIndex(right_gripper_frame_id.toString());
     YARP_ASSERT(right_hand_link_idyntree_id >= 0);
-    left_sole_frame_idyntree_id = icub_model->getLinkIndex("l_sole");
+    left_sole_frame_idyntree_id = icub_model->getLinkIndex(left_sole_frame_id.toString());
     YARP_ASSERT(left_sole_frame_idyntree_id >= 0);
-    right_sole_frame_idyntree_id = icub_model->getLinkIndex("r_sole");
+    right_sole_frame_idyntree_id = icub_model->getLinkIndex(right_sole_frame_id.toString());
     YARP_ASSERT(right_sole_frame_idyntree_id >= 0);
 
+    //Compatibility layer for hardcoded skin ids
     KDL::CoDyCo::TreePartition icub_partition = icub_model->getKDLUndirectedTree().getPartition();
-    left_hand_link_id = icub_partition.getLocalLinkIndex(left_hand_link_idyntree_id);
-    YARP_ASSERT(left_hand_link_id >= 0);
-    right_hand_link_id = icub_partition.getLocalLinkIndex(right_hand_link_idyntree_id);
-    YARP_ASSERT(right_hand_link_id >= 0);
-    left_foot_link_id = icub_partition.getLocalLinkIndex(left_foot_link_idyntree_id);
-    right_foot_link_id = icub_partition.getLocalLinkIndex(right_foot_link_idyntree_id);
-
-    left_gripper_frame_id = icub_partition.getLocalLinkIndex(left_gripper_frame_idyntree_id);
-    right_gripper_frame_id = icub_partition.getLocalLinkIndex(right_gripper_frame_idyntree_id);
-    left_sole_frame_id = icub_partition.getLocalLinkIndex(left_sole_frame_idyntree_id);
-    right_sole_frame_id = icub_partition.getLocalLinkIndex(right_sole_frame_idyntree_id);
+    left_hand_link_old_id = icub_partition.getLocalLinkIndex(left_hand_link_idyntree_id);
+    YARP_ASSERT(left_hand_link_old_id >= 0);
+    right_hand_link_old_id = icub_partition.getLocalLinkIndex(right_hand_link_idyntree_id);
+    YARP_ASSERT(right_hand_link_old_id >= 0);
+    left_foot_link_old_id = icub_partition.getLocalLinkIndex(left_foot_link_idyntree_id);
+    right_foot_link_old_id = icub_partition.getLocalLinkIndex(right_foot_link_idyntree_id);
+    left_gripper_frame_old_id = icub_partition.getLocalLinkIndex(left_gripper_frame_idyntree_id);
+    right_gripper_frame_old_id = icub_partition.getLocalLinkIndex(right_gripper_frame_idyntree_id);
+    left_sole_frame_old_id = icub_partition.getLocalLinkIndex(left_sole_frame_idyntree_id);
+    right_sole_frame_old_id = icub_partition.getLocalLinkIndex(right_sole_frame_idyntree_id);
 
 
     return ok;
 }
 
-void icubWholeBodyDynamicsEstimator::run()
+void yarpWholeBodyDynamicsEstimator::run()
 {
     run_mutex.wait();
-    //Temporary workaround: icubWholeBodyStatesLocal needs all the DOF present in the dynamical model
+    //Temporary workaround: yarpWholeBodyStatesLocal needs all the DOF present in the dynamical model
     if( sensors->getSensorNumber(wbi::SENSOR_ENCODER) != icub_model->getNrOfDOFs() )
     {
-        LocalIdList list = sensors->getSensorList(wbi::SENSOR_ENCODER);
+        wbiIdList list = sensors->getSensorList(wbi::SENSOR_ENCODER);
 
-        std::cerr << "Available sensors: " << std::endl;
+        std::cerr << "Available sensors: " << list.toString() << std::endl;
 
-        for(LocalIdList::const_iterator it = list.begin(); it != list.end(); it++ ) {
-            for(int j=0; j < it->second.size(); j++ ) {
-                std::cerr << "Bp: " << it->first << " index " << it->second[j] << std::endl;
-            }
-        }
-           std::cerr << "icubWholeBodyDynamicsEstimator::run() error: " <<
+           std::cerr << "yarpWholeBodyDynamicsEstimator::run() error: " <<
                   sensors->getSensorNumber(wbi::SENSOR_ENCODER) << " joint sensors are available, while  " <<
                   icub_model->getNrOfDOFs() << " joints are present in the model " << std::endl;
         assert(false);
@@ -733,16 +712,15 @@ void icubWholeBodyDynamicsEstimator::run()
 
         ///< Read force/torque sensors
         ///< \todo TODO buffer value of available_ft_sensors to avoid memory allocation (?)
-        LocalIdList available_ft_sensors = sensors->getSensorList(SENSOR_FORCE_TORQUE);
-        FOR_ALL_OF(itBp, itS, available_ft_sensors)
+        wbiIdList available_ft_sensors = sensors->getSensorList(SENSOR_FORCE_TORQUE);
+        for(int ft_numeric = 0; ft_numeric < (int)available_ft_sensors.size(); ft_numeric++ )
         {
-            LocalId loc_id(itBp->first,*itS);
-            int ft_index = available_ft_sensors.localToGlobalId(loc_id);
-            if( sensors->readSensor(SENSOR_FORCE_TORQUE, loc_id, forcetorques[ft_index].data(), &(forcetorquesStamps[ft_index]),false ) ) {
+            int ft_index = ft_numeric;
+            if( sensors->readSensor(SENSOR_FORCE_TORQUE, ft_numeric, forcetorques[ft_index].data(), &(forcetorquesStamps[ft_index]),false ) ) {
                 estimates.lastForceTorques[ft_index] = forcetorqueFilters[ft_index]->filt(forcetorques[ft_index]); ///< low pass filter
                 estimates.lastForceTorques[ft_index] = estimates.lastForceTorques[ft_index] - forcetorques_offset[ft_index]; /// remove offset
             } else {
-                std::cout << "icubWholeBodyStatesLocal: Error in reading F/T sensors, exiting" << std::endl;
+                std::cout << "yarpWholeBodyStatesLocal: Error in reading F/T sensors, exiting" << std::endl;
                 YARP_ASSERT(false);
             }
         }
@@ -750,21 +728,20 @@ void icubWholeBodyDynamicsEstimator::run()
         ///< Read IMU
         ///< \todo TODO buffer value of available_imu_sensors to avoid memory allocation (?)
         ///< \todo TODO add filters for imu values ->
-        LocalIdList available_imu_sensors = sensors->getSensorList(SENSOR_IMU);
-        FOR_ALL_OF(itBp, itS, available_imu_sensors)
+        wbiIdList available_imu_sensors = sensors->getSensorList(SENSOR_IMU);
+        for(int imu_numeric = 0; imu_numeric < (int) available_ft_sensors.size(); imu_numeric++ )
         {
-            LocalId loc_id(itBp->first,*itS);
-            int imu_index = available_imu_sensors.localToGlobalId(loc_id);
+            int imu_index = imu_numeric;
             //std::cout << "readSensor for IMU " << imu_index << std::endl;
-            assert(IMUs.size() > imu_index );
-            assert(IMUs[imu_index].size() == sensorTypeDescriptions[SENSOR_IMU].dataSize );
-            if( sensors->readSensor(SENSOR_IMU, loc_id, IMUs[imu_index].data(), &(IMUStamps[imu_index]),false ) ) {
+            assert((int)IMUs.size() > imu_index );
+            assert((int)IMUs[imu_index].size() == sensorTypeDescriptions[SENSOR_IMU].dataSize );
+            if( sensors->readSensor(SENSOR_IMU, imu_numeric, IMUs[imu_index].data(), &(IMUStamps[imu_index]),false ) ) {
                 estimates.lastIMUs[imu_index].setSubvector(0,IMUs[imu_index].subVector(0,3)); ///< orientation is simply copied as already result of an estimation
                 estimates.lastIMUs[imu_index].setSubvector(4,imuLinearAccelerationFilters[imu_index]->filt(IMUs[imu_index].subVector(4,6)));  ///< linear acceleration is filtered with a low pass filter
                 estimates.lastIMUs[imu_index].setSubvector(7,imuAngularVelocityFilters[imu_index]->filt(IMUs[imu_index].subVector(7,9)));  ///< angular velocity is filtered with a low pass filter
                 estimates.lastIMUs[imu_index].setSubvector(10,imuMagnetometerFilters[imu_index]->filt(IMUs[imu_index].subVector(10,12))); ///< magnetometer readings are filtered with a low pass filter
             } else {
-                std::cout << "icubWholeBodyStatesLocal: Error in reading IMU, exiting" << std::endl;
+                std::cout << "yarpWholeBodyStatesLocal: Error in reading IMU, exiting" << std::endl;
                 YARP_ASSERT(false);
             }
             //std::cout << "IMU measured " << std::endl;
@@ -822,7 +799,7 @@ void icubWholeBodyDynamicsEstimator::run()
     return;
 }
 
-void icubWholeBodyDynamicsEstimator::readSkinContacts()
+void yarpWholeBodyDynamicsEstimator::readSkinContacts()
 {
     skinContactList *scl = port_skin_contacts->read(false);
     if(scl)
@@ -858,7 +835,7 @@ void icubWholeBodyDynamicsEstimator::readSkinContacts()
                     }
 
                     //Insert a contact in skinContacts only if the number of taxel is greater than ActiveTaxels
-                    if( c->getActiveTaxels() > min_taxel )
+                    if( (int)c->getActiveTaxels() > min_taxel )
                     {
                         skinContacts.insert(skinContacts.end(),*c);
                     }
@@ -917,7 +894,7 @@ void icubWholeBodyDynamicsEstimator::readSkinContacts()
 
 
 
-dynContact icubWholeBodyDynamicsEstimator::getDefaultContact(const iCubSubtree icub_subtree)
+dynContact yarpWholeBodyDynamicsEstimator::getDefaultContact(const iCubSubtree icub_subtree)
 {
     dynContact return_value;
     Vector r_knee_pos(3,0.0);
@@ -988,7 +965,29 @@ void getEEWrench(const iCub::iDynTree::iCubTree & icub_model,
     KDLtoYarp(f_gripper,gripper_wrench);
 }
 
-void icubWholeBodyDynamicsEstimator::estimateExternalForcesAndJointTorques()
+wbi::wbiId yarpWholeBodyDynamicsEstimator::linkOldIdToNewId(const int bodyPart, const int link_index)
+{
+    // \todo TODO FIXME Remove hardcoded values
+    if( bodyPart == LEFT_ARM && link_index == left_hand_link_old_id )
+    {
+        return left_hand_link_id;
+    }
+    if( bodyPart == RIGHT_ARM && link_index == right_hand_link_old_id )
+    {
+        return right_hand_link_id;
+    }
+    if( bodyPart == LEFT_LEG && link_index == left_foot_link_old_id )
+    {
+        return left_foot_link_id;
+    }
+    if( bodyPart == RIGHT_LEG && link_index == right_foot_link_old_id )
+    {
+        return right_foot_link_id;
+    }
+    return wbiId();
+}
+
+void yarpWholeBodyDynamicsEstimator::estimateExternalForcesAndJointTorques()
 {
     //Assume that only a IMU is available
 
@@ -1023,9 +1022,9 @@ void icubWholeBodyDynamicsEstimator::estimateExternalForcesAndJointTorques()
     }
 
     model_mutex.wait();
-    assert(estimates.lastQ.size() == icub_model->getNrOfDOFs());
-    assert(estimates.lastDq.size() == icub_model->getNrOfDOFs());
-    assert(estimates.lastD2q.size() == icub_model->getNrOfDOFs());
+    assert((int)estimates.lastQ.size() == icub_model->getNrOfDOFs());
+    assert((int)estimates.lastDq.size() == icub_model->getNrOfDOFs());
+    assert((int)estimates.lastD2q.size() == icub_model->getNrOfDOFs());
 
     YARP_ASSERT(icub_model->setInertialMeasure(omega_used_IMU,domega_used_IMU,ddp_used_IMU));
     (icub_model->setAng(estimates.lastQ));
@@ -1034,7 +1033,7 @@ void icubWholeBodyDynamicsEstimator::estimateExternalForcesAndJointTorques()
     for(int i=0; i < icub_model->getNrOfFTSensors(); i++ ) {
         //std::cout << "Number of F/T sensors available " << estimates.lastForceTorques.size() << std::endl;
         //std::cout << "Number of F/T sensors required by the model " << icub_model->getNrOfFTSensors() << std::endl;
-        YARP_ASSERT(estimates.lastForceTorques.size() == icub_model->getNrOfFTSensors());
+        YARP_ASSERT((int)estimates.lastForceTorques.size() == icub_model->getNrOfFTSensors());
         assert(estimates.lastForceTorques[i].size() == 6);
         YARP_ASSERT(icub_model->setSensorMeasurement(i,estimates.lastForceTorques[i]));
     }
@@ -1093,30 +1092,28 @@ void icubWholeBodyDynamicsEstimator::estimateExternalForcesAndJointTorques()
             skinContacts.push_back(skinContact(estimatedLastDynContacts[i]));
         contactFound = false;
 
+        wbiId contactLink = linkOldIdToNewId(estimatedLastDynContacts[i].getBodyPart(),estimatedLastDynContacts[i].getLinkNumber());
+
         //If a dyn contact is found on the end effector, store its value
-        if( estimatedLastDynContacts[i].getBodyPart() == LEFT_ARM &&
-            estimatedLastDynContacts[i].getLinkNumber() ==  left_hand_link_id )
+        if( contactLink == left_hand_link_id )
         {
             getEEWrench(*icub_model,estimatedLastDynContacts[i],left_arm_ee_contact_found,
                         left_hand_ee_wrench,left_gripper_ee_wrench,left_gripper_frame_idyntree_id,left_hand_link_idyntree_id);
             laContactFound = true;
         }
-        if( estimatedLastDynContacts[i].getBodyPart() == RIGHT_ARM &&
-            estimatedLastDynContacts[i].getLinkNumber() ==  right_hand_link_id )
+        if( contactLink ==  right_hand_link_id )
         {
             getEEWrench(*icub_model,estimatedLastDynContacts[i],right_arm_ee_contact_found,
                         right_hand_ee_wrench,right_gripper_ee_wrench,right_gripper_frame_idyntree_id,right_hand_link_idyntree_id);
             raContactFound = true;
         }
-        if( estimatedLastDynContacts[i].getBodyPart() == LEFT_LEG &&
-            estimatedLastDynContacts[i].getLinkNumber() ==  left_foot_link_id )
+        if( contactLink ==  left_foot_link_id )
         {
             getEEWrench(*icub_model,estimatedLastDynContacts[i],left_leg_ee_contact_found,
                         left_foot_ee_wrench,left_sole_ee_wrench,left_sole_frame_idyntree_id,left_foot_link_idyntree_id);
             llContactFound = true;
         }
-        if( estimatedLastDynContacts[i].getBodyPart() == RIGHT_LEG &&
-            estimatedLastDynContacts[i].getLinkNumber() ==  right_foot_link_id )
+        if( contactLink ==  right_foot_link_id )
         {
             getEEWrench(*icub_model,estimatedLastDynContacts[i],right_leg_ee_contact_found,
                         right_foot_ee_wrench,right_sole_ee_wrench,right_sole_frame_idyntree_id,right_foot_link_idyntree_id);
@@ -1168,7 +1165,7 @@ void deleteFirstOrderFilterVector(std::vector<iCub::ctrl::FirstOrderLowPassFilte
     vec.resize(0);
 }
 
-void icubWholeBodyDynamicsEstimator::threadRelease()
+void yarpWholeBodyDynamicsEstimator::threadRelease()
 {
     if(dqFilt!=0)    { delete dqFilt;  dqFilt=0; }
     if(d2qFilt!=0)   { delete d2qFilt; d2qFilt=0; }
@@ -1185,14 +1182,14 @@ void icubWholeBodyDynamicsEstimator::threadRelease()
     return;
 }
 
-void icubWholeBodyDynamicsEstimator::lockAndResizeAll(int n)
+void yarpWholeBodyDynamicsEstimator::lockAndResizeAll(int n)
 {
     mutex.wait();
     resizeAll(n);
     mutex.post();
 }
 
-void icubWholeBodyDynamicsEstimator::resizeAll(int n)
+void yarpWholeBodyDynamicsEstimator::resizeAll(int n)
 {
     q.resize(n,0.0);
     qStamps.resize(n,INITIAL_TIMESTAMP);
@@ -1210,14 +1207,14 @@ void icubWholeBodyDynamicsEstimator::resizeAll(int n)
     estimates.lastPwm.resize(n,0.0);
 }
 
-void icubWholeBodyDynamicsEstimator::lockAndResizeFTs(int n)
+void yarpWholeBodyDynamicsEstimator::lockAndResizeFTs(int n)
 {
     mutex.wait();
     resizeFTs(n);
     mutex.post();
 }
 
-void icubWholeBodyDynamicsEstimator::resizeFTs(int n)
+void yarpWholeBodyDynamicsEstimator::resizeFTs(int n)
 {
     forcetorques.resize(n,Vector(sensorTypeDescriptions[SENSOR_FORCE_TORQUE].dataSize,0.0));
     forcetorques_offset.resize(n,Vector(sensorTypeDescriptions[SENSOR_FORCE_TORQUE].dataSize,0.0));
@@ -1226,14 +1223,14 @@ void icubWholeBodyDynamicsEstimator::resizeFTs(int n)
     estimates.lastForceTorques.resize(n,Vector(sensorTypeDescriptions[SENSOR_FORCE_TORQUE].dataSize,0.0));
 }
 
-void icubWholeBodyDynamicsEstimator::lockAndResizeIMUs(int n)
+void yarpWholeBodyDynamicsEstimator::lockAndResizeIMUs(int n)
 {
     mutex.wait();
     resizeIMUs(n);
     mutex.post();
 }
 
-void icubWholeBodyDynamicsEstimator::resizeIMUs(int n)
+void yarpWholeBodyDynamicsEstimator::resizeIMUs(int n)
 {
     IMUs.resize(n,Vector(sensorTypeDescriptions[SENSOR_IMU].dataSize,0.0));
     IMUStamps.resize(n,INITIAL_TIMESTAMP);
@@ -1243,7 +1240,7 @@ void icubWholeBodyDynamicsEstimator::resizeIMUs(int n)
     estimates.lastIMUs.resize(n,Vector(sensorTypeDescriptions[SENSOR_IMU].dataSize,0.0));
 }
 
-bool icubWholeBodyDynamicsEstimator::lockAndCopyVector(const Vector &src, double *dest)
+bool yarpWholeBodyDynamicsEstimator::lockAndCopyVector(const Vector &src, double *dest)
 {
     if(dest==0)
         return false;
@@ -1253,7 +1250,7 @@ bool icubWholeBodyDynamicsEstimator::lockAndCopyVector(const Vector &src, double
     return true;
 }
 
-bool icubWholeBodyDynamicsEstimator::lockAndCopyVectorElement(int index, const Vector &src, double *dest)
+bool yarpWholeBodyDynamicsEstimator::lockAndCopyVectorElement(int index, const Vector &src, double *dest)
 {
     mutex.wait();
     dest[0] = src[index];
@@ -1261,7 +1258,7 @@ bool icubWholeBodyDynamicsEstimator::lockAndCopyVectorElement(int index, const V
     return true;
 }
 
-bool icubWholeBodyDynamicsEstimator::lockAndCopyElementVectorFromVector(int index, const std::vector<Vector> &src, double *dest)
+bool yarpWholeBodyDynamicsEstimator::lockAndCopyElementVectorFromVector(int index, const std::vector<Vector> &src, double *dest)
 {
     if(dest==0)
         return false;
@@ -1271,7 +1268,7 @@ bool icubWholeBodyDynamicsEstimator::lockAndCopyElementVectorFromVector(int inde
     return true;
 }
 
-bool icubWholeBodyDynamicsEstimator::lockAndCopyVectorOfVectors(const std::vector<Vector> &src, double *dest)
+bool yarpWholeBodyDynamicsEstimator::lockAndCopyVectorOfVectors(const std::vector<Vector> &src, double *dest)
 {
     if(dest==0)
         return false;
@@ -1289,68 +1286,57 @@ void copyVector(const yarp::sig::Vector & src, double * dest)
     memcpy(dest,src.data(),src.size()*sizeof(double));
 }
 
-bool icubWholeBodyDynamicsEstimator::lockAndCopyExternalForceTorque(const LocalId & sid, double * dest)
+bool yarpWholeBodyDynamicsEstimator::lockAndCopyExternalForceTorque(const wbiId & sid, double * dest)
 {
     bool external_ft_available = false;
     if(dest==0)
     {
         return false;
     }
-    switch(sid.bodyPart)
+    if( sid == left_hand_link_id )
     {
-        case LEFT_ARM:
-            if( sid.index == left_hand_link_id )
-            {
-                copyVector(left_hand_ee_wrench,dest);
-                external_ft_available = true;
-            }
-            else if ( sid.index == left_gripper_frame_id )
-            {
-                copyVector(left_gripper_ee_wrench,dest);
-                external_ft_available = true;
-            }
-        break;
-        case RIGHT_ARM:
-            if( sid.index == right_hand_link_id )
-            {
-                copyVector(right_hand_ee_wrench,dest);
-                external_ft_available = true;
-            }
-            else if ( sid.index == right_gripper_frame_id )
-            {
-                copyVector(right_gripper_ee_wrench,dest);
-                external_ft_available = true;
-            }
-        break;
-        case LEFT_LEG:
-            if( sid.index == left_foot_link_id )
-            {
-                copyVector(left_foot_ee_wrench,dest);
-                external_ft_available = true;
-            }
-            else if ( sid.index == left_sole_frame_id )
-            {
-                copyVector(left_sole_ee_wrench,dest);
-                external_ft_available = true;
-            }
-        break;
-        case RIGHT_LEG:
-            if( sid.index == right_foot_link_id )
-            {
-                copyVector(right_foot_ee_wrench,dest);
-                external_ft_available = true;
-            }
-            else if ( sid.index == right_sole_frame_id )
-            {
-                copyVector(right_sole_ee_wrench,dest);
-                external_ft_available = true;
-            }
-        break;
+        copyVector(left_hand_ee_wrench,dest);
+        external_ft_available = true;
+    }
+    else if ( sid == left_gripper_frame_id )
+    {
+        copyVector(left_gripper_ee_wrench,dest);
+        external_ft_available = true;
+    }
+    else if( sid == right_hand_link_id )
+    {
+        copyVector(right_hand_ee_wrench,dest);
+        external_ft_available = true;
+    }
+    else if ( sid == right_gripper_frame_id )
+    {
+        copyVector(right_gripper_ee_wrench,dest);
+        external_ft_available = true;
+    }
+    else if( sid == left_foot_link_id )
+    {
+        copyVector(left_foot_ee_wrench,dest);
+        external_ft_available = true;
+    }
+    else if ( sid == left_sole_frame_id )
+    {
+        copyVector(left_sole_ee_wrench,dest);
+        external_ft_available = true;
+    }
+    else if( sid == right_foot_link_id )
+    {
+        copyVector(right_foot_ee_wrench,dest);
+        external_ft_available = true;
+    }
+    else if ( sid == right_sole_frame_id )
+    {
+        copyVector(right_sole_ee_wrench,dest);
+        external_ft_available = true;
     }
     return external_ft_available;
 }
 
-bool icubWholeBodyDynamicsEstimator::lockAndSetEstimationParameter(const EstimateType et, const EstimationParameter ep, const void *value)
+bool yarpWholeBodyDynamicsEstimator::lockAndSetEstimationParameter(const EstimateType et, const EstimationParameter ep, const void *value)
 {
     bool res = false;
     mutex.wait();
@@ -1415,7 +1401,7 @@ bool icubWholeBodyDynamicsEstimator::lockAndSetEstimationParameter(const Estimat
     return res;
 }
 
-bool icubWholeBodyDynamicsEstimator::lockAndSetEstimationOffset(const EstimateType et, const LocalId & sid, const double *value)
+bool yarpWholeBodyDynamicsEstimator::lockAndSetEstimationOffset(const EstimateType et, const wbiId & sid, const double *value)
 {
     bool res = true;
     int ft_index;
@@ -1423,7 +1409,7 @@ bool icubWholeBodyDynamicsEstimator::lockAndSetEstimationOffset(const EstimateTy
     switch(et)
     {
     case ESTIMATE_FORCE_TORQUE_SENSOR: ///< \todo TODO
-        ft_index = sensors->getSensorList(SENSOR_FORCE_TORQUE).localToGlobalId(sid);
+        sensors->getSensorList(SENSOR_FORCE_TORQUE).wbiIdToNumericId(sid,ft_index);
         memcpy(forcetorques_offset[ft_index].data(), (double*)value, sizeof(double)*sensorTypeDescriptions[SENSOR_FORCE_TORQUE].dataSize);
         break;
     default:
@@ -1433,7 +1419,7 @@ bool icubWholeBodyDynamicsEstimator::lockAndSetEstimationOffset(const EstimateTy
     return res;
 }
 
-bool icubWholeBodyDynamicsEstimator::lockAndGetEstimationOffset(const EstimateType et, const LocalId & sid, double *value)
+bool yarpWholeBodyDynamicsEstimator::lockAndGetEstimationOffset(const EstimateType et, const wbiId & sid, double *value)
 {
     bool res = true;
     int ft_index;
@@ -1441,7 +1427,7 @@ bool icubWholeBodyDynamicsEstimator::lockAndGetEstimationOffset(const EstimateTy
     switch(et)
     {
     case ESTIMATE_FORCE_TORQUE_SENSOR: ///< \todo TODO
-        ft_index = sensors->getSensorList(SENSOR_FORCE_TORQUE).localToGlobalId(sid);
+        sensors->getSensorList(SENSOR_FORCE_TORQUE).wbiIdToNumericId(sid,ft_index);
         memcpy(value, forcetorques_offset[ft_index].data(), sizeof(double)*sensorTypeDescriptions[SENSOR_FORCE_TORQUE].dataSize);
         break;
     default:
@@ -1453,7 +1439,7 @@ bool icubWholeBodyDynamicsEstimator::lockAndGetEstimationOffset(const EstimateTy
 
 
 
-bool icubWholeBodyDynamicsEstimator::setVelFiltParams(int windowLength, double threshold)
+bool yarpWholeBodyDynamicsEstimator::setVelFiltParams(int windowLength, double threshold)
 {
     if(windowLength<1 || threshold<=0.0)
         return false;
@@ -1469,7 +1455,7 @@ bool icubWholeBodyDynamicsEstimator::setVelFiltParams(int windowLength, double t
     return true;
 }
 
-bool icubWholeBodyDynamicsEstimator::setAccFiltParams(int windowLength, double threshold)
+bool yarpWholeBodyDynamicsEstimator::setAccFiltParams(int windowLength, double threshold)
 {
     if(windowLength<1 || threshold<=0.0)
         return false;
@@ -1485,7 +1471,7 @@ bool icubWholeBodyDynamicsEstimator::setAccFiltParams(int windowLength, double t
     return true;
 }
 
-bool icubWholeBodyDynamicsEstimator::setDtauJFiltParams(int windowLength, double threshold)
+bool yarpWholeBodyDynamicsEstimator::setDtauJFiltParams(int windowLength, double threshold)
 {
     if(windowLength<1 || threshold<=0.0)
         return false;
@@ -1501,7 +1487,7 @@ bool icubWholeBodyDynamicsEstimator::setDtauJFiltParams(int windowLength, double
     return true;
 }
 
-bool icubWholeBodyDynamicsEstimator::setDtauMFiltParams(int windowLength, double threshold)
+bool yarpWholeBodyDynamicsEstimator::setDtauMFiltParams(int windowLength, double threshold)
 {
     if(windowLength<1 || threshold<=0.0)
         return false;
@@ -1517,28 +1503,28 @@ bool icubWholeBodyDynamicsEstimator::setDtauMFiltParams(int windowLength, double
     return true;
 }
 
-bool icubWholeBodyDynamicsEstimator::setTauJCutFrequency(double fc)
+bool yarpWholeBodyDynamicsEstimator::setTauJCutFrequency(double fc)
 {
     return tauJFilt->setCutFrequency(fc);
 }
 
-bool icubWholeBodyDynamicsEstimator::setTauMCutFrequency(double fc)
+bool yarpWholeBodyDynamicsEstimator::setTauMCutFrequency(double fc)
 {
     return tauMFilt->setCutFrequency(fc);
 }
 
-bool icubWholeBodyDynamicsEstimator::setPwmCutFrequency(double fc)
+bool yarpWholeBodyDynamicsEstimator::setPwmCutFrequency(double fc)
 {
     return pwmFilt->setCutFrequency(fc);
 }
 
-bool icubWholeBodyDynamicsEstimator::setEnableOmegaDomegaIMU(bool _enabled_omega_domega_IMU)
+bool yarpWholeBodyDynamicsEstimator::setEnableOmegaDomegaIMU(bool _enabled_omega_domega_IMU)
 {
     enable_omega_domega_IMU = _enabled_omega_domega_IMU;
     return true;
 }
 
-bool icubWholeBodyDynamicsEstimator::setMinTaxel(const int _min_taxel)
+bool yarpWholeBodyDynamicsEstimator::setMinTaxel(const int _min_taxel)
 {
     if( _min_taxel < 0 )
     {
