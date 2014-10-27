@@ -452,11 +452,7 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
                     return itrq[li.bodyPart]->setRefTorque(i, *ref);
             }
             ///< iCub simulator does not implement PWM motor control
-#ifdef YARP_INTERACTION_MODE_MOTOR_INTERFACE
             case CTRL_MODE_MOTOR_PWM:   return isICubSimulator(robot) ? true : iopl[li.bodyPart]->setRefOutput(i, *ref);
-#else /* YARP_INTERACTION_MODE_MOTOR_INTERFACE */
-            case CTRL_MODE_MOTOR_PWM:   return isICubSimulator(robot) ? true : iopl[li.bodyPart]->setOutput(i, *ref);
-#endif /* YARP_INTERACTION_MODE_MOTOR_INTERFACE */
             default: break;
         }
         return false;
@@ -614,11 +610,7 @@ bool icubWholeBodyActuators::setControlReference(double *ref, int joint)
                 break;
             case CTRL_MODE_MOTOR_PWM:
                 if(!isICubSimulator(robot)) ///< iCub simulator does not implement PWM motor control
-#ifdef YARP_INTERACTION_MODE_MOTOR_INTERFACE
                     ok = ok && iopl[itBp->first]->setRefOutput(j, ref[i]);
-#else /* #ifdef YARP_INTERACTION_MODE_MOTOR_INTERFACE */
-                    ok = ok && iopl[itBp->first]->setOutput(j, ref[i]);
-#endif
                 break;
             default:
                 printf("[icubWholeBodyActuators::setControlReference] ERROR: unmanaged control mode.\n");
