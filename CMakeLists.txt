@@ -21,7 +21,7 @@ ycm_default_dirs(${VARS_PREFIX})
 option(CODYCO_USES_URDFDOM "Compile yarpWholeBodyInterface with URDF support" TRUE)
 option(ICUBWBI_USE_EXTERNAL_TORQUE_CONTROL "Compile yarpwholebodyinterface to use JTC external torque control" FALSE)
 option(COMPILE_AS_SHARED_LIBRARY "Compile ${PROJECT_NAME} as a shared library" TRUE)
-option(ENABLE_TESTS "Enable unit testing using Gazebo simulator" TRUE)
+option(ENABLE_TESTS "Enable unit testing using Gazebo simulator" FALSE)
 
 find_package(YARP REQUIRED)
 find_package(ICUB REQUIRED)
