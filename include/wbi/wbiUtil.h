@@ -66,6 +66,9 @@ namespace wbi
 
         wbiId(const std::string & new_id);
 
+        wbiId(const char * new_id);
+
+
         wbiId & operator=(const wbiId & id_copy);
 
         /**

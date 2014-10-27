@@ -39,6 +39,11 @@ wbiId::wbiId(const std::string & _id)
     id = _id;
 }
 
+wbiId::wbiId(const char * _id)
+{
+    id = std::string(_id);
+}
+
 
 const std::string & wbiId::toString() const
 {
