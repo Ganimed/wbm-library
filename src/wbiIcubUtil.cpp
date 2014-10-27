@@ -163,9 +163,7 @@ bool openPolyDriver(const std::string &localName, const std::string &robotName, 
     options.put("device","remote_controlboard");
     options.put("local",localPort.c_str());
     options.put("remote",remotePort.c_str());
-#ifdef YARP_INTERACTION_MODE_MOTOR_INTERFACE
     options.put("writeStrict","on");
-#endif
     pd = new yarp::dev::PolyDriver(options);
     if(!pd || !(pd->isValid()))
     {
