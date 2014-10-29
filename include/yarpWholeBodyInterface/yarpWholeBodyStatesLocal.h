@@ -61,7 +61,7 @@ namespace yarpWbi
     protected:
         yarpWholeBodySensors        *sensors;
         yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> * port_skin_contacts;
-        iCub::iDynTree::iCubTree * icub_model;
+        iCub::iDynTree::iCubTree * robot_estimation_model;
 
         //double                      estWind;        // time window for the estimation
 
@@ -166,6 +166,7 @@ namespace yarpWbi
         int min_taxel;
         bool assume_fixed_base;
         enum { FIXED_ROOT_LINK, FIXED_L_SOLE, FIXED_R_SOLE } fixed_link;
+        yarp::os::Property wbi_yarp_conf;
 
         yarp::sig::Vector omega_used_IMU;
         yarp::sig::Vector domega_used_IMU;
@@ -216,9 +217,6 @@ namespace yarpWbi
 
         /** Store external wrenches ad the end effectors */
         void readEndEffectorsExternalWrench();
-
-        /** Version of considered iCub robot */
-        iCub::iDynTree::iCubTree_version_tag icub_version;
 
     public:
 

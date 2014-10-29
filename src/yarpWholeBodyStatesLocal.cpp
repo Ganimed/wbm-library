@@ -18,8 +18,11 @@
 #include "yarpWholeBodyInterface/yarpWholeBodyStatesLocal.h"
 #include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
 #include <iCub/skinDynLib/common.h>
+
 #include <yarp/os/Time.h>
 #include <yarp/os/Log.h>
+#include <yarp/os/ResourceFinder.h>
+
 #include <string>
 #include <iostream>
 #include <yarp/os/Log.h>
@@ -400,7 +403,8 @@ yarpWholeBodyDynamicsEstimator::yarpWholeBodyDynamicsEstimator(int _period,
    port_skin_contacts(_port_skin_contacts),
    dqFilt(0), d2qFilt(0),
    enable_omega_domega_IMU(false),
-   min_taxel(0)
+   min_taxel(0),
+   wbi_yarp_conf(_wbi_yarp_conf)
 {
 
     resizeAll(sensors->getSensorNumber(SENSOR_ENCODER));
@@ -535,13 +539,25 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
             break;
         }
     }
+
+    if( !this->wbi_yarp_conf.check("urdf_file") )
+    {
+        std::cerr << "[ERR] yarpWholeBodyStatesLocal error: urdf_file not found in configuration files" << std::endl;
+        return false;
+    }
+
+    std::string urdf_file = this->wbi_yarp_conf.find("urdf_file").asString().c_str();
+    yarp::os::ResourceFinder rf;
+    std::string urdf_file_path = rf.findFile(urdf_file.c_str());
+
+
     model_mutex.wait();
     {
         if( !assume_fixed_base )
         {
-            icub_model = new iCub::iDynTree::iCubTree(icub_version);
+            robot_estimation_model = new iCub::iDynTree::iCubTree(urdf_file_path);
         } else {
-            icub_model = new iCub::iDynTree::iCubTree(icub_version,fixed_link_name);
+            robot_estimation_model = new iCub::iDynTree::iCubTree(urdf_file_path,fixed_link_name);
         }
     }
     model_mutex.post();
@@ -557,26 +573,26 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     right_sole_frame_id = "r_sole";
 
     //Find end effector ids
-    left_hand_link_idyntree_id = icub_model->getLinkIndex(left_hand_link_id.toString());
+    left_hand_link_idyntree_id = robot_estimation_model->getLinkIndex(left_hand_link_id.toString());
     YARP_ASSERT(left_hand_link_idyntree_id >= 0);
-    right_hand_link_idyntree_id = icub_model->getLinkIndex(right_hand_link_id.toString());
+    right_hand_link_idyntree_id = robot_estimation_model->getLinkIndex(right_hand_link_id.toString());
     YARP_ASSERT(right_hand_link_idyntree_id >= 0);
-    left_foot_link_idyntree_id = icub_model->getLinkIndex(left_foot_link_id.toString());
+    left_foot_link_idyntree_id = robot_estimation_model->getLinkIndex(left_foot_link_id.toString());
     YARP_ASSERT(left_foot_link_idyntree_id >= 0);
-    right_foot_link_idyntree_id = icub_model->getLinkIndex(right_foot_link_id.toString());
+    right_foot_link_idyntree_id = robot_estimation_model->getLinkIndex(right_foot_link_id.toString());
     YARP_ASSERT(right_foot_link_idyntree_id >= 0);
 
-    left_gripper_frame_idyntree_id = icub_model->getLinkIndex(left_gripper_frame_id.toString());
+    left_gripper_frame_idyntree_id = robot_estimation_model->getLinkIndex(left_gripper_frame_id.toString());
     YARP_ASSERT(left_gripper_frame_idyntree_id >= 0);
-    right_gripper_frame_idyntree_id = icub_model->getLinkIndex(right_gripper_frame_id.toString());
+    right_gripper_frame_idyntree_id = robot_estimation_model->getLinkIndex(right_gripper_frame_id.toString());
     YARP_ASSERT(right_hand_link_idyntree_id >= 0);
-    left_sole_frame_idyntree_id = icub_model->getLinkIndex(left_sole_frame_id.toString());
+    left_sole_frame_idyntree_id = robot_estimation_model->getLinkIndex(left_sole_frame_id.toString());
     YARP_ASSERT(left_sole_frame_idyntree_id >= 0);
-    right_sole_frame_idyntree_id = icub_model->getLinkIndex(right_sole_frame_id.toString());
+    right_sole_frame_idyntree_id = robot_estimation_model->getLinkIndex(right_sole_frame_id.toString());
     YARP_ASSERT(right_sole_frame_idyntree_id >= 0);
 
     //Compatibility layer for hardcoded skin ids
-    KDL::CoDyCo::TreePartition icub_partition = icub_model->getKDLUndirectedTree().getPartition();
+    KDL::CoDyCo::TreePartition icub_partition = robot_estimation_model->getKDLUndirectedTree().getPartition();
     left_hand_link_old_id = icub_partition.getLocalLinkIndex(left_hand_link_idyntree_id);
     YARP_ASSERT(left_hand_link_old_id >= 0);
     right_hand_link_old_id = icub_partition.getLocalLinkIndex(right_hand_link_idyntree_id);
@@ -596,7 +612,7 @@ void yarpWholeBodyDynamicsEstimator::run()
 {
     run_mutex.wait();
     //Temporary workaround: yarpWholeBodyStatesLocal needs all the DOF present in the dynamical model
-    if( sensors->getSensorNumber(wbi::SENSOR_ENCODER) != icub_model->getNrOfDOFs() )
+    if( sensors->getSensorNumber(wbi::SENSOR_ENCODER) != robot_estimation_model->getNrOfDOFs() )
     {
         wbiIdList list = sensors->getSensorList(wbi::SENSOR_ENCODER);
 
@@ -604,7 +620,7 @@ void yarpWholeBodyDynamicsEstimator::run()
 
            std::cerr << "yarpWholeBodyDynamicsEstimator::run() error: " <<
                   sensors->getSensorNumber(wbi::SENSOR_ENCODER) << " joint sensors are available, while  " <<
-                  icub_model->getNrOfDOFs() << " joints are present in the model " << std::endl;
+                  robot_estimation_model->getNrOfDOFs() << " joints are present in the model " << std::endl;
         assert(false);
         return;
     }
@@ -940,33 +956,33 @@ void yarpWholeBodyDynamicsEstimator::estimateExternalForcesAndJointTorques()
     }
 
     model_mutex.wait();
-    assert((int)estimates.lastQ.size() == icub_model->getNrOfDOFs());
-    assert((int)estimates.lastDq.size() == icub_model->getNrOfDOFs());
-    assert((int)estimates.lastD2q.size() == icub_model->getNrOfDOFs());
+    assert((int)estimates.lastQ.size() == robot_estimation_model->getNrOfDOFs());
+    assert((int)estimates.lastDq.size() == robot_estimation_model->getNrOfDOFs());
+    assert((int)estimates.lastD2q.size() == robot_estimation_model->getNrOfDOFs());
 
-    YARP_ASSERT(icub_model->setInertialMeasure(omega_used_IMU,domega_used_IMU,ddp_used_IMU));
-    (icub_model->setAng(estimates.lastQ));
-    (icub_model->setDAng(estimates.lastDq));
-    (icub_model->setD2Ang(estimates.lastD2q));
-    for(int i=0; i < icub_model->getNrOfFTSensors(); i++ ) {
+    YARP_ASSERT(robot_estimation_model->setInertialMeasure(omega_used_IMU,domega_used_IMU,ddp_used_IMU));
+    (robot_estimation_model->setAng(estimates.lastQ));
+    (robot_estimation_model->setDAng(estimates.lastDq));
+    (robot_estimation_model->setD2Ang(estimates.lastD2q));
+    for(int i=0; i < robot_estimation_model->getNrOfFTSensors(); i++ ) {
         //std::cout << "Number of F/T sensors available " << estimates.lastForceTorques.size() << std::endl;
         //std::cout << "Number of F/T sensors required by the model " << icub_model->getNrOfFTSensors() << std::endl;
-        YARP_ASSERT((int)estimates.lastForceTorques.size() == icub_model->getNrOfFTSensors());
+        YARP_ASSERT((int)estimates.lastForceTorques.size() == robot_estimation_model->getNrOfFTSensors());
         assert(estimates.lastForceTorques[i].size() == 6);
-        YARP_ASSERT(icub_model->setSensorMeasurement(i,estimates.lastForceTorques[i]));
+        YARP_ASSERT(robot_estimation_model->setSensorMeasurement(i,estimates.lastForceTorques[i]));
     }
-    icub_model->setContacts(dynContacts);
+    robot_estimation_model->setContacts(dynContacts);
 
     /** \todo TODO avoid unlocking/locking a mutex locked in the calling function in the called function */
     /** \todo TODO use a different mutex to ensure that the dimensions of the sensors/states does not change? */
     //mutex.post();
 
-    YARP_ASSERT(icub_model->kinematicRNEA());
-    YARP_ASSERT(icub_model->estimateContactForcesFromSkin());
-    YARP_ASSERT(icub_model->dynamicRNEA());
-    YARP_ASSERT(icub_model->computePositions());
+    YARP_ASSERT(robot_estimation_model->kinematicRNEA());
+    YARP_ASSERT(robot_estimation_model->estimateContactForcesFromSkin());
+    YARP_ASSERT(robot_estimation_model->dynamicRNEA());
+    YARP_ASSERT(robot_estimation_model->computePositions());
 
-    estimatedLastDynContacts = icub_model->getContacts();
+    estimatedLastDynContacts = robot_estimation_model->getContacts();
 
     //Create estimatedLastSkinDynContacts using original skinContacts list read from skinManager
     // for each dynContact find the related skinContact (if any) and set the wrench in it
@@ -1015,25 +1031,25 @@ void yarpWholeBodyDynamicsEstimator::estimateExternalForcesAndJointTorques()
         //If a dyn contact is found on the end effector, store its value
         if( contactLink == left_hand_link_id )
         {
-            getEEWrench(*icub_model,estimatedLastDynContacts[i],left_arm_ee_contact_found,
+            getEEWrench(*robot_estimation_model,estimatedLastDynContacts[i],left_arm_ee_contact_found,
                         left_hand_ee_wrench,left_gripper_ee_wrench,left_gripper_frame_idyntree_id,left_hand_link_idyntree_id);
             laContactFound = true;
         }
         if( contactLink ==  right_hand_link_id )
         {
-            getEEWrench(*icub_model,estimatedLastDynContacts[i],right_arm_ee_contact_found,
+            getEEWrench(*robot_estimation_model,estimatedLastDynContacts[i],right_arm_ee_contact_found,
                         right_hand_ee_wrench,right_gripper_ee_wrench,right_gripper_frame_idyntree_id,right_hand_link_idyntree_id);
             raContactFound = true;
         }
         if( contactLink ==  left_foot_link_id )
         {
-            getEEWrench(*icub_model,estimatedLastDynContacts[i],left_leg_ee_contact_found,
+            getEEWrench(*robot_estimation_model,estimatedLastDynContacts[i],left_leg_ee_contact_found,
                         left_foot_ee_wrench,left_sole_ee_wrench,left_sole_frame_idyntree_id,left_foot_link_idyntree_id);
             llContactFound = true;
         }
         if( contactLink ==  right_foot_link_id )
         {
-            getEEWrench(*icub_model,estimatedLastDynContacts[i],right_leg_ee_contact_found,
+            getEEWrench(*robot_estimation_model,estimatedLastDynContacts[i],right_leg_ee_contact_found,
                         right_foot_ee_wrench,right_sole_ee_wrench,right_sole_frame_idyntree_id,right_foot_link_idyntree_id);
             rlContactFound = true;
         }
@@ -1068,8 +1084,8 @@ void yarpWholeBodyDynamicsEstimator::estimateExternalForcesAndJointTorques()
 
     estimatedLastSkinDynContacts = skinContacts;
 
-    assert((int)tauJ.size() == icub_model->getNrOfDOFs());
-    tauJ = icub_model->getTorques();
+    assert((int)tauJ.size() == robot_estimation_model->getNrOfDOFs());
+    tauJ = robot_estimation_model->getTorques();
     model_mutex.post();
 
 }
