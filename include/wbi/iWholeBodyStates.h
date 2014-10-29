@@ -81,7 +81,7 @@ namespace wbi {
          * @param blocking If true, perform a blocking read before estimating, otherwise the estimate is based on the last reading.
          * @return True if all the estimate succeeded, false otherwise.
          */
-        virtual bool getEstimate(const EstimateType et, const int sensor, double *data, double time=-1.0, bool blocking=true) = 0;
+        virtual bool getEstimate(const EstimateType et, const int estimate, double *data, double time=-1.0, bool blocking=true) = 0;
 
         /** Get all the estimates of the specified estimate type at the specified time.
          * @param et Type of estimate to get.
