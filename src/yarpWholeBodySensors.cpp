@@ -72,7 +72,7 @@ bool yarpWholeBodySensors::init()
 
     //Get encoders
     #ifndef NDEBUG
-    std::cout << "yarpWholeBodySensors: initializing with " << encoderIdList.size() << " encoders " <<
+    std::cout << "[INFO] yarpWholeBodySensors: initializing with " << encoderIdList.size() << " encoders " <<
                                                                pwmSensIdList.size() << " pwm sensors " <<
                                                                ftSensIdList.size() << " F/T sensors " <<
                                                                imuIdList.size() << " IMUs " << std::endl;
@@ -124,7 +124,7 @@ bool yarpWholeBodySensors::init()
     }
     if( !initDone )
     {
-        std::cerr << "yarpWholeBodySensors::init() error: failing in opening encoders." << std::endl;
+        std::cerr << "[ERR] yarpWholeBodySensors::init() error: failing in opening encoders." << std::endl;
         return false;
     }
 
@@ -136,7 +136,7 @@ bool yarpWholeBodySensors::init()
 
     if( !initDone )
     {
-        std::cerr << "yarpWholeBodySensors::init() error: failing in opening motor pwm inputs." << std::endl;
+        std::cerr << "[ERR] yarpWholeBodySensors::init() error: failing in opening motor pwm inputs." << std::endl;
         return false;
     }
 
@@ -148,15 +148,15 @@ bool yarpWholeBodySensors::init()
 
     if( !initDone )
     {
-        std::cerr << "yarpWholeBodySensors::init() error: failing in opening torques sensors." << std::endl;
+        std::cerr << "[ERR] yarpWholeBodySensors::init() error: failing in opening torques sensors." << std::endl;
         return false;
     }
 
 
     //Load imu and ft sensors information
     std::vector<string> imu_ports, ft_ports;
-    bool ret = loadFTSensorPortsFromConfig(wbi_yarp_properties,ftSensIdList,imu_ports);
-    ret = ret && loadIMUSensorPortsFromConfig(wbi_yarp_properties,imuIdList,ft_ports);
+    bool ret = loadFTSensorPortsFromConfig(wbi_yarp_properties,ftSensIdList,ft_ports);
+    ret = ret && loadIMUSensorPortsFromConfig(wbi_yarp_properties,imuIdList,imu_ports);
     if( ! ret )
     {
         std::cerr << "yarpWholeBodySensors::init() error: failing in loading configuration of IMU and FT sensors." << std::endl;
@@ -167,9 +167,12 @@ bool yarpWholeBodySensors::init()
     int nrOfFtSensors = ftSensIdList.size();
     ftSensLastRead.resize(nrOfFtSensors);
     ftStampSensLastRead.resize(nrOfFtSensors);
+    portsFTsens.resize(nrOfFtSensors);
+
     int nrOfImuSensors = imuIdList.size();
     imuLastRead.resize(nrOfImuSensors);
     imuStampLastRead.resize(nrOfImuSensors);
+    portsIMU.resize(nrOfImuSensors);
 
     for(int ft_numeric_id = 0; ft_numeric_id < (int)ftSensIdList.size(); ft_numeric_id++)
     {
@@ -178,7 +181,7 @@ bool yarpWholeBodySensors::init()
 
     if( !initDone )
     {
-        std::cerr << "yarpWholeBodySensors::init() error: failing in opening force/torque sensors." << std::endl;
+        std::cerr << "[ERR] yarpWholeBodySensors::init() error: failing in opening force/torque sensors." << std::endl;
         return false;
     }
 
@@ -189,7 +192,7 @@ bool yarpWholeBodySensors::init()
 
     if( !initDone )
     {
-        std::cerr << "yarpWholeBodySensors::init() error: failing in opening imu sensors." << std::endl;
+        std::cerr << "[ERR] yarpWholeBodySensors::init() error: failing in opening imu sensors." << std::endl;
         return false;
     }
 

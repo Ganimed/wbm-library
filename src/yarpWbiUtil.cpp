@@ -83,7 +83,7 @@ bool getControlBoardAxisList(yarp::os::Bottle & joints_config,
 
         if( joints_config.find(wbi_jnt_name.toString().c_str()).isNull() )
         {
-            std::cerr << "yarpWbiUtil error: joint " << wbi_jnt_name.toString() << " not found in WBI_YARP_JOINTS section " << std::endl;
+            std::cerr << "[ERR] yarpWbiUtil error: joint " << wbi_jnt_name.toString() << " not found in WBI_YARP_JOINTS section " << std::endl;
             return false;
         }
 
@@ -91,14 +91,14 @@ bool getControlBoardAxisList(yarp::os::Bottle & joints_config,
 
         if( ctrlBoard_mapping->size() != 2 )
         {
-            std::cerr << "yarpWbiUtil error: joint " << wbi_jnt_name.toString() << " found in WBI_YARP_JOINTS section, but with wrong format " << std::endl;
+            std::cerr << "[ERR] yarpWbiUtil error: joint " << wbi_jnt_name.toString() << " found in WBI_YARP_JOINTS section, but with wrong format " << std::endl;
             return false;
         }
 
         std::string controlboard_name = ctrlBoard_mapping->get(0).asString().c_str();
         if( controlBoardIds.find(controlboard_name) == controlBoardIds.end() )
         {
-            std::cerr << "yarpWbiUtil :: getControlBoardAxisList error in configuration files with joint " << wbi_jnt_name.toString() << std::endl;
+            std::cerr << "[ERR] yarpWbiUtil :: getControlBoardAxisList error in configuration files with joint " << wbi_jnt_name.toString() << std::endl;
             return false;
         }
     }
@@ -204,9 +204,9 @@ bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
     sensorIdList = wbi::wbiIdList();
     ports.resize(0);
 
-    ports.resize(ports_list.size());
-    for(int port_id = 0; port_id < ports_list.size(); port_id++ ) {
-        yarp::os::Bottle * port = ports_list.get(port_id).asList();
+    ports.resize(ports_list.size()-1);
+    for(int port_id = 0; port_id < ports_list.size()-1; port_id++ ) {
+        yarp::os::Bottle * port = ports_list.get(port_id+1).asList();
         if( port == NULL || port->size() != 2 ) {
             std::cout << "yarpWbi::loadSensorPortsFromConfig error: " << ports_list.toString() << " has a malformed element" << std::endl;
             return false;
@@ -323,7 +323,7 @@ bool loadIdListsFromConfigRecursiveHelper(std::string & requested_list,
                                           yarp::os::Bottle & list_bots)
 {
     yarp::os::Bottle * requested_list_bot = list_bots.find(requested_list).asList();
-    std::cout << "Requested list bot: " << requested_list_bot->toString() << std::endl;
+    std::cout << "[INFO] Requested list bot: " << requested_list_bot->toString() << std::endl;
     if( requested_list_bot == NULL )
     {
         return false;

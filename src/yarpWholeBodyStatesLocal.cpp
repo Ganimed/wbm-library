@@ -560,7 +560,38 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
             robot_estimation_model = new iCub::iDynTree::iCubTree(urdf_file_path,fixed_link_name);
         }
     }
+    //Load mapping from skinDynLib to iDynTree links from configuration files
     model_mutex.post();
+
+    if( !this->wbi_yarp_conf.check("IDYNTREE_SKINDYNLIB_LINKS") )
+    {
+        std::cerr << "[ERR] yarpWholeBodyStatesLocal error: IDYNTREE_SKINDYNLIB_LINKS group not found in configuration files" << std::endl;
+        return false;
+    }
+
+    yarp::os::Bottle & bot =  this->wbi_yarp_conf.findGroup("IDYNTREE_SKINDYNLIB_LINKS");
+    for(int i=1; i < bot.size(); i++ )
+    {
+        yarp::os::Bottle * map_bot = bot.get(i).asList();
+        if( map_bot->size() != 2 || map_bot->get(1).asList() == NULL ||
+            map_bot->get(1).asList()->size() != 2 ) 
+        {
+            std::cerr << "[ERR] yarpWholeBodyStatesLocal error: IDYNTREE_SKINDYNLIB_LINKS group is malformed (" << map_bot->toString() << ")" << std::endl;
+            return false;
+        }
+        std::string link_name = map_bot->get(0).asString();
+        int body_part = map_bot->get(1).asList()->get(0).asInt();
+        int local_link_index = map_bot->get(1).asList()->get(1).asInt();
+        model_mutex.wait();
+        bool ret_sdl = robot_estimation_model->addSkinDynLibAlias(link_name,body_part,local_link_index);
+        model_mutex.wait();
+        if( ret_sdl )
+        {
+            std::cerr << "[ERR] yarpWholeBodyStatesLocal error: IDYNTREE_SKINDYNLIB_LINKS link " << link_name << " not found in urdf model" << std::endl; 
+            return false;
+        } 
+    }
+    std::cerr << std::endl << "[INFO] IDYNTREE_SKINDYNLIB_LINKS correctly loaded" << std::endl;
 
     left_hand_link_id = "l_hand";
     right_hand_link_id = "r_hand";
@@ -574,36 +605,30 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
 
     //Find end effector ids
     left_hand_link_idyntree_id = robot_estimation_model->getLinkIndex(left_hand_link_id.toString());
-    YARP_ASSERT(left_hand_link_idyntree_id >= 0);
+    //YARP_ASSERT(left_hand_link_idyntree_id >= 0);
     right_hand_link_idyntree_id = robot_estimation_model->getLinkIndex(right_hand_link_id.toString());
-    YARP_ASSERT(right_hand_link_idyntree_id >= 0);
+    //YARP_ASSERT(right_hand_link_idyntree_id >= 0);
     left_foot_link_idyntree_id = robot_estimation_model->getLinkIndex(left_foot_link_id.toString());
-    YARP_ASSERT(left_foot_link_idyntree_id >= 0);
+    //YARP_ASSERT(left_foot_link_idyntree_id >= 0);
     right_foot_link_idyntree_id = robot_estimation_model->getLinkIndex(right_foot_link_id.toString());
-    YARP_ASSERT(right_foot_link_idyntree_id >= 0);
+    //YARP_ASSERT(right_foot_link_idyntree_id >= 0);
 
     left_gripper_frame_idyntree_id = robot_estimation_model->getLinkIndex(left_gripper_frame_id.toString());
-    YARP_ASSERT(left_gripper_frame_idyntree_id >= 0);
+    //YARP_ASSERT(left_gripper_frame_idyntree_id >= 0);
     right_gripper_frame_idyntree_id = robot_estimation_model->getLinkIndex(right_gripper_frame_id.toString());
-    YARP_ASSERT(right_hand_link_idyntree_id >= 0);
+    //YARP_ASSERT(right_hand_link_idyntree_id >= 0);
     left_sole_frame_idyntree_id = robot_estimation_model->getLinkIndex(left_sole_frame_id.toString());
-    YARP_ASSERT(left_sole_frame_idyntree_id >= 0);
+    //YARP_ASSERT(left_sole_frame_idyntree_id >= 0);
     right_sole_frame_idyntree_id = robot_estimation_model->getLinkIndex(right_sole_frame_id.toString());
-    YARP_ASSERT(right_sole_frame_idyntree_id >= 0);
+    //YARP_ASSERT(right_sole_frame_idyntree_id >= 0);
 
-    //Compatibility layer for hardcoded skin ids
-    KDL::CoDyCo::TreePartition icub_partition = robot_estimation_model->getKDLUndirectedTree().getPartition();
-    left_hand_link_old_id = icub_partition.getLocalLinkIndex(left_hand_link_idyntree_id);
-    YARP_ASSERT(left_hand_link_old_id >= 0);
-    right_hand_link_old_id = icub_partition.getLocalLinkIndex(right_hand_link_idyntree_id);
-    YARP_ASSERT(right_hand_link_old_id >= 0);
-    left_foot_link_old_id = icub_partition.getLocalLinkIndex(left_foot_link_idyntree_id);
-    right_foot_link_old_id = icub_partition.getLocalLinkIndex(right_foot_link_idyntree_id);
-    left_gripper_frame_old_id = icub_partition.getLocalLinkIndex(left_gripper_frame_idyntree_id);
-    right_gripper_frame_old_id = icub_partition.getLocalLinkIndex(right_gripper_frame_idyntree_id);
-    left_sole_frame_old_id = icub_partition.getLocalLinkIndex(left_sole_frame_idyntree_id);
-    right_sole_frame_old_id = icub_partition.getLocalLinkIndex(right_sole_frame_idyntree_id);
-
+    wbiIdList available_encoders = sensors->getSensorList(wbi::SENSOR_ENCODER);
+    for(int i = 0; i < (int)available_encoders.size(); i++ )
+    {
+        wbiId enc;
+        available_encoders.numericIdToWbiId(i,enc);
+        YARP_ASSERT(robot_estimation_model->getLinkIndex(enc.toString()) == i);
+    }
 
     return ok;
 }
@@ -616,7 +641,7 @@ void yarpWholeBodyDynamicsEstimator::run()
     {
         wbiIdList list = sensors->getSensorList(wbi::SENSOR_ENCODER);
 
-        std::cerr << "Available sensors: " << list.toString() << std::endl;
+        std::cerr << "Available encoders: " << list.toString() << std::endl;
 
            std::cerr << "yarpWholeBodyDynamicsEstimator::run() error: " <<
                   sensors->getSensorNumber(wbi::SENSOR_ENCODER) << " joint sensors are available, while  " <<
@@ -663,7 +688,7 @@ void yarpWholeBodyDynamicsEstimator::run()
         ///< \todo TODO buffer value of available_imu_sensors to avoid memory allocation (?)
         ///< \todo TODO add filters for imu values ->
         wbiIdList available_imu_sensors = sensors->getSensorList(SENSOR_IMU);
-        for(int imu_numeric = 0; imu_numeric < (int) available_ft_sensors.size(); imu_numeric++ )
+        for(int imu_numeric = 0; imu_numeric < (int) available_imu_sensors.size(); imu_numeric++ )
         {
             int imu_index = imu_numeric;
             //std::cout << "readSensor for IMU " << imu_index << std::endl;
