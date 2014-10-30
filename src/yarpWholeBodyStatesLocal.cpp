@@ -71,10 +71,14 @@ bool yarpWholeBodyStatesLocal::init()
 
 bool yarpWholeBodyStatesLocal::close()
 {
-    std::cout << "yarpWholeBodyStatesLocal::close() : closing estimator thread" << std::endl;
+    std::cout << "[INFO]yarpWholeBodyStatesLocal::close() : closing estimator thread" << std::endl;
     if(estimator) estimator->stop();  // stop estimator BEFORE closing sensor interface
-    std::cout << "yarpWholeBodyStatesLocal::close() : closing sensor interface" << std::endl;
+    std::cout << "[INFO]yarpWholeBodyStatesLocal::close() : closing sensor interface" << std::endl;
     bool ok = (sensors ? sensors->close() : true);
+    std::cout << "[INFO]yarpWholeBodyStatesLocal::close() : closing skin_contacts_port" << std::endl;
+    skin_contacts_port->close();
+    //
+    //delete skin_contacts_port;
     std::cout << "yarpWholeBodyStatesLocal::close() : deleting sensor interface" << std::endl;
     if(sensors) { delete sensors; sensors = 0; }
     std::cout << "yarpWholeBodyStatesLocal::close() : deleting estimator thread" << std::endl;
@@ -550,14 +554,31 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     yarp::os::ResourceFinder rf;
     std::string urdf_file_path = rf.findFile(urdf_file.c_str());
 
+    std::vector<std::string> dof_serialization;
+    wbiIdList torque_estimation_list = sensors->getSensorList(SENSOR_ENCODER);
+    for(int dof=0; dof < (int)torque_estimation_list.size(); dof++)
+    {
+        wbiId wbi_id;
+        torque_estimation_list.numericIdToWbiId(dof,wbi_id);
+        dof_serialization.push_back(wbi_id.toString());
+    }
+
+    std::vector<std::string> ft_serialization;
+    wbiIdList ft_sensor_list = sensors->getSensorList(SENSOR_FORCE_TORQUE);
+    for(int ft=0; ft < (int)ft_sensor_list.size(); ft++)
+    {
+        wbiId wbi_id;
+        ft_sensor_list.numericIdToWbiId(ft,wbi_id);
+        ft_serialization.push_back(wbi_id.toString());
+    }
 
     model_mutex.wait();
     {
         if( !assume_fixed_base )
         {
-            robot_estimation_model = new iCub::iDynTree::iCubTree(urdf_file_path);
+            robot_estimation_model = new iCub::iDynTree::TorqueEstimationTree(urdf_file_path,dof_serialization,ft_serialization);
         } else {
-            robot_estimation_model = new iCub::iDynTree::iCubTree(urdf_file_path,fixed_link_name);
+            robot_estimation_model = new iCub::iDynTree::TorqueEstimationTree(urdf_file_path,dof_serialization,ft_serialization,fixed_link_name);
         }
     }
     //Load mapping from skinDynLib to iDynTree links from configuration files
@@ -584,14 +605,101 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
         int local_link_index = map_bot->get(1).asList()->get(1).asInt();
         model_mutex.wait();
         bool ret_sdl = robot_estimation_model->addSkinDynLibAlias(link_name,body_part,local_link_index);
-        model_mutex.wait();
-        if( ret_sdl )
+        model_mutex.post();
+        if( !ret_sdl )
         {
             std::cerr << "[ERR] yarpWholeBodyStatesLocal error: IDYNTREE_SKINDYNLIB_LINKS link " << link_name << " not found in urdf model" << std::endl; 
             return false;
         } 
     }
     std::cerr << std::endl << "[INFO] IDYNTREE_SKINDYNLIB_LINKS correctly loaded" << std::endl;
+
+
+    //Load subtree information
+    link2subtree.resize(robot_estimation_model->getNrOfLinks());
+
+    if( !this->wbi_yarp_conf.check("WBD_SUBTREES") )
+    {
+        std::cerr << "[ERR] yarpWholeBodyStatesLocal error: WBD_SUBTREES group not found in configuration files" << std::endl;
+        return false;
+    }
+
+    yarp::os::Bottle & wbd_subtrees_bot =  this->wbi_yarp_conf.findGroup("WBD_SUBTREES");
+
+
+    for(int i=1; i < wbd_subtrees_bot.size(); i++ )
+    {
+        yarp::os::Bottle * subtree_bot = wbd_subtrees_bot.get(i).asList();
+        if( subtree_bot->size() != 2
+            || subtree_bot->get(1).asList() == NULL
+            || subtree_bot->get(1).asList()->size() != 2
+            || subtree_bot->get(1).asList()->get(0).asList() == NULL )
+        {
+            std::cerr << "[ERR] yarpWholeBodyStatesLocal error: WBD_SUBTREES group is malformed (" << subtree_bot->toString() << ")" << std::endl;
+            return false;
+        }
+
+
+        TorqueEstimationSubtree subtree;
+
+        std::string subtree_name = subtree_bot->get(0).asString();
+        subtree.subtree_name = subtree_name;
+
+
+        yarp::os::Bottle * subtree_links_bot = subtree_bot->get(1).asList()->get(0).asList();
+        for(int l=0; l < subtree_links_bot->size(); l++ )
+        {
+
+            std::string link_name = subtree_links_bot->get(l).asString();
+            model_mutex.wait();
+            int link_index = robot_estimation_model->getLinkIndex(link_name);
+            model_mutex.post();
+            if( link_index < 0 )
+            {
+                std::cerr << "[ERR] yarpWholeBodyStatesLocal error: WBD_SUBTREES link " << link_name << " not found in urdf model" << std::endl;
+                return false;
+            }
+            subtree.links.push_back(link_name);
+            subtree.links_numeric_ids.insert(link_index);
+
+            int current_subtree = i-1;
+            link2subtree[link_index] = current_subtree;
+
+        }
+        std::string default_contact_link_name = subtree_bot->get(1).asList()->get(1).asString();
+
+        model_mutex.wait();
+        int default_contact_link_index = robot_estimation_model->getLinkIndex(default_contact_link_name);
+        model_mutex.post();
+        if( default_contact_link_index < 0 )
+        {
+            std::cerr << "[ERR] yarpWholeBodyStatesLocal error: WBD_SUBTREES link " << default_contact_link_name << " not found in urdf model" << std::endl;
+            return false;
+        }
+
+        if( subtree.links_numeric_ids.find(default_contact_link_index) == subtree.links_numeric_ids.end() )
+        {
+            std::cerr << "[ERR] yarpWholeBodyStatesLocal error: WBD_SUBTREES link " << default_contact_link_name
+                      << " was specified as default contact for subtree " << subtree.subtree_name
+                      << " but it is not present in the subtree" << std::endl;
+            return false;
+        }
+
+        subtree.default_contact_link = default_contact_link_index;
+
+        torque_estimation_subtrees.push_back(subtree);
+    }
+
+    contacts_for_given_subtree.resize(torque_estimation_subtrees.size());
+
+    model_mutex.wait();
+    std::cerr << "[DEBUG] robot_estimation_model->getSubTreeInternalDynamics().size() : " << robot_estimation_model->getSubTreeInternalDynamics().size() << std::endl;
+    std::cerr << "[DEBUG] torque_estimation_subtrees.size(): " << torque_estimation_subtrees.size() << std::endl;
+    YARP_ASSERT(robot_estimation_model->getSubTreeInternalDynamics().size() ==  torque_estimation_subtrees.size());
+    model_mutex.post();
+
+    std::cerr << "[INFO] WBD_SUBTREES correctly loaded with " << torque_estimation_subtrees.size() << "subtrees" << std::endl;
+
 
     left_hand_link_id = "l_hand";
     right_hand_link_id = "r_hand";
@@ -627,9 +735,14 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     {
         wbiId enc;
         available_encoders.numericIdToWbiId(i,enc);
-        YARP_ASSERT(robot_estimation_model->getLinkIndex(enc.toString()) == i);
+        if(!(robot_estimation_model->getDOFIndex(enc.toString()) == i))
+        {
+            std::cerr << "[ERR] dof " << enc.toString() << " has ID " << robot_estimation_model->getDOFIndex(enc.toString())
+                      << " in the dynamical model and id " << i << "in the wbi" << std::endl;
+        }
+        YARP_ASSERT((robot_estimation_model->getDOFIndex(enc.toString()) == i));
     }
-
+    std::cout << "[DEBUG] yarpWholeBodyDynamicsEstimator::threadInit() terminet successfully" << std::endl;
     return ok;
 }
 
@@ -817,87 +930,75 @@ void yarpWholeBodyDynamicsEstimator::readSkinContacts()
         skinContacts.clear();
     }
 
+    //std::cout << "skinContacts: " << std::endl;
+    //std::cout << skinContacts.toString() << std::endl;
+
+
     //At this point, in a way or the other skinContacts must have at least a valid contact for each subtree
     //If this is not true, we add a default contact for each subgraph
-    map<BodyPart, skinContactList> contactsPerBp = skinContacts.splitPerBodyPart();
-
     dynContacts = skinContacts.toDynContactList();
 
-    //Ugly, but if we depend on skinContact data structure we have to do in this way
-    //default contact torso
-    if( contactsPerBp[TORSO].size() == 0 ) {
-        dynContacts.push_back(getDefaultContact(TORSO_SUBTREE));
+    // std::cout << "dynContacts: " << std::endl;
+    // std::cout << dynContacts.toString() << std::endl;
+
+    for(int subtree=0; subtree < contacts_for_given_subtree.size(); subtree++ )
+    {
+        contacts_for_given_subtree[subtree] = 0;
     }
 
-    if( contactsPerBp[RIGHT_ARM].size() == 0 ) {
-        dynContacts.push_back(getDefaultContact(RIGHT_ARM_SUBTREE));
+    for(dynContactList::iterator it=dynContacts.begin();
+        it != dynContacts.end(); it++ )
+    {
+        int body_part = it->getBodyPart();
+        int local_link_index = it->getLinkNumber();
+        model_mutex.wait();
+        int link_index = robot_estimation_model->getLinkFromSkinDynLibID(body_part,local_link_index);
+        model_mutex.post();
+        // \todo TODO FIXME properly address when you find an unexpcted contact id without crashing
+        YARP_ASSERT(link_index >0);
+        contacts_for_given_subtree[link2subtree[link_index]]++;
     }
 
-    if( contactsPerBp[LEFT_ARM].size() == 0 ) {
-        dynContacts.push_back(getDefaultContact(LEFT_ARM_SUBTREE));
+    for(int subtree=0; subtree < torque_estimation_subtrees.size(); subtree++ )
+    {
+        if( contacts_for_given_subtree[subtree] == 0 )
+        {
+            dynContact default_contact = this->getDefaultContact(subtree);
+            dynContacts.push_back(default_contact);
+            //std::cout << "Adding :" << default_contact.toString() << std::endl;
+            //std::cout << "dynContacts: " << std::endl;
+            //std::cout << dynContacts.toString() << std::endl;
+        }
     }
 
-    if( contactsPerBp[RIGHT_LEG].size() == 0 ) {
-        /// \todo TODO handle v1 and v2 legs
-        dynContacts.push_back(getDefaultContact(RIGHT_LEG_SUBTREE));
-        dynContacts.push_back(getDefaultContact(RIGHT_FOOT_SUBTREE));
-    }
-
-    if( contactsPerBp[LEFT_LEG].size() == 0 ) {
-        /// \todo TODO handle v1 and v2 legs
-        dynContacts.push_back(getDefaultContact(LEFT_LEG_SUBTREE));
-        dynContacts.push_back(getDefaultContact(LEFT_FOOT_SUBTREE));
-    }
 
 }
 
 
 
-dynContact yarpWholeBodyDynamicsEstimator::getDefaultContact(const iCubSubtree icub_subtree)
+dynContact yarpWholeBodyDynamicsEstimator::getDefaultContact(const int subtree)
 {
-    dynContact return_value;
-    Vector r_knee_pos(3,0.0);
-    r_knee_pos[0] = 0.18;
-    r_knee_pos[1] = 0.04;
-    r_knee_pos[2] = 0.0;
-    Vector l_knee_pos(3,0.0);
-    l_knee_pos[0] = 0.18;
-    l_knee_pos[1] = 0.04;
-    l_knee_pos[2] = 0.0;
-    switch( icub_subtree ) {
-        case RIGHT_ARM_SUBTREE:
-            //Copied by iDynContactSolver::computeExternalContacts
-            return_value = dynContact(RIGHT_ARM,6,Vector(3,0.0));
-            break;
-        case LEFT_ARM_SUBTREE:
-            //Copied by iDynContactSolver::computeExternalContacts
-            return_value = dynContact(LEFT_ARM,6,Vector(3,0.0));
-            break;
-        case TORSO_SUBTREE:
-            // \todo TODO if floating base, use dynContact(TORSO,0,Vector(3,0.0))
-            return_value = dynContact(TORSO,0,Vector(3,0.0));
-            break;
-        case RIGHT_LEG_SUBTREE:
-            return_value = dynContact(RIGHT_LEG,3,r_knee_pos); //Approximate position of the knee
-            break;
-        case LEFT_LEG_SUBTREE:
-            return_value = dynContact(LEFT_LEG,3,l_knee_pos);  //Approximate position of the knee
-            break;
-        case RIGHT_FOOT_SUBTREE:
-            //Copied by wholeBodyDynamics run() method
-            return_value = dynContact(RIGHT_LEG,5,Vector(3,0.0));
-            break;
-        case LEFT_FOOT_SUBTREE:
-            //Copied by wholeBodyDynamics run() method
-            return_value = dynContact(LEFT_LEG,5,Vector(3,0.0));
-            break;
-        default:
-            break;
-    }
+    int default_contact_link = torque_estimation_subtrees[subtree].default_contact_link;
+
+    //std::cout << "default_contact_link" << default_contact_link << std::endl;
+    model_mutex.wait();
+    //std::cout << "Model: " << robot_estimation_model->getKDLUndirectedTree().getSerialization().toString() << std::endl;
+    model_mutex.post();
+    int body_part = -1;
+    int local_link_index = -1;
+    model_mutex.wait();
+    YARP_ASSERT(robot_estimation_model->getSkinDynLibAlias(default_contact_link,body_part,local_link_index));
+    model_mutex.post();
+    YARP_ASSERT(body_part != -1);
+    YARP_ASSERT(local_link_index != -1);
+    dynContact return_value = dynContact();
+    return_value.setBodyPart((iCub::skinDynLib::BodyPart)body_part);
+    return_value.setLinkNumber(local_link_index);
+    //std::cout << return_value.toString() << std::endl;
     return return_value;
 }
 
-void getEEWrench(const iCub::iDynTree::iCubTree & icub_model,
+void getEEWrench(const iCub::iDynTree::TorqueEstimationTree & icub_model,
                  const iCub::skinDynLib::dynContact & dyn_contact,
                  bool & contact_found,
                  yarp::sig::Vector & link_wrench,
@@ -1105,6 +1206,7 @@ void yarpWholeBodyDynamicsEstimator::estimateExternalForcesAndJointTorques()
     }
 
 
+
     //mutex.wait();
 
     estimatedLastSkinDynContacts = skinContacts;
@@ -1138,6 +1240,15 @@ void yarpWholeBodyDynamicsEstimator::threadRelease()
     deleteFirstOrderFilterVector(imuMagnetometerFilters);
     deleteFirstOrderFilterVector(forcetorqueFilters);
     if(imuAngularAccelerationFilt!=0) { delete imuAngularAccelerationFilt; imuAngularAccelerationFilt=0; }
+
+    double avgTime, stdDev, avgTimeUsed, stdDevUsed;
+    this->getEstPeriod(avgTime, stdDev);
+    this->getEstUsed(avgTimeUsed, stdDevUsed);
+    double period = this->getRate();
+    printf("[PERFORMANCE INFORMATION][yarpWholeBodyDynamicsEstimator]:\n");
+    printf("Expected period %d ms.\nReal period: %3.1f+/-%3.1f ms.\n", period, avgTime, stdDev);
+    printf("Real duration of 'run' method: %3.1f+/-%3.1f ms.\n", avgTimeUsed, stdDevUsed);
+
     return;
 }
 

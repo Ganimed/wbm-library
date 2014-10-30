@@ -30,24 +30,20 @@
 #include <iCub/skinDynLib/skinContactList.h>
 #include <yarpWholeBodyInterface/yarpWbiUtil.h>
 #include <map>
+#include <set>
 
 
 #include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
 
 namespace yarpWbi
 {
-    /**
-     * Enum of iCub subtrees
-     *
-     */
-    enum iCubSubtree {
-        TORSO_SUBTREE,
-        LEFT_ARM_SUBTREE,
-        RIGHT_ARM_SUBTREE,
-        LEFT_LEG_SUBTREE,
-        RIGHT_LEG_SUBTREE,
-        LEFT_FOOT_SUBTREE,
-        RIGHT_FOOT_SUBTREE
+    class TorqueEstimationSubtree
+    {
+    public:
+        std::string subtree_name;
+        std::vector<std::string> links;
+        std::set<int> links_numeric_ids;
+        int default_contact_link;
     };
 
 
@@ -61,7 +57,7 @@ namespace yarpWbi
     protected:
         yarpWholeBodySensors        *sensors;
         yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> * port_skin_contacts;
-        iCub::iDynTree::iCubTree * robot_estimation_model;
+        iCub::iDynTree::TorqueEstimationTree * robot_estimation_model;
 
         //double                      estWind;        // time window for the estimation
 
@@ -209,7 +205,10 @@ namespace yarpWbi
         void readSkinContacts();
 
         /** For a given subtree, get the default contact point (the one used if there are now contacts coming from the skin */
-        iCub::skinDynLib::dynContact getDefaultContact(const iCubSubtree icub_subtree);
+        iCub::skinDynLib::dynContact getDefaultContact(const int subtree_id);
+        std::vector<TorqueEstimationSubtree> torque_estimation_subtrees;
+        std::vector<int>                     contacts_for_given_subtree;
+        std::vector<int>                     link2subtree;
 
 
         /**  Estimate internal torques and external forces from measured sensors, using iDynTree library */
