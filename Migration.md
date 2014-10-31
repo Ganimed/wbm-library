@@ -16,3 +16,13 @@ becomes
 ```
 using namespace yarpWbi;
 ```
+
+### Headers names changes
+The namespace for all the headers changed from `icub` related names to `yarp` related names
+```
+#include <wbiIcub/wholeBodyInterfaceIcub.h>
+```
+becomes
+```
+#include <yarpWholeBodyInterface/yarpWholeBodyInterface.h>
+```
