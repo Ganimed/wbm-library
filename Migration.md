@@ -11,6 +11,7 @@ of changes related to this, more notably:
 
 ### All add* methods should be called before init()
 Relevant discussion: https://github.com/robotology/codyco-modules/issues/18
-To simplify implementation, now all `add*` / `remove*` methods must be called 
+
+Now all `add*` / `remove*` methods must be called 
 before calling the init() function. Once the interface is initialized, the 
 list of joints/sensors/estimates cannot be changed. 
