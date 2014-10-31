@@ -6,5 +6,13 @@ specific changes are discussed in this file.
 In 0.2.0 we aim to provide a generic interface to yarp-powered robot, removing any
 iCub specific software, most of the changes are related to that.
 
-### wbiIcub -> yarpWbi
-The namespace for all the project changed from wbiIcub to yarpWbi
+### Namespace change
+The namespace for all the project changed from `wbiIcub` to `yarpWbi`
+#### Relevant code changes
+```
+using namespace wbiIcub;
+```
+becomes
+```
+using namespace yarpWbi;
+```
