@@ -595,7 +595,7 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     {
         yarp::os::Bottle * map_bot = bot.get(i).asList();
         if( map_bot->size() != 2 || map_bot->get(1).asList() == NULL ||
-            map_bot->get(1).asList()->size() != 2 ) 
+            map_bot->get(1).asList()->size() != 2 )
         {
             std::cerr << "[ERR] yarpWholeBodyStatesLocal error: IDYNTREE_SKINDYNLIB_LINKS group is malformed (" << map_bot->toString() << ")" << std::endl;
             return false;
@@ -608,9 +608,9 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
         model_mutex.post();
         if( !ret_sdl )
         {
-            std::cerr << "[ERR] yarpWholeBodyStatesLocal error: IDYNTREE_SKINDYNLIB_LINKS link " << link_name << " not found in urdf model" << std::endl; 
+            std::cerr << "[ERR] yarpWholeBodyStatesLocal error: IDYNTREE_SKINDYNLIB_LINKS link " << link_name << " not found in urdf model" << std::endl;
             return false;
-        } 
+        }
     }
     std::cerr << std::endl << "[INFO] IDYNTREE_SKINDYNLIB_LINKS correctly loaded" << std::endl;
 
@@ -941,7 +941,7 @@ void yarpWholeBodyDynamicsEstimator::readSkinContacts()
     // std::cout << "dynContacts: " << std::endl;
     // std::cout << dynContacts.toString() << std::endl;
 
-    for(int subtree=0; subtree < contacts_for_given_subtree.size(); subtree++ )
+    for(int subtree=0; subtree < (int)contacts_for_given_subtree.size(); subtree++ )
     {
         contacts_for_given_subtree[subtree] = 0;
     }
@@ -959,7 +959,7 @@ void yarpWholeBodyDynamicsEstimator::readSkinContacts()
         contacts_for_given_subtree[link2subtree[link_index]]++;
     }
 
-    for(int subtree=0; subtree < torque_estimation_subtrees.size(); subtree++ )
+    for(int subtree=0; subtree < (int)torque_estimation_subtrees.size(); subtree++ )
     {
         if( contacts_for_given_subtree[subtree] == 0 )
         {

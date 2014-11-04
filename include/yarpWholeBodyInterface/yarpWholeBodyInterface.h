@@ -125,8 +125,8 @@ namespace yarpWbi
         // MODEL
         virtual int getDoFs(){ return modelInt->getDoFs(); }
         virtual const wbi::wbiIdList& getJointList(){ return modelInt->getJointList(); }
-        virtual bool getLinkId(const char *linkName, int &linkId)
-        { return modelInt->getLinkId(linkName, linkId); }
+        virtual const wbi::wbiIdList& getFrameList()
+        { return modelInt->getFrameList(); }
         virtual bool getJointLimits(double *qMin, double *qMax, int joint=-1)
         { return modelInt->getJointLimits(qMin, qMax, joint); }
         virtual bool computeH(double *q, const wbi::Frame &xB, int linkId, wbi::Frame &H)

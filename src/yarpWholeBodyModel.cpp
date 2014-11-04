@@ -155,6 +155,15 @@ bool yarpWholeBodyModel::init()
         wbiToiDynTreeJointId[wbi_numeric_id] = idyntree_id;
     }
 
+    //Populate the frame id add
+    // \todo TODO FIXME properly implement frames in iDynTree
+    for(int frame_numeric_id=0; frame_numeric_id < p_model->getNrOfFrames(); frame_numeric_id++ )
+    {
+        std::string frame_name;
+        p_model->getFrameName(frame_numeric_id,frame_name);
+        frameIdList.addId(frame_name);
+    }
+
 
     return this->initDone;
 }
@@ -327,22 +336,6 @@ bool yarpWholeBodyModel::convertGeneralizedTorques(yarp::sig::Vector idyntree_ba
 
     return true;
 }
-
-bool yarpWholeBodyModel::getLinkId(const char *linkName, int &linkNumericId)
-{
-    if( !this->initDone /*|| p_model == 0*/ )
-    {
-        return false;
-    }
-    int link_id = p_model->getLinkIndex(std::string(linkName));
-    if( link_id == - 1 )
-    {
-        return false;
-    }
-    linkNumericId = link_id;
-    return false;
-}
-
 
 bool yarpWholeBodyModel::getJointLimits(double *qMin, double *qMax, int joint)
 {
@@ -747,6 +740,17 @@ bool yarpWholeBodyModel::computeCentroidalMomentum(double *q, const Frame &xBase
 
     return true;
 }
+
+const wbi::wbiIdList & yarpWholeBodyModel::getJointList()
+{
+    return jointIdList;
+}
+
+const wbi::wbiIdList & yarpWholeBodyModel::getFrameList()
+{
+    return frameIdList;
+}
+
 
 
 
