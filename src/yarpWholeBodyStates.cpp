@@ -23,9 +23,9 @@
 
 #include "yarpWholeBodyInterface/yarpWholeBodyStates.h"
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
-#include <../../external/ICUB/src/libraries/icubmod/imu3DM_GX3/dataTypes.h>
 
 #include <Eigen/Sparse>
+#include <Eigen/LU>
 
 using namespace std;
 using namespace wbi;
@@ -78,7 +78,7 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
         return false;
     }
 
-    for(int encoder_id = 0; encoder_id < estimateIdList[SENSOR_ENCODER].size(); encoder_id++)
+    for(int encoder_id = 0; encoder_id < (int)estimateIdList[SENSOR_ENCODER].size(); encoder_id++)
     {
         //search if coupling information is provided for each motor, if not return false
         wbi::wbiId joint_encoder_name;
@@ -95,11 +95,11 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
         if( !joint_coupling_bot )
         {
             std::cerr << "[ERR] WBI_YARP_JOINTS_MOTOR_KINEMATIC_COUPLINGS group found, but coupling found for joint "
-                      << joint_encoder_name.toString() << " is malformed" < std::endl;
+                      << joint_encoder_name.toString() << " is malformed" << std::endl;
             return false;
         }
 
-        for(int coupled_motor=0; coupled_motor < joint_coupling_bot.size(); coupled_motor++ )
+        for(int coupled_motor=0; coupled_motor < joint_coupling_bot->size(); coupled_motor++ )
         {
             if( !(joint_coupling_bot->get(coupled_motor).isList()) ||
                 !(joint_coupling_bot->get(coupled_motor).asList()->size() == 2) ||
@@ -107,7 +107,7 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
                 !(joint_coupling_bot->get(coupled_motor).asList()->get(1).isString()) )
             {
                 std::cerr << "[ERR] WBI_YARP_JOINTS_MOTOR_KINEMATIC_COUPLINGS group found, but coupling found for joint "
-                      << joint_encoder_name.toString() << " is malformed" < std::endl;
+                      << joint_encoder_name.toString() << " is malformed" << std::endl;
                 return false;
             }
         }
@@ -116,7 +116,7 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
     //Reset motor estimate list (the motor list will be induced by the joint list
     estimateIdList[ESTIMATE_MOTOR_POS] = wbiIdList();
 
-    for(int encoder_id = 0; encoder_id < estimateIdList[SENSOR_ENCODER].size(); encoder_id++)
+    for(int encoder_id = 0; encoder_id < (int)estimateIdList[SENSOR_ENCODER].size(); encoder_id++)
     {
         wbi::wbiId joint_encoder_name;
         estimateIdList[ESTIMATE_JOINT_POS].numericIdToWbiId(encoder_id,joint_encoder_name);
@@ -125,9 +125,9 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
         Bottle * joint_coupling_bot = couplings_bot.find(joint_encoder_name.toString()).asList();
 
         //Load motors names
-        for(int coupled_motor=0; coupled_motor < joint_coupling_bot.size(); coupled_motor++ )
+        for(int coupled_motor=0; coupled_motor < joint_coupling_bot->size(); coupled_motor++ )
         {
-            std::string motor_name = joint_coupling_bot->get(coupled_motor).asList()->get(1).isString();
+            std::string motor_name = joint_coupling_bot->get(coupled_motor).asList()->get(1).asString();
             //Add the motor name to all relevant estimates lists
             estimateIdList[ESTIMATE_MOTOR_POS].addId(motor_name);
         }
@@ -148,7 +148,7 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
     motor_to_joint_kinematic_coupling.setZero();
 
 
-    for(int encoder_id = 0; encoder_id < estimateIdList[SENSOR_ENCODER].size(); encoder_id++)
+    for(int encoder_id = 0; encoder_id < (int)estimateIdList[SENSOR_ENCODER].size(); encoder_id++)
     {
         wbi::wbiId joint_encoder_name;
         estimateIdList[ESTIMATE_JOINT_POS].numericIdToWbiId(encoder_id,joint_encoder_name);
@@ -157,10 +157,10 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
         Bottle * joint_coupling_bot = couplings_bot.find(joint_encoder_name.toString()).asList();
 
         //Load coupling
-        for(int coupled_motor=0; coupled_motor < joint_coupling_bot.size(); coupled_motor++ )
+        for(int coupled_motor=0; coupled_motor < joint_coupling_bot->size(); coupled_motor++ )
         {
             double coupling_coefficient = joint_coupling_bot->get(coupled_motor).asList()->get(0).asDouble();
-            std::string motor_name = joint_coupling_bot->get(coupled_motor).asList()->get(1).isString();
+            std::string motor_name = joint_coupling_bot->get(coupled_motor).asList()->get(1).asString();
             int motor_id;
             estimateIdList[ESTIMATE_MOTOR_POS].wbiIdToNumericId(motor_name,motor_id);
 
@@ -173,13 +173,14 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
     Eigen::SparseMatrix<double> I(encoders,encoders);
     I.setIdentity();
     double sparse_eps = 1e-3;
-    Eigen::MatrixXd joint_to_motor_kinematic_coupling_dense = motor_to_joint_kinematic_coupling.Inverse();
+    Eigen::MatrixXd joint_to_motor_kinematic_coupling_dense = motor_to_joint_kinematic_coupling.inverse();
     Eigen::MatrixXd joint_to_motor_torque_coupling_dense = motor_to_joint_kinematic_coupling.transpose();
     estimator->joint_to_motor_kinematic_coupling = joint_to_motor_kinematic_coupling_dense.sparseView(sparse_eps);
     estimator->joint_to_motor_torque_coupling = joint_to_motor_torque_coupling_dense.sparseView(sparse_eps);
 
     estimator->motor_quantites_estimation_enabled = 0;
 
+    return true;
 }
 
 bool yarpWholeBodyStates::init()
@@ -239,7 +240,7 @@ bool yarpWholeBodyStates::init()
     }
 
     // Load joint coupling information
-    if( ! estimator->loadCouplingFromConfigurationFile(wbi_yarp_properties) )
+    if( ! this->loadCouplingsFromConfigurationFile() )
     {
         return false;
     }
@@ -378,7 +379,8 @@ bool yarpWholeBodyStates::removeEstimate(const EstimateType et, const wbiId &sid
 
 const wbiIdList& yarpWholeBodyStates::getEstimateList(const EstimateType et)
 {
-    /*
+    if( initDone )
+    {
     switch(et)
     {
     case ESTIMATE_JOINT_POS:                return sensors->getSensorList(SENSOR_ENCODER);
@@ -386,19 +388,19 @@ const wbiIdList& yarpWholeBodyStates::getEstimateList(const EstimateType et)
     case ESTIMATE_JOINT_ACC:                return sensors->getSensorList(SENSOR_ENCODER);
     case ESTIMATE_JOINT_TORQUE:             return sensors->getSensorList(SENSOR_TORQUE);
     case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return sensors->getSensorList(SENSOR_TORQUE);
-    case ESTIMATE_MOTOR_POS:                return sensors->getSensorList(SENSOR_ENCODER);
-    case ESTIMATE_MOTOR_VEL:                return sensors->getSensorList(SENSOR_ENCODER);
-    case ESTIMATE_MOTOR_ACC:                return sensors->getSensorList(SENSOR_ENCODER);
-    case ESTIMATE_MOTOR_TORQUE:             return sensors->getSensorList(SENSOR_TORQUE);
-    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return sensors->getSensorList(SENSOR_TORQUE);
-    case ESTIMATE_MOTOR_PWM:                return sensors->getSensorList(SENSOR_PWM);
+    case ESTIMATE_MOTOR_POS:                return estimateIdList[ESTIMATE_MOTOR_POS];
+    case ESTIMATE_MOTOR_VEL:                return estimateIdList[ESTIMATE_MOTOR_POS];
+    case ESTIMATE_MOTOR_ACC:                return estimateIdList[ESTIMATE_MOTOR_POS];
+    case ESTIMATE_MOTOR_TORQUE:             return estimateIdList[ESTIMATE_MOTOR_POS];
+    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return estimateIdList[ESTIMATE_MOTOR_POS];
+    case ESTIMATE_MOTOR_PWM:                return estimateIdList[ESTIMATE_MOTOR_POS];
     //case ESTIMATE_IMU:                    return sensors->getSensorList(SENSOR_IMU);
     case ESTIMATE_FORCE_TORQUE_SENSOR:      return sensors->getSensorList(SENSOR_FORCE_TORQUE);
     // ESTIMATE_EXTERNAL_FORCE_TORQUE: return list of links where is possible to get contact
     default: break;
     }
     return emptyList;
-    */
+    }
     return estimateIdList[et];
 }
 
