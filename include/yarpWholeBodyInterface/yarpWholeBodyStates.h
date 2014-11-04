@@ -28,6 +28,8 @@
 #include <iCub/ctrl/filters.h>
 #include <iCub/skinDynLib/skinContactList.h>
 
+#include <Eigen/Sparse>
+
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
 #include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
 
@@ -122,13 +124,25 @@ namespace yarpWbi
             yarp::sig::Vector lastQ;                    // last joint position estimation
             yarp::sig::Vector lastDq;                   // last joint velocity estimation
             yarp::sig::Vector lastD2q;                  // last joint acceleration estimation
+            yarp::sig::Vector lastQM;                   // last motor position estimation
+            yarp::sig::Vector lastDqM;                  // last motor velocity estimation
+            yarp::sig::Vector lastD2qM;                 // last motor acceleration estimation
             yarp::sig::Vector lastTauJ;                 // last joint torque
             yarp::sig::Vector lastTauM;                 // last motor torque
             yarp::sig::Vector lastDtauJ;                // last joint torque derivative
             yarp::sig::Vector lastDtauM;                // last motor torque derivative
             yarp::sig::Vector lastPwm;                  // last motor PWM
+            yarp::sig::Vector lastPwmBuffer;            // buffer for proper decoupling PWM readings
         }
         estimates;
+
+        /** Matrix such that m_dot = joint_kinematic_to_motor_kinematic_coupling*q_dot */
+        Eigen::SparseMatrix<double> joint_to_motor_kinematic_coupling;
+
+        /** Matrix such that tau_m = joint_kinematic_to_motor_kinematic_coupling*tau_joint */
+        Eigen::SparseMatrix<double> joint_to_motor_torque_coupling;
+
+        bool motor_quantites_estimation_enabled;
 
         /** Constructor.
          */
@@ -184,6 +198,12 @@ namespace yarpWbi
         bool getMotorVel(const int numeric_id, double *data, double time, bool blocking);
         /** Get the velocities of all the robot motors. */
         bool getMotorVel(double *data, double time, bool blocking);
+
+        // Motor-quantities estimation
+        // For now we support motor quantites estimation by assuming a stiff actuation
+        // and knowledge of the coupling matrix
+        bool loadCouplingsFromConfigurationFile();
+
 
     public:
         // *** CONSTRUCTORS ***

@@ -23,6 +23,9 @@
 
 #include "yarpWholeBodyInterface/yarpWholeBodyStates.h"
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
+#include <../../external/ICUB/src/libraries/icubmod/imu3DM_GX3/dataTypes.h>
+
+#include <Eigen/Sparse>
 
 using namespace std;
 using namespace wbi;
@@ -67,6 +70,118 @@ yarpWholeBodyStates::~yarpWholeBodyStates()
     close();
 }
 
+bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
+{
+    Bottle couplings_bot = wbi_yarp_properties.findGroup("WBI_YARP_JOINTS_MOTOR_KINEMATIC_COUPLINGS");
+    if( couplings_bot.isNull() )
+    {
+        return false;
+    }
+
+    for(int encoder_id = 0; encoder_id < estimateIdList[SENSOR_ENCODER].size(); encoder_id++)
+    {
+        //search if coupling information is provided for each motor, if not return false
+        wbi::wbiId joint_encoder_name;
+        estimateIdList[ESTIMATE_JOINT_POS].numericIdToWbiId(encoder_id,joint_encoder_name);
+        if( !couplings_bot.check(joint_encoder_name.toString()) )
+        {
+            std::cerr << "[ERR] WBI_YARP_JOINTS_MOTOR_KINEMATIC_COUPLINGS group found, but no coupling found for joint "
+                      << joint_encoder_name.toString() << ", exiting" << std::endl;
+                      return false;
+        }
+
+        //Check coupling configuration is well formed
+        Bottle * joint_coupling_bot = couplings_bot.find(joint_encoder_name.toString()).asList();
+        if( !joint_coupling_bot )
+        {
+            std::cerr << "[ERR] WBI_YARP_JOINTS_MOTOR_KINEMATIC_COUPLINGS group found, but coupling found for joint "
+                      << joint_encoder_name.toString() << " is malformed" < std::endl;
+            return false;
+        }
+
+        for(int coupled_motor=0; coupled_motor < joint_coupling_bot.size(); coupled_motor++ )
+        {
+            if( !(joint_coupling_bot->get(coupled_motor).isList()) ||
+                !(joint_coupling_bot->get(coupled_motor).asList()->size() == 2) ||
+                !(joint_coupling_bot->get(coupled_motor).asList()->get(0).isDouble()) ||
+                !(joint_coupling_bot->get(coupled_motor).asList()->get(1).isString()) )
+            {
+                std::cerr << "[ERR] WBI_YARP_JOINTS_MOTOR_KINEMATIC_COUPLINGS group found, but coupling found for joint "
+                      << joint_encoder_name.toString() << " is malformed" < std::endl;
+                return false;
+            }
+        }
+    }
+
+    //Reset motor estimate list (the motor list will be induced by the joint list
+    estimateIdList[ESTIMATE_MOTOR_POS] = wbiIdList();
+
+    for(int encoder_id = 0; encoder_id < estimateIdList[SENSOR_ENCODER].size(); encoder_id++)
+    {
+        wbi::wbiId joint_encoder_name;
+        estimateIdList[ESTIMATE_JOINT_POS].numericIdToWbiId(encoder_id,joint_encoder_name);
+
+        //Check coupling configuration is well formed
+        Bottle * joint_coupling_bot = couplings_bot.find(joint_encoder_name.toString()).asList();
+
+        //Load motors names
+        for(int coupled_motor=0; coupled_motor < joint_coupling_bot.size(); coupled_motor++ )
+        {
+            std::string motor_name = joint_coupling_bot->get(coupled_motor).asList()->get(1).isString();
+            //Add the motor name to all relevant estimates lists
+            estimateIdList[ESTIMATE_MOTOR_POS].addId(motor_name);
+        }
+
+    }
+
+    if( estimateIdList[ESTIMATE_MOTOR_POS].size() !=  estimateIdList[ESTIMATE_JOINT_POS].size() )
+    {
+        std::cerr << "[ERR] WBI_YARP_JOINTS_MOTOR_KINEMATIC_COUPLINGS group found, but coupling where"
+                  << "the number of joints is different from the number of motors is not currently supported" << std::endl;
+                return false;
+    }
+
+    //Build coupling matrix
+    int encoders = estimateIdList[ESTIMATE_MOTOR_POS].size();
+
+    Eigen::MatrixXd motor_to_joint_kinematic_coupling(encoders,encoders);
+    motor_to_joint_kinematic_coupling.setZero();
+
+
+    for(int encoder_id = 0; encoder_id < estimateIdList[SENSOR_ENCODER].size(); encoder_id++)
+    {
+        wbi::wbiId joint_encoder_name;
+        estimateIdList[ESTIMATE_JOINT_POS].numericIdToWbiId(encoder_id,joint_encoder_name);
+
+        //Check coupling configuration is well formed
+        Bottle * joint_coupling_bot = couplings_bot.find(joint_encoder_name.toString()).asList();
+
+        //Load coupling
+        for(int coupled_motor=0; coupled_motor < joint_coupling_bot.size(); coupled_motor++ )
+        {
+            double coupling_coefficient = joint_coupling_bot->get(coupled_motor).asList()->get(0).asDouble();
+            std::string motor_name = joint_coupling_bot->get(coupled_motor).asList()->get(1).isString();
+            int motor_id;
+            estimateIdList[ESTIMATE_MOTOR_POS].wbiIdToNumericId(motor_name,motor_id);
+
+            motor_to_joint_kinematic_coupling(encoder_id,motor_id) = coupling_coefficient;
+        }
+
+    }
+
+    //Transform loaded coupling to the one actually needed
+    Eigen::SparseMatrix<double> I(encoders,encoders);
+    I.setIdentity();
+    double sparse_eps = 1e-3;
+    Eigen::MatrixXd joint_to_motor_kinematic_coupling_dense = motor_to_joint_kinematic_coupling.Inverse();
+    Eigen::MatrixXd joint_to_motor_torque_coupling_dense = motor_to_joint_kinematic_coupling.transpose();
+    estimator->joint_to_motor_kinematic_coupling = joint_to_motor_kinematic_coupling_dense.sparseView(sparse_eps);
+    estimator->joint_to_motor_torque_coupling = joint_to_motor_torque_coupling_dense.sparseView(sparse_eps);
+
+    estimator->motor_quantites_estimation_enabled = 0;
+
+}
+
 bool yarpWholeBodyStates::init()
 {
     if( initDone ) return false;
@@ -97,11 +212,9 @@ bool yarpWholeBodyStates::init()
             case ESTIMATE_JOINT_POS:
             case ESTIMATE_JOINT_VEL:
             case ESTIMATE_JOINT_ACC:
-            case ESTIMATE_MOTOR_POS:
-            case ESTIMATE_MOTOR_VEL:
-            case ESTIMATE_MOTOR_ACC:
                 sensors->addSensors(SENSOR_ENCODER, estimateIdList[et]);
                 break;
+
             case ESTIMATE_JOINT_TORQUE:
             case ESTIMATE_JOINT_TORQUE_DERIVATIVE:
             case ESTIMATE_MOTOR_TORQUE:
@@ -123,6 +236,12 @@ bool yarpWholeBodyStates::init()
             default:
                 break;
         }
+    }
+
+    // Load joint coupling information
+    if( ! estimator->loadCouplingFromConfigurationFile(wbi_yarp_properties) )
+    {
+        return false;
     }
 
     // Initialized sensor interface
@@ -529,7 +648,8 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period, yarpWholeBodySensors
   dTauJFilt(0),
   dTauMFilt(0),
   tauJFilt(0),
-  tauMFilt(0)//,
+  tauMFilt(0),
+  motor_quantites_estimation_enabled(false)//,
   //ee_wrenches_enabled(false)
 {
     resizeAll(sensors->getSensorNumber(SENSOR_ENCODER));
@@ -614,6 +734,11 @@ bool yarpWholeBodyEstimator::setWorldBasePosition(const wbi::Frame & xB)
     */
 }
 
+Eigen::Map<Eigen::VectorXd> toEigen(yarp::sig::Vector & vec)
+{
+    return Eigen::Map<Eigen::VectorXd>(vec.data(),vec.size());
+}
+
 void yarpWholeBodyEstimator::run()
 {
     mutex.wait();
@@ -629,6 +754,17 @@ void yarpWholeBodyEstimator::run()
             el.time = qStamps[0];
             estimates.lastDq = dqFilt->estimate(el);
             estimates.lastD2q = d2qFilt->estimate(el);
+
+            //if motor quantites are enabled, estimate also motor motor_quantities
+            if( this->motor_quantites_estimation_enabled )
+            {
+                toEigen(estimates.lastQM)
+                    = this->joint_to_motor_kinematic_coupling*toEigen(estimates.lastQ);
+                toEigen(estimates.lastDqM)
+                    = this->joint_to_motor_kinematic_coupling*toEigen(estimates.lastDq);
+                toEigen(estimates.lastD2qM)
+                    = this->joint_to_motor_kinematic_coupling*toEigen(estimates.lastD2q);
+            }
         }
 
         ///< Read joint torque sensors
@@ -639,18 +775,34 @@ void yarpWholeBodyEstimator::run()
             el.time = yarp::os::Time::now();
 
             estimates.lastTauJ = tauJFilt->filt(tauJ);  ///< low pass filter
-            estimates.lastTauM = tauMFilt->filt(tauJ);  ///< low pass filter
 
+            if( this->motor_quantites_estimation_enabled )
+            {
+                toEigen(estimates.lastTauM)
+                    = this->joint_to_motor_torque_coupling*toEigen(estimates.lastTauJ);
+            }
+
+            //Here there are some inefficencies... \todo TODO FIXME
             el.data = tauJ;
             estimates.lastDtauJ = dTauJFilt->estimate(el);  ///< derivative filter
 
-            //el.data = tauM;
+            el.data = estimates.lastTauM;
             estimates.lastDtauM = dTauMFilt->estimate(el);  ///< derivative filter
         }
 
         ///< Read motor pwm
         sensors->readSensors(SENSOR_PWM, pwm.data(), 0, false);
         estimates.lastPwm = pwmFilt->filt(pwm);     ///< low pass filter
+
+        //This pwms are actually obtained through getOutputs() yarp calls, so they are
+        //"joint" PWMs that need to be decoupled
+        if( this->motor_quantites_estimation_enabled )
+        {
+            toEigen(estimates.lastPwmBuffer)
+                = this->joint_to_motor_torque_coupling*toEigen(estimates.lastPwm);
+            estimates.lastPwm = estimates.lastPwmBuffer;
+        }
+
 
         ///< Read end effector wrenches
         /*
@@ -776,6 +928,7 @@ void yarpWholeBodyEstimator::resizeAll(int n)
     estimates.lastDtauJ.resize(n);
     estimates.lastDtauM.resize(n);
     estimates.lastPwm.resize(n);
+    estimates.lastPwmBuffer.resize(n);
 }
 
 bool yarpWholeBodyEstimator::lockAndCopyVector(const Vector &src, double *dest)
