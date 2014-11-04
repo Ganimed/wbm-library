@@ -15,3 +15,21 @@ Relevant discussion: https://github.com/robotology/codyco-modules/issues/18
 Now all `add*` / `remove*` methods must be called 
 before calling the init() function. Once the interface is initialized, the 
 list of joints/sensors/estimates cannot be changed. 
+
+### Frames are now the subject of geometric iWholeBodyModel methods 
+Relevant discussion: https://github.com/robotology/codyco-modules/issues/39
+
+Accordingly, a `virtual const wbiIdList& getFrameList()` method has been addeed
+to the iWholeBodyModel. This is substituting the ugly `getLinkId` method.
+
+#### Relevant code changes
+```
+int root\_link\_id;
+bool ok = getLinkId("root\_link",root\_link\_id);
+```
+becomes
+```
+int root\_link\_id;
+bool ok = getFramesList().wbiIdToNumericId("root\_link",root\_link\_id);
+```
+
