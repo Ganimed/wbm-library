@@ -24,12 +24,12 @@ to the iWholeBodyModel. This is substituting the ugly `getLinkId` method.
 
 #### Relevant code changes
 ```
-int root\_link\_id;
-bool ok = getLinkId("root\_link",root\_link\_id);
+int root_link_id;
+bool ok = getLinkId("root_link",root_link_id);
 ```
 becomes
 ```
-int root\_link\_id;
-bool ok = getFramesList().wbiIdToNumericId("root\_link",root\_link\_id);
+int root_link_id;
+bool ok = getFramesList().wbiIdToNumericId("root_link",root_link_id);
 ```
 
