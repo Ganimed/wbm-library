@@ -109,3 +109,9 @@ include(CTest)
 enable_testing()
 add_subdirectory(tests)
 endif()
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${YARP_MODULE_PATH})
+include(YarpInstallationHelpers)
+yarp_configure_external_installation(codyco)
+
+add_subdirectory(app)
