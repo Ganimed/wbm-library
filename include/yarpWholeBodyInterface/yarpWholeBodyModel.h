@@ -45,6 +45,7 @@ namespace yarpWbi
     {
     protected:
         wbi::wbiIdList jointIdList;
+        wbi::wbiIdList frameIdList;
 
         bool initDone;
         int dof;
@@ -141,17 +142,9 @@ namespace yarpWbi
         virtual bool removeJoint(const wbi::wbiId &j);
         virtual bool addJoint(const wbi::wbiId &j);
         virtual int addJoints(const wbi::wbiIdList &j);
-        virtual const wbi::wbiIdList& getJointList(){    return jointIdList; }
+        virtual const wbi::wbiIdList& getJointList();
 
         virtual bool getJointLimits(double *qMin, double *qMax, int joint=-1);
-
-        /**
-         * Get the id of the link with the specified name.
-         * @param linkName Name of the link.
-         * @param linkId Id of the link (if found).
-         * @return True if the link name was found, false otherwise.
-         */
-        virtual bool getLinkId(const char *linkName, int &linkNumericId);
 
         /** Compute rototranslation matrix from root reference frame to reference frame associated to the specified link.
           * @param q Joint angles
@@ -235,6 +228,7 @@ namespace yarpWbi
          * @return True if the operation succeeded, false otherwise. */
         virtual bool computeCentroidalMomentum(double *q, const wbi::Frame &xBase, double *dq, double *dxB, double *h);
 
+        virtual const wbi::wbiIdList & getFrameList();
 
     };
 }
