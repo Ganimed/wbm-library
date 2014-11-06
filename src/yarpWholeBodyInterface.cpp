@@ -134,3 +134,8 @@ int yarpWholeBodyInterface::addJoints(const wbiIdList &jList)
     assert(res1==res4);
     return res1;
 }
+
+yarp::os::Mutex& yarpWholeBodyInterface::getInterfaceMutex()
+{
+    return wbiMutex;
+}

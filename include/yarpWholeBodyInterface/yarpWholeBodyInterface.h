@@ -26,11 +26,13 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/os/Semaphore.h>
 #include <yarp/os/BufferedPort.h>
+#include <yarp/os/Mutex.h>
 #include <iCub/ctrl/adaptWinPolyEstimator.h>
 #include <iCub/ctrl/filters.h>
 #include <iCub/iDynTree/iCubTree.h>
 #include <iCub/skinDynLib/skinContactList.h>
 #include <map>
+
 
 #define INITIAL_TIMESTAMP -1000.0
 
@@ -62,6 +64,9 @@ namespace yarpWbi
      */
     class yarpWholeBodyInterface : public wbi::wholeBodyInterface
     {
+    private:
+        yarp::os::Mutex wbiMutex;
+        
     protected:
         yarpWholeBodyActuators  *actuatorInt;
         yarpWholeBodyModel      *modelInt;
@@ -95,6 +100,8 @@ namespace yarpWbi
         virtual bool removeJoint(const wbi::wbiId &j);
         virtual bool addJoint(const wbi::wbiId &j);
         virtual int addJoints(const wbi::wbiIdList &j);
+        
+        yarp::os::Mutex& getInterfaceMutex();
 
         // ACTUATORS
         //virtual int getActuatorNumber(){                        return actuatorInt->getActuatorNumber(); }
