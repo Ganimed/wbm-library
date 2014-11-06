@@ -323,15 +323,18 @@ bool loadIdListsFromConfigRecursiveHelper(std::string & requested_list,
                                           yarp::os::Bottle & list_bots)
 {
     yarp::os::Bottle * requested_list_bot = list_bots.find(requested_list).asList();
-    std::cout << "[INFO] Requested list bot: " << requested_list_bot->toString() << std::endl;
+    //std::cout << "[INFO] Requested list bot: " << requested_list_bot->toString() << std::endl;
     if( requested_list_bot == NULL )
     {
+        std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " not found in configuration file " << std::endl;
         return false;
     }
     //This is needed to check for a circular inclusion in the lists
     if (std::find(lists_names_stack.begin(), lists_names_stack.end(), requested_list) != lists_names_stack.end())
     {
         // List already include once, error
+        std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " is recursivly" 
+                  << "[ERR] part of " << list_names_stack[0] << std::endl;
         return false;
     }
 
