@@ -334,7 +334,7 @@ bool loadIdListsFromConfigRecursiveHelper(std::string & requested_list,
     {
         // List already include once, error
         std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " is recursivly" 
-                  << "[ERR] part of " << list_names_stack[0] << std::endl;
+                  << "[ERR] part of " << lists_names_stack[0] << std::endl;
         return false;
     }
 
