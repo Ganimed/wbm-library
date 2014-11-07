@@ -75,6 +75,7 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
     Bottle couplings_bot = wbi_yarp_properties.findGroup("WBI_YARP_JOINTS_MOTOR_KINEMATIC_COUPLINGS");
     if( couplings_bot.isNull() )
     {
+        std::cerr << "[ERR] yarpWholeBodyStates::loadCouplingsFromConfigurationFile : WBI_YARP_JOINTS_MOTOR_KINEMATIC_COUPLINGS group not found in configuration file" << std::endl;
         return false;
     }
 
@@ -240,9 +241,11 @@ bool yarpWholeBodyStates::init()
     }
 
     // Load joint coupling information
+    //FIXME If no joint coupling information is found do not return false but warn the user
     if( ! this->loadCouplingsFromConfigurationFile() )
     {
-        return false;
+	std::cerr << "[WARNING] yarpWholeBodyStates::init : joint coupling information was not successfully loaded" << std::endl;
+//         return false;
     }
 
     // Initialized sensor interface
