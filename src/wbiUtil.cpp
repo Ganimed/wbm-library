@@ -16,7 +16,7 @@
  * email: andrea.delprete@iit.it - marco.randazzo@iit.it
  */
 
-#include <wbi/wbi.h>
+#include "wbiUtil.h"
 #include <sstream>
 
 #include <algorithm>

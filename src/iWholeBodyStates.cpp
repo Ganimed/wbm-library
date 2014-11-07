@@ -1,3 +1,3 @@
-#include <wbi/iWholeBodyStates.h>
+#include "iWholeBodyStates.h"
 
 wbi::iWholeBodyStates::~iWholeBodyStates() {}

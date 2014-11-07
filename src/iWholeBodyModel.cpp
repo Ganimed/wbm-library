@@ -1,3 +1,3 @@
-#include <wbi/iWholeBodyModel.h>
+#include "iWholeBodyModel.h"
 
 wbi::iWholeBodyModel::~iWholeBodyModel() {}
