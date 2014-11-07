@@ -20,6 +20,7 @@
 #define WBMODEL_ICUB_H
 
 #include <wbi/wbiUtil.h>
+#include <wbi/wbiID.h>
 #include <wbi/iWholeBodyModel.h>
 
 #include <yarp/dev/ControlBoardInterfaces.h>
