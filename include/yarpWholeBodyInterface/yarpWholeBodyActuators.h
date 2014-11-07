@@ -109,8 +109,11 @@ namespace yarpWbi
         std::vector< std::pair<int,int> >  controlBoardAxisList;
         // number of joints controlled by wbi for each body part (size as controlBoardNames)
         //std::vector< int >                 controlledJointsInControlBoard;
-        // total number of joint in each controlBoard (size as controlBoardNames)
+        // total number of axes in each controlBoard (size as controlBoardNames. the one retunrned by getAxes)
         std::vector< int >                 totalAxesInControlBoard;
+        // total number of axes in each controlBoard controlled by the wbi
+        std::vector< int >                 totalControlledAxesInControlBoard;
+        // total number
         // structure containing information of joints controlled in each mode for each controlboard
         yarpWholeBodyActuatorsControlledJoints controlledJointsForControlBoard;
 
@@ -135,6 +138,10 @@ namespace yarpWbi
          */
         bool openControlBoardDrivers(int bodyPart);
 
+        /**
+         * Method called to update the internal data structures,
+         * at initialization or when a control board control mode changes
+         */
         bool updateControlledJointsForEachControlBoard();
 
         /** Convert the control modes defined in yarp/dev/IControlMode.h into the one defined in wbi. */

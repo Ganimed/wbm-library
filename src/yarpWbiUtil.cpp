@@ -79,7 +79,7 @@ bool getControlBoardAxisList(yarp::os::Bottle & joints_config,
         wbi::wbiId wbi_jnt_name;
         jointIdList.numericIdToWbiId(wbi_jnt,wbi_jnt_name);
 
-        std::cout << joints_config.toString() << std::endl;
+        //std::cout << joints_config.toString() << std::endl;
 
         if( joints_config.find(wbi_jnt_name.toString().c_str()).isNull() )
         {
@@ -333,7 +333,7 @@ bool loadIdListsFromConfigRecursiveHelper(std::string & requested_list,
     if (std::find(lists_names_stack.begin(), lists_names_stack.end(), requested_list) != lists_names_stack.end())
     {
         // List already include once, error
-        std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " is duplicated " 
+        std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " is duplicated "
                   << "[ERR] inside of parent list " << lists_names_stack[0] << std::endl;
         return false;
     }
