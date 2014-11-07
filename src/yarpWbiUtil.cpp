@@ -333,8 +333,8 @@ bool loadIdListsFromConfigRecursiveHelper(std::string & requested_list,
     if (std::find(lists_names_stack.begin(), lists_names_stack.end(), requested_list) != lists_names_stack.end())
     {
         // List already include once, error
-        std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " is recursivly" 
-                  << "[ERR] part of " << lists_names_stack[0] << std::endl;
+        std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " is duplicated " 
+                  << "[ERR] inside of parent list " << lists_names_stack[0] << std::endl;
         return false;
     }
 
