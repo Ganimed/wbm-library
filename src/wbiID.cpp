@@ -18,6 +18,7 @@
 
 #include "wbiID.h"
 #include <sstream>
+#include <algorithm>
 
 namespace wbi {
 
