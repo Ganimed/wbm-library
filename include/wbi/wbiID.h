@@ -91,33 +91,33 @@ namespace wbi
         wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3, const wbiIdList &lid4, const wbiIdList &lid5);
         wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3, const wbiIdList &lid4, const wbiIdList &lid5, const wbiIdList &lid6);
         
-        virtual ~wbiIdList();
+        ~wbiIdList();
         
         /**
          * Convert a wbiId to a numeric id.
          * Return the numeric id (index) of the specified wbiId in this wbiIdList.
          * @return true it the specified wbiId is found in the list, false otherwise.
          */
-        virtual bool wbiIdToNumericId(const wbiId &wbi_id, int & numericId) const;
+        bool wbiIdToNumericId(const wbiId &wbi_id, int & numericId) const;
         
         /**
          * Convert a numeric id to a wbiId
          * @return true it the specified wbiId is found in the list, false otherwise
          */
-        virtual bool numericIdToWbiId(const int numeridId, wbiId & wbi_id) const;
+        bool numericIdToWbiId(const int numeridId, wbiId & wbi_id) const;
         
         /**
          * Remove the specified id from the list
          * @return true if the id was found and removed, false if it was not found
          */
-        virtual bool removeId(const wbiId &id);
+        bool removeId(const wbiId &id);
         
         /**
          * Add the specified id to the list.
          * @param id id to add
          * @return true if the id has been added
          */
-        virtual bool addId(const wbiId &id);
+        bool addId(const wbiId &id);
         
         /**
          * Add the specified ids to the list.
@@ -131,24 +131,24 @@ namespace wbi
          *         appendedList.size() if all the element in the appendedList were not in the list.
          *
          */
-        virtual int addIdList(const wbiIdList &appendedList);
+        int addIdList(const wbiIdList &appendedList);
         
         /**
          * Get the number of ids in this list
          * @return the number of ids in the list
          */
-        virtual unsigned int size() const;
+        unsigned int size() const;
         
         /**
          * Check whether the specified id is present in this list.
          * @return true if the specified id is in the list, false otherwise.
          */
-        virtual bool containsId(const wbiId &i) const;
+        bool containsId(const wbiId &i) const;
         
         /**
          * Provide a human readable represent of the list
          */
-        virtual std::string toString() const;
+        std::string toString() const;
     };
     
     
