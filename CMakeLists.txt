@@ -40,6 +40,7 @@ if(MSVC)
 endif(MSVC)
 
 SET(folder_source src/wbiUtil.cpp
+                  src/wbiID.cpp
                   src/wbiConstants.cpp
                   src/iWholeBodyModel.cpp
                   src/iWholeBodyStates.cpp
@@ -50,12 +51,15 @@ SET(folder_source src/wbiUtil.cpp
 SET(folder_header include/wbi/wbi.h
                   include/wbi/wbiConstants.h
                   include/wbi/wbiUtil.h
+                  include/wbi/wbiID.h
                   include/wbi/wbiUtil.inl
                   include/wbi/iWholeBodyModel.h
                   include/wbi/iWholeBodyStates.h
                   include/wbi/iWholeBodySensors.h
                   include/wbi/iWholeBodyActuators.h
                   include/wbi/wholeBodyInterface.h)
+                  
+include_directories(include/wbi)
 
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})
