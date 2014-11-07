@@ -178,7 +178,7 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
     estimator->joint_to_motor_kinematic_coupling = joint_to_motor_kinematic_coupling_dense.sparseView(sparse_eps);
     estimator->joint_to_motor_torque_coupling = joint_to_motor_torque_coupling_dense.sparseView(sparse_eps);
 
-    estimator->motor_quantites_estimation_enabled = 0;
+    estimator->motor_quantites_estimation_enabled = true;
 
     return true;
 }
@@ -240,10 +240,7 @@ bool yarpWholeBodyStates::init()
     }
 
     // Load joint coupling information
-    if( ! this->loadCouplingsFromConfigurationFile() )
-    {
-        return false;
-    }
+    this->loadCouplingsFromConfigurationFile();
 
     // Initialized sensor interface
     bool ok = sensors->init();              // initialize sensor interface
