@@ -93,7 +93,17 @@ bool yarpWholeBodyInterface::close()
             ok = false;
         }
     }
-    //if( stateInt ) { ok = stateInt->close(); delete stateInt; stateInt=0; }
+    
+    if (stateInt) {
+      if (stateInt->close()) {
+	delete stateInt; 
+	stateInt = 0; 	
+      }
+      else {
+	ok = false;
+      }
+    }
+      
     if (modelInt) {
         if(modelInt->close()) {
             delete modelInt;
