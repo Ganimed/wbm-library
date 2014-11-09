@@ -23,8 +23,8 @@
 
 namespace wbi {
 
-    class wbiId;
-    class wbiIdList;
+    class ID;
+    class IDList;
 
     /**
      * Interface to access the estimates of the state of the robot.
@@ -42,21 +42,21 @@ namespace wbi {
          * @param sid Id of the estimate.
          * @return True if the estimate has been added, false otherwise (e.g. the estimate has been already added).
          */
-        virtual bool addEstimate(const EstimateType st, const wbiId &sid) = 0;
+        virtual bool addEstimate(const EstimateType st, const ID &sid) = 0;
 
         /** Add the specified estimates so that they can be read.
          * @param st Type of estimates.
          * @param sids Ids of the estimates.
          * @return True if the estimate has been added, false otherwise (e.g. the estimate has been already added).
          */
-        virtual int addEstimates(const EstimateType st, const wbiIdList &sids) = 0;
+        virtual int addEstimates(const EstimateType st, const IDList &sids) = 0;
 
         /** Remove the specified estimate.
          * @param st Type of the estimate to remove.
          * @param sid Id of the estimate to remove.
          * @return True if the estimate has been removed, false otherwise.
          */
-        virtual bool removeEstimate(const EstimateType st, const wbiId &sid) = 0;
+        virtual bool removeEstimate(const EstimateType st, const ID &sid) = 0;
 
         /** Remove all the estimates associated to the specified joint.
          * @param j Id of the joint.
@@ -67,7 +67,7 @@ namespace wbi {
         /** Get a copy of the estimate list of the specified estimate type.
          * @param st Type of estimate.
          * @return A copy of the estimate list. */
-        virtual const wbiIdList& getEstimateList(const EstimateType st) = 0;
+        virtual const IDList& getEstimateList(const EstimateType st) = 0;
 
         /** Get the number of estimates of the specified type.
          * @return The number of estimates of the specified type. */

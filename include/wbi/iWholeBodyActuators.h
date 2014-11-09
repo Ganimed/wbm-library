@@ -22,8 +22,8 @@
 #include <wbi/wbiConstants.h>
 
 namespace wbi {
-    class wbiId;
-    class wbiIdList;
+    class ID;
+    class IDList;
 
     /**
      * Interface to the actuators of the robot.
@@ -36,10 +36,10 @@ namespace wbi {
         virtual bool close() = 0;
 
         //virtual int getActuatorNumber() = 0;
-        virtual bool removeActuator(const wbiId &j) = 0;
-        virtual bool addActuator(const wbiId &j) = 0;
-        virtual int addActuators(const wbiIdList &j) = 0;
-        virtual const wbiIdList& getActuatorList() = 0;
+        virtual bool removeActuator(const ID &j) = 0;
+        virtual bool addActuator(const ID &j) = 0;
+        virtual int addActuators(const IDList &j) = 0;
+        virtual const IDList& getActuatorList() = 0;
 
         /** Set the control mode of the specified joint(s).
          * @param controlMode Id of the control mode.

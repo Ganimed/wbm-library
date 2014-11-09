@@ -30,44 +30,44 @@ namespace wbi
      * joints, sensors, links and every other kind of entity in wholeBodyInterface .
      *
      */
-    class wbiId
+    class ID
     {
     private:
         std::string id;
     public:
-        wbiId();
+        ID();
         
-        wbiId(const std::string & new_id);
+        ID(const std::string & new_id);
         
-        wbiId(const char * new_id);
+        ID(const char * new_id);
         
         
-        wbiId & operator=(const wbiId & id_copy);
+        ID & operator=(const ID & id_copy);
         
         /**
-         * Get the identifier string for the wbiId
+         * Get the identifier string for the ID
          */
         const std::string & toString() const;
         
-        bool operator==(const wbiId & comparison_id) const;
+        bool operator==(const ID & comparison_id) const;
     };
     
     /**
-     * List of wholeBodyInterface identifiers (wbiId).
+     * List of wholeBodyInterface identifiers (ID).
      * Used to represent lists of joints, sensors, links, ... .
      */
-    class wbiIdList
+    class IDList
     {
     private:
-        std::vector<wbiId> storage;
+        std::vector<ID> storage;
         
     protected:
         /** Add the specified id without checking its existance. */
-        void pushId(const wbiId & id);
+        void pushID(const ID & id);
         
     public:
-        wbiIdList();
-        wbiIdList(const wbiId &id0);
+        IDList();
+        IDList(const ID &id0);
         /**
          * Create an id list with the specified ids.
          * @param id0 First id
@@ -75,49 +75,49 @@ namespace wbi
          */
         
         /** \note this helper function should be deprecated
-         *        as they facilitate putting wbiIdList in code
+         *        as they facilitate putting IDList in code
          *        while they should be in configuration files.
          */
-        wbiIdList(const wbiId &id0, const wbiId &id1);
-        wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2);
-        wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3);
-        wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3, const wbiId &id4);
-        wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3, const wbiId &id4, const wbiId& id5);
-        wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3, const wbiId &id4, const wbiId& id5, const wbiId & id6);
+        IDList(const ID &id0, const ID &id1);
+        IDList(const ID &id0, const ID &id1, const ID &id2);
+        IDList(const ID &id0, const ID &id1, const ID &id2, const ID &id3);
+        IDList(const ID &id0, const ID &id1, const ID &id2, const ID &id3, const ID &id4);
+        IDList(const ID &id0, const ID &id1, const ID &id2, const ID &id3, const ID &id4, const ID& id5);
+        IDList(const ID &id0, const ID &id1, const ID &id2, const ID &id3, const ID &id4, const ID& id5, const ID & id6);
         
-        wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2);
-        wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3);
-        wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3, const wbiIdList &lid4);
-        wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3, const wbiIdList &lid4, const wbiIdList &lid5);
-        wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3, const wbiIdList &lid4, const wbiIdList &lid5, const wbiIdList &lid6);
+        IDList(const IDList &lid1, const IDList &lid2);
+        IDList(const IDList &lid1, const IDList &lid2, const IDList &lid3);
+        IDList(const IDList &lid1, const IDList &lid2, const IDList &lid3, const IDList &lid4);
+        IDList(const IDList &lid1, const IDList &lid2, const IDList &lid3, const IDList &lid4, const IDList &lid5);
+        IDList(const IDList &lid1, const IDList &lid2, const IDList &lid3, const IDList &lid4, const IDList &lid5, const IDList &lid6);
         
-        ~wbiIdList();
-        
-        /**
-         * Convert a wbiId to a numeric id.
-         * Return the numeric id (index) of the specified wbiId in this wbiIdList.
-         * @return true it the specified wbiId is found in the list, false otherwise.
-         */
-        bool wbiIdToNumericId(const wbiId &wbi_id, int & numericId) const;
+        ~IDList();
         
         /**
-         * Convert a numeric id to a wbiId
-         * @return true it the specified wbiId is found in the list, false otherwise
+         * Convert a ID to a numeric id.
+         * Return the numeric id (index) of the specified ID in this IDList.
+         * @return true it the specified ID is found in the list, false otherwise.
          */
-        bool numericIdToWbiId(const int numeridId, wbiId & wbi_id) const;
+        bool wbiIdToNumericId(const ID &wbi_id, int & numericId) const;
+        
+        /**
+         * Convert a numeric id to a ID
+         * @return true it the specified ID is found in the list, false otherwise
+         */
+        bool numericIdToWbiId(const int numeridId, ID & wbi_id) const;
         
         /**
          * Remove the specified id from the list
          * @return true if the id was found and removed, false if it was not found
          */
-        bool removeId(const wbiId &id);
+        bool removeID(const ID &id);
         
         /**
          * Add the specified id to the list.
          * @param id id to add
          * @return true if the id has been added
          */
-        bool addId(const wbiId &id);
+        bool addID(const ID &id);
         
         /**
          * Add the specified ids to the list.
@@ -131,7 +131,7 @@ namespace wbi
          *         appendedList.size() if all the element in the appendedList were not in the list.
          *
          */
-        int addIdList(const wbiIdList &appendedList);
+        int addIDList(const IDList &appendedList);
         
         /**
          * Get the number of ids in this list
@@ -143,7 +143,7 @@ namespace wbi
          * Check whether the specified id is present in this list.
          * @return true if the specified id is in the list, false otherwise.
          */
-        bool containsId(const wbiId &i) const;
+        bool containsID(const ID &i) const;
         
         /**
          * Provide a human readable represent of the list

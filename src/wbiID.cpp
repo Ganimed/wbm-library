@@ -22,90 +22,90 @@
 
 namespace wbi {
 
-wbiId::wbiId()
+ID::ID()
 {
     id = "WBI_ID_DEFAULT_VALUE";
 }
 
-wbiId::wbiId(const std::string & _id)
+ID::ID(const std::string & _id)
 {
     id = _id;
 }
 
-wbiId::wbiId(const char * _id)
+ID::ID(const char * _id)
 {
     id = std::string(_id);
 }
 
 
-const std::string & wbiId::toString() const
+const std::string & ID::toString() const
 {
     return id;
 }
 
-wbiId & wbiId::operator=(const wbiId & id_copy)
+ID & ID::operator=(const ID & id_copy)
 {
     this->id = id_copy.toString();
     return *this;
 }
 
-bool wbiId::operator==(const wbiId & comparison_id) const
+bool ID::operator==(const ID & comparison_id) const
 {
     return (comparison_id.toString() == this->id);
 }
 
 
-wbiIdList::wbiIdList()
+IDList::IDList()
 {}
-wbiIdList::wbiIdList(const wbiId &id0)
-{ addId(id0); }
-wbiIdList::wbiIdList(const wbiId &id0, const wbiId &id1)
-{ addId(id0); addId(id1);}
-wbiIdList::wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2)
-{ addId(id0); addId(id1); addId(id2); }
-wbiIdList::wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3)
-{ addId(id0); addId(id1); addId(id2); addId(id3); }
-wbiIdList::wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3, const wbiId &id4)
-{ addId(id0); addId(id1); addId(id2); addId(id3); addId(id4); }
-wbiIdList::wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3, const wbiId &id4, const wbiId& id5)
-{ addId(id0); addId(id1); addId(id2); addId(id3); addId(id4); addId(id5); }
-wbiIdList::wbiIdList(const wbiId &id0, const wbiId &id1, const wbiId &id2, const wbiId &id3, const wbiId &id4, const wbiId& id5, const wbiId & id6)
-{ addId(id0); addId(id1); addId(id2); addId(id3); addId(id4); addId(id5); addId(id6); }
+IDList::IDList(const ID &id0)
+{ addID(id0); }
+IDList::IDList(const ID &id0, const ID &id1)
+{ addID(id0); addID(id1);}
+IDList::IDList(const ID &id0, const ID &id1, const ID &id2)
+{ addID(id0); addID(id1); addID(id2); }
+IDList::IDList(const ID &id0, const ID &id1, const ID &id2, const ID &id3)
+{ addID(id0); addID(id1); addID(id2); addID(id3); }
+IDList::IDList(const ID &id0, const ID &id1, const ID &id2, const ID &id3, const ID &id4)
+{ addID(id0); addID(id1); addID(id2); addID(id3); addID(id4); }
+IDList::IDList(const ID &id0, const ID &id1, const ID &id2, const ID &id3, const ID &id4, const ID& id5)
+{ addID(id0); addID(id1); addID(id2); addID(id3); addID(id4); addID(id5); }
+IDList::IDList(const ID &id0, const ID &id1, const ID &id2, const ID &id3, const ID &id4, const ID& id5, const ID & id6)
+{ addID(id0); addID(id1); addID(id2); addID(id3); addID(id4); addID(id5); addID(id6); }
 
-wbiIdList::wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2)
-{ addIdList(lid1); addIdList(lid2); }
-wbiIdList::wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3)
-{ addIdList(lid1); addIdList(lid2); addIdList(lid3); }
-wbiIdList::wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3, const wbiIdList &lid4)
-{ addIdList(lid1); addIdList(lid2); addIdList(lid3); addIdList(lid4); }
-wbiIdList::wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3, const wbiIdList &lid4, const wbiIdList &lid5)
-{ addIdList(lid1); addIdList(lid2); addIdList(lid3); addIdList(lid4); addIdList(lid5); }
-wbiIdList::wbiIdList(const wbiIdList &lid1, const wbiIdList &lid2, const wbiIdList &lid3, const wbiIdList &lid4, const wbiIdList &lid5, const wbiIdList &lid6)
-{ addIdList(lid1); addIdList(lid2); addIdList(lid3); addIdList(lid4); addIdList(lid5); addIdList(lid6); }
+IDList::IDList(const IDList &lid1, const IDList &lid2)
+{ addIDList(lid1); addIDList(lid2); }
+IDList::IDList(const IDList &lid1, const IDList &lid2, const IDList &lid3)
+{ addIDList(lid1); addIDList(lid2); addIDList(lid3); }
+IDList::IDList(const IDList &lid1, const IDList &lid2, const IDList &lid3, const IDList &lid4)
+{ addIDList(lid1); addIDList(lid2); addIDList(lid3); addIDList(lid4); }
+IDList::IDList(const IDList &lid1, const IDList &lid2, const IDList &lid3, const IDList &lid4, const IDList &lid5)
+{ addIDList(lid1); addIDList(lid2); addIDList(lid3); addIDList(lid4); addIDList(lid5); }
+IDList::IDList(const IDList &lid1, const IDList &lid2, const IDList &lid3, const IDList &lid4, const IDList &lid5, const IDList &lid6)
+{ addIDList(lid1); addIDList(lid2); addIDList(lid3); addIDList(lid4); addIDList(lid5); addIDList(lid6); }
 
-wbiIdList::~wbiIdList() {}
+IDList::~IDList() {}
 
-void wbiIdList::pushId(const wbiId &id)
+void IDList::pushID(const ID &id)
 {
     storage.push_back(id);
 }
 
-bool wbiIdList::wbiIdToNumericId(const wbiId &_wbiId, int & numericId) const
+bool IDList::wbiIdToNumericId(const ID &_wbiId, int & numericId) const
 {
-    wbiId wbi_id = _wbiId;
-    std::vector<wbiId>::const_iterator it = std::find(storage.begin(),storage.end(),wbi_id);
-    if( it == storage.end() )
+    ID wbi_id = _wbiId;
+    std::vector<ID>::const_iterator it = std::find(storage.begin(), storage.end(), wbi_id);
+    if (it == storage.end())
     {
         return false;
     }
-    numericId = std::distance(storage.begin(),it);
+    numericId = std::distance(storage.begin(), it);
     return true;
 }
 
 /** Convert a global id into a local id */
-bool wbiIdList::numericIdToWbiId(const int numeridId, wbiId & wbi_id) const
+bool IDList::numericIdToWbiId(const int numeridId, ID & wbi_id) const
 {
-    if( numeridId < 0 && numeridId >= this->size() )
+    if (numeridId < 0 && numeridId >= this->size())
     {
         return false;
     }
@@ -114,9 +114,9 @@ bool wbiIdList::numericIdToWbiId(const int numeridId, wbiId & wbi_id) const
 }
 
 //Remove an existing element
-bool wbiIdList::removeId(const wbiId &j)
+bool IDList::removeID(const ID &j)
 {
-    std::vector<wbiId>::iterator it = std::find(storage.begin(),storage.end(),j);
+    std::vector<ID>::iterator it = std::find(storage.begin(), storage.end(), j);
     if( it == storage.end() )
     {
         return false;
@@ -125,34 +125,34 @@ bool wbiIdList::removeId(const wbiId &j)
     return true;
 }
 
-bool wbiIdList::addId(const wbiId &i)
+bool IDList::addID(const ID &i)
 {
-    if(containsId(i))
+    if (containsID(i))
         return true;
-    pushId(i);
+    pushID(i);
     return true;
 }
 
-int wbiIdList::addIdList(const wbiIdList &addedList)
+int IDList::addIDList(const IDList &addedList)
 {
     int count = 0;
-    wbiId added_id;
-    for(int i=0; i < addedList.size(); i++ )
+    ID added_id;
+    for (int i = 0; i < addedList.size(); i++)
     {
         addedList.numericIdToWbiId(i,added_id);
-        if(!containsId(added_id))
+        if(!containsID(added_id))
         {
-            pushId(added_id);
+            pushID(added_id);
             count++;
         }
     }
     return count;
 }
 
-bool wbiIdList::containsId(const wbiId &i) const
+bool IDList::containsID(const ID &i) const
 {
-    std::vector<wbiId>::const_iterator it = std::find(storage.begin(),storage.end(),i);
-    if(it==storage.end()) {
+    std::vector<ID>::const_iterator it = std::find(storage.begin(), storage.end(), i);
+    if (it == storage.end()) {
         return false;
     } else {
         return true;
@@ -160,15 +160,15 @@ bool wbiIdList::containsId(const wbiId &i) const
 }
 
 // Get the number of ids in this list
-unsigned int wbiIdList::size() const
+unsigned int IDList::size() const
 {
     return storage.size();
 }
 
-std::string wbiIdList::toString() const
+std::string IDList::toString() const
 {
     std::ostringstream s;
-    for(int i=0; i < storage.size(); i++ )
+    for (int i = 0; i < storage.size(); i++)
     {
         s << storage[i].toString() << std::endl;
     }

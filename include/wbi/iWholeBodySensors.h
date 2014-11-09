@@ -22,8 +22,8 @@
 #include <wbi/wbiConstants.h>
 
 namespace wbi {
-    class wbiId;
-    class wbiIdList;
+    class ID;
+    class IDList;
 
     /*
      * Interface for reading the sensors of the robot.
@@ -46,21 +46,21 @@ namespace wbi {
          * @param sid Id of the sensor.
          * @return True if the sensor has been added, false otherwise (e.g. the sensor has been already added).
          */
-        virtual bool addSensor(const SensorType st, const wbiId &sid) = 0;
+        virtual bool addSensor(const SensorType st, const ID &sid) = 0;
 
         /** Add the specified sensors so that they can be read.
          * @param st Type of sensors.
          * @param sids Ids of the sensors.
          * @return True if the sensor has been added, false otherwise (e.g. the sensor has been already added).
          */
-        virtual int addSensors(const SensorType st, const wbiIdList &sids) = 0;
+        virtual int addSensors(const SensorType st, const IDList &sids) = 0;
 
         /** Remove the specified sensor.
          * @param st Type of the sensor to remove.
          * @param sid Id of the sensor to remove.
          * @return True if the sensor has been removed, false otherwise.
          */
-        virtual bool removeSensor(const SensorType st, const wbiId &sid) = 0;
+        virtual bool removeSensor(const SensorType st, const ID &sid) = 0;
 
         /** Remove all the sensors associated to the specified joint. This affects the reading of all the
          *  joint space sensors (e.g. encoders, pwm).
@@ -72,7 +72,7 @@ namespace wbi {
         /** Get a copy of the sensor list of the specified sensor type.
          * @param st Type of sensors.
          * @return A copy of the sensor list. */
-        virtual const wbiIdList& getSensorList(const SensorType st) = 0;
+        virtual const IDList& getSensorList(const SensorType st) = 0;
 
         /** Get the number of sensors of the specified type.
          * @return The number of sensors of the specified type. */

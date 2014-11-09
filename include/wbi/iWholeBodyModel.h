@@ -20,8 +20,8 @@
 #define IWHOLEBODYMODEL_H
 
 namespace wbi {
-    class wbiId;
-    class wbiIdList;
+    class ID;
+    class IDList;
     class Frame;
 
     /**
@@ -47,11 +47,11 @@ namespace wbi {
          * iWholeBodyModel is called). If no previous value of the joint angle is known, zero is assumed.
          * @param j Id of the joint to remove
          * @return True if the joint was found and removed, false otherwise. */
-        virtual bool removeJoint(const wbiId &j) = 0;
-        virtual bool addJoint(const wbiId &j) = 0;
-        virtual int addJoints(const wbiIdList &j) = 0;
+        virtual bool removeJoint(const ID &j) = 0;
+        virtual bool addJoint(const ID &j) = 0;
+        virtual int addJoints(const IDList &j) = 0;
 
-        virtual const wbiIdList& getJointList() = 0;
+        virtual const IDList& getJointList() = 0;
 
         /** Get the upper and lower limits of the joint position(s).
          * @param qMin Output lower limit(s) (rad).
@@ -146,7 +146,7 @@ namespace wbi {
          * be called.
          * @return the list of available frames.
          */
-        virtual const wbiIdList& getFrameList() = 0;
+        virtual const IDList& getFrameList() = 0;
 
     };
 
