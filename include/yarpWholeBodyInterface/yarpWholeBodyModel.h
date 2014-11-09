@@ -36,6 +36,11 @@
 #include <iCub/skinDynLib/skinContactList.h>
 #include <map>
 
+namespace wbi {
+    class ID;
+    class IDList;
+}
+
 
 namespace yarpWbi
 {
@@ -45,8 +50,8 @@ namespace yarpWbi
     class yarpWholeBodyModel: public wbi::iWholeBodyModel
     {
     protected:
-        wbi::wbiIdList jointIdList;
-        wbi::wbiIdList frameIdList;
+        wbi::IDList jointIdList;
+        wbi::IDList frameIdList;
 
         bool initDone;
         int dof;
@@ -140,10 +145,10 @@ namespace yarpWbi
           * iWholeBodyModel is called). If no previous value of the joint angle is known, zero is assumed.
           * @param j Id of the joint to remove
           * @return True if the joint was found and removed, false otherwise. */
-        virtual bool removeJoint(const wbi::wbiId &j);
-        virtual bool addJoint(const wbi::wbiId &j);
-        virtual int addJoints(const wbi::wbiIdList &j);
-        virtual const wbi::wbiIdList& getJointList();
+        virtual bool removeJoint(const wbi::ID &j);
+        virtual bool addJoint(const wbi::ID &j);
+        virtual int addJoints(const wbi::IDList &j);
+        virtual const wbi::IDList& getJointList();
 
         virtual bool getJointLimits(double *qMin, double *qMax, int joint=-1);
 
@@ -229,7 +234,7 @@ namespace yarpWbi
          * @return True if the operation succeeded, false otherwise. */
         virtual bool computeCentroidalMomentum(double *q, const wbi::Frame &xBase, double *dq, double *dxB, double *h);
 
-        virtual const wbi::wbiIdList & getFrameList();
+        virtual const wbi::IDList & getFrameList();
 
     };
 }

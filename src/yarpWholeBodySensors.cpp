@@ -254,7 +254,7 @@ bool yarpWholeBodySensors::close()
     return ok;
 }
 
-bool yarpWholeBodySensors::addSensor(const SensorType st, const wbiId &sid)
+bool yarpWholeBodySensors::addSensor(const SensorType st, const ID &sid)
 {
     if( initDone )
     {
@@ -273,7 +273,7 @@ bool yarpWholeBodySensors::addSensor(const SensorType st, const wbiId &sid)
     return false;
 }
 
-int yarpWholeBodySensors::addSensors(const SensorType st, const wbiIdList &sids)
+int yarpWholeBodySensors::addSensors(const SensorType st, const IDList &sids)
 {
     if( initDone )
     {
@@ -292,12 +292,12 @@ int yarpWholeBodySensors::addSensors(const SensorType st, const wbiIdList &sids)
     return false;
 }
 
-bool yarpWholeBodySensors::removeSensor(const SensorType st, const wbiId &sid)
+bool yarpWholeBodySensors::removeSensor(const SensorType st, const ID &sid)
 {
     return false;
 }
 
-const wbiIdList& yarpWholeBodySensors::getSensorList(const SensorType st)
+const IDList& yarpWholeBodySensors::getSensorList(const SensorType st)
 {
     switch(st)
     {
@@ -418,7 +418,7 @@ bool yarpWholeBodySensors::openImu(const int numeric_id, const std::string & por
 
     string remotePort = "/" + robot + port_name;
     stringstream localPort;
-    wbi::wbiId wbi_id;
+    wbi::ID wbi_id;
     imuIdList.numericIdToWbiId(numeric_id,wbi_id);
     localPort << "/" << name << "/imu/" <<  wbi_id.toString() << ":i";
     portsIMU[numeric_id] = new BufferedPort<Vector>();
@@ -446,7 +446,7 @@ bool yarpWholeBodySensors::openFTsens(const int ft_sens_numeric_id, const std::s
 {
     string remotePort = "/" + robot + port_name;
     stringstream localPort;
-    wbi::wbiId wbi_id;
+    wbi::ID wbi_id;
     ftSensIdList.numericIdToWbiId(ft_sens_numeric_id,wbi_id);
     localPort << "/" << name << "/ftSens/" << wbi_id.toString() << ":i";
     portsFTsens[ft_sens_numeric_id] = new BufferedPort<Vector>();
@@ -502,7 +502,7 @@ bool yarpWholeBodySensors::openTorqueSensor(const int bp)
 
 /********************************************** ADD *******************************************************/
 
-bool yarpWholeBodySensors::addEncoder(const wbiId &j)
+bool yarpWholeBodySensors::addEncoder(const ID &j)
 {
     // if initialization was done, no sensors can be added
     if(initDone)
@@ -511,10 +511,10 @@ bool yarpWholeBodySensors::addEncoder(const wbiId &j)
     }
 
     // if initialization was not done, drivers will be opened during initialization
-    return encoderIdList.addId(j);
+    return encoderIdList.addID(j);
 }
 
-int yarpWholeBodySensors::addEncoders(const wbiIdList &jList)
+int yarpWholeBodySensors::addEncoders(const IDList &jList)
 {
     if(initDone)
     {
@@ -522,30 +522,30 @@ int yarpWholeBodySensors::addEncoders(const wbiIdList &jList)
     }
 
     // if initialization was not done, drivers will be opened during initialization
-    return encoderIdList.addIdList(jList);
+    return encoderIdList.addIDList(jList);
 }
 
-bool yarpWholeBodySensors::addPwm(const wbiId &j)
+bool yarpWholeBodySensors::addPwm(const ID &j)
 {
     if(initDone)
     {
         return false;
     }
 
-    return pwmSensIdList.addId(j);
+    return pwmSensIdList.addID(j);
 }
 
-int yarpWholeBodySensors::addPwms(const wbiIdList &jList)
+int yarpWholeBodySensors::addPwms(const IDList &jList)
 {
     if( initDone )
     {
         return false;
     }
 
-    return pwmSensIdList.addIdList(jList);
+    return pwmSensIdList.addIDList(jList);
 }
 
-bool yarpWholeBodySensors::addIMU(const wbi::wbiId &i)
+bool yarpWholeBodySensors::addIMU(const wbi::ID &i)
 {
     // if initialization was not done, ports will be opened during initialization
     if(initDone)
@@ -553,10 +553,10 @@ bool yarpWholeBodySensors::addIMU(const wbi::wbiId &i)
             return false;
     }
 
-    return imuIdList.addId(i);
+    return imuIdList.addID(i);
 }
 
-int yarpWholeBodySensors::addIMUs(const wbi::wbiIdList &jList)
+int yarpWholeBodySensors::addIMUs(const wbi::IDList &jList)
 {
     // if initialization was done, then open port of specified IMU
     // if initialization was not done, ports will be opened during initialization
@@ -565,10 +565,10 @@ int yarpWholeBodySensors::addIMUs(const wbi::wbiIdList &jList)
         return 0;
     }
 
-    return imuIdList.addIdList(jList);
+    return imuIdList.addIDList(jList);
 }
 
-bool yarpWholeBodySensors::addFTsensor(const wbi::wbiId &i)
+bool yarpWholeBodySensors::addFTsensor(const wbi::ID &i)
 {
     // if initialization was done, then open port of specified F/T sensor
     // if initialization was not done, ports will be opened during initialization
@@ -577,37 +577,37 @@ bool yarpWholeBodySensors::addFTsensor(const wbi::wbiId &i)
         return false;
     }
 
-    return ftSensIdList.addId(i);
+    return ftSensIdList.addID(i);
 }
 
-int yarpWholeBodySensors::addFTsensors(const wbi::wbiIdList &jList)
+int yarpWholeBodySensors::addFTsensors(const wbi::IDList &jList)
 {
     if(initDone)
     {
         return 0;
     }
 
-    return ftSensIdList.addIdList(jList);
+    return ftSensIdList.addIDList(jList);
 }
 
-bool yarpWholeBodySensors::addTorqueSensor(const wbi::wbiId &i)
+bool yarpWholeBodySensors::addTorqueSensor(const wbi::ID &i)
 {
     if(initDone)
     {
         return false;
     }
 
-    return torqueSensorIdList.addId(i);
+    return torqueSensorIdList.addID(i);
 }
 
-int yarpWholeBodySensors::addTorqueSensors(const wbi::wbiIdList &jList)
+int yarpWholeBodySensors::addTorqueSensors(const wbi::IDList &jList)
 {
     if(initDone)
     {
         return 0;
     }
 
-    return torqueSensorIdList.addIdList(jList);
+    return torqueSensorIdList.addIDList(jList);
 }
 
 /**************************** READ ************************/

@@ -92,7 +92,7 @@ namespace yarpWbi
 
 
     bool loadJointsControlBoardFromConfig(yarp::os::Property & wbi_yarp_properties,
-                                          const wbi::wbiIdList & jointIdList,
+                                          const wbi::IDList & jointIdList,
                                           std::vector<std::string> & controlBoardNames,
                                           std::vector< std::pair<int,int> > & controlBoardAxisList);
 
@@ -101,27 +101,27 @@ namespace yarpWbi
     yarp::os::Bottle & getWBIYarpJointsOptions(yarp::os::Property & wbi_yarp_properties);
 
     bool appendNewControlBoardsToVector(yarp::os::Bottle & joints_config,
-                                    const wbi::wbiIdList & jointIdList,
+                                    const wbi::IDList & jointIdList,
                                     std::vector<std::string> & controlBoardNames);
 
     bool getControlBoardAxisList(yarp::os::Bottle & joints_config,
-                                                          const wbi::wbiIdList &jointIdList,
+                                                          const wbi::IDList &jointIdList,
                                                           const std::vector<std::string>& controlBoardNames,
                                                           std::vector< std::pair<int,int> > & controlBoardAxisList);
 
     std::vector< int > getControlBoardList(const std::vector< std::pair<int,int> > & controlBoardAxisList);
 
     bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
-                               wbi::wbiIdList & sensorIdList,
+                               wbi::IDList & sensorIdList,
                                std::vector<std::string> & ports,
                                const std::string group_name);
 
     bool loadFTSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
-                                 wbi::wbiIdList & sensorIdList,
+                                 wbi::IDList & sensorIdList,
                                  std::vector<std::string> & ports);
 
     bool loadIMUSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
-                                      wbi::wbiIdList & sensorIdList,
+                                      wbi::IDList & sensorIdList,
                                       std::vector<std::string> & ports);
 
     /**
@@ -136,7 +136,7 @@ namespace yarpWbi
      */
     bool loadIdListFromConfig(std::string requested_list,
                               yarp::os::Property & wbi_yarp_properties,
-                              wbi::wbiIdList & requestedIdList);
+                              wbi::IDList & requestedIdList);
 
 
 

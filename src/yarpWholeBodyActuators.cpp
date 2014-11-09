@@ -351,7 +351,7 @@ bool yarpWholeBodyActuators::updateControlledJointsForEachControlBoard()
         controlled_joints +=  controlledJointsForControlBoard.velocityControlledJoints[wbi_ctrlBoard].size();
         controlled_joints +=  controlledJointsForControlBoard.torqueControlledJoints[wbi_ctrlBoard].size();
         controlled_joints +=  controlledJointsForControlBoard.pwmControlledJoints[wbi_ctrlBoard].size();
-        int tot = totalAxesInControlBoard[wbi_ctrlBoard];
+//        int tot = totalAxesInControlBoard[wbi_ctrlBoard];
         assert(controlled_joints == totalControlledAxesInControlBoard[wbi_ctrlBoard]);
         total_controlled_joints += controlled_joints;
     }
@@ -418,30 +418,30 @@ bool yarpWholeBodyActuators::setConfigurationParameter(const std::string &parame
     return false;
 }
 
-bool yarpWholeBodyActuators::removeActuator(const wbiId &j)
+bool yarpWholeBodyActuators::removeActuator(const ID &j)
 {
     if (initDone) return false;
 
-    if(!jointIdList.removeId(j))
+    if(!jointIdList.removeID(j))
         return false;
     return true;
 }
 
-bool yarpWholeBodyActuators::addActuator(const wbiId &j)
+bool yarpWholeBodyActuators::addActuator(const ID &j)
 {
     if (initDone) return false;
 
-    if(!jointIdList.addId(j))
+    if(!jointIdList.addID(j))
         return false;
 
     return true;
 }
 
-int yarpWholeBodyActuators::addActuators(const wbiIdList &jList)
+int yarpWholeBodyActuators::addActuators(const IDList &jList)
 {
     if (initDone) return false;
 
-    int count = jointIdList.addIdList(jList);
+    int count = jointIdList.addIDList(jList);
     return count;
 }
 
@@ -928,7 +928,7 @@ bool yarpWholeBodyActuators::setPIDGains(const double *pValue, const double *dVa
     if (joint < 0) {
         return false;
 //        FOR_ALL(itBp, itJ) {
-//            switch (currentCtrlModes[wbiId(itBp->first,*itJ)]) {
+//            switch (currentCtrlModes[ID(itBp->first,*itJ)]) {
 //                case wbi::CTRL_MODE_TORQUE:
 //                {
 //                    //this is wrong...

@@ -86,7 +86,7 @@ bool yarpWholeBodyStatesLocal::close()
     return ok;
 }
 
-bool yarpWholeBodyStatesLocal::addEstimate(const EstimateType et, const wbiId &sid)
+bool yarpWholeBodyStatesLocal::addEstimate(const EstimateType et, const ID &sid)
 {
     switch(et)
     {
@@ -108,7 +108,7 @@ bool yarpWholeBodyStatesLocal::addEstimate(const EstimateType et, const wbiId &s
     return false;
 }
 
-int yarpWholeBodyStatesLocal::addEstimates(const EstimateType et, const wbiIdList &sids)
+int yarpWholeBodyStatesLocal::addEstimates(const EstimateType et, const IDList &sids)
 {
     //\todo TODO properly handle dependencies
     switch(et)
@@ -131,7 +131,7 @@ int yarpWholeBodyStatesLocal::addEstimates(const EstimateType et, const wbiIdLis
     return false;
 }
 
-bool yarpWholeBodyStatesLocal::removeEstimate(const EstimateType et, const wbiId &sid)
+bool yarpWholeBodyStatesLocal::removeEstimate(const EstimateType et, const ID &sid)
 {
     switch(et)
     {
@@ -153,7 +153,7 @@ bool yarpWholeBodyStatesLocal::removeEstimate(const EstimateType et, const wbiId
     return false;
 }
 
-const wbiIdList& yarpWholeBodyStatesLocal::getEstimateList(const EstimateType et)
+const IDList& yarpWholeBodyStatesLocal::getEstimateList(const EstimateType et)
 {
     switch(et)
     {
@@ -199,7 +199,7 @@ int yarpWholeBodyStatesLocal::getEstimateNumber(const EstimateType et)
 
 bool yarpWholeBodyStatesLocal::getEstimate(const EstimateType et, const int numeric_id, double *data, double time, bool blocking)
 {
-    wbi::wbiId sid;
+    wbi::ID sid;
     switch(et)
     {
     case ESTIMATE_JOINT_POS:
@@ -263,12 +263,12 @@ bool yarpWholeBodyStatesLocal::setEstimationParameter(const EstimateType et, con
     return estimator->lockAndSetEstimationParameter(et, ep, value);
 }
 
-bool yarpWholeBodyStatesLocal::setEstimationOffset(const EstimateType et, const wbiId & sid, const double *value)
+bool yarpWholeBodyStatesLocal::setEstimationOffset(const EstimateType et, const ID & sid, const double *value)
 {
     return estimator->lockAndSetEstimationOffset(et,sid,value);
 }
 
-bool yarpWholeBodyStatesLocal::getEstimationOffset(const EstimateType et, const wbiId & sid, double *value)
+bool yarpWholeBodyStatesLocal::getEstimationOffset(const EstimateType et, const ID & sid, double *value)
 {
     return estimator->lockAndGetEstimationOffset(et,sid,value);
 }
@@ -295,7 +295,7 @@ bool yarpWholeBodyStatesLocal::getMotorVel(double *data, double time, bool block
 {
     bool res = estimator->lockAndCopyVector(estimator->estimates.lastDq, data);    ///< read joint vel
     if(!res) return false;
-    wbiIdList idList = lockAndGetSensorList(SENSOR_ENCODER);
+    IDList idList = lockAndGetSensorList(SENSOR_ENCODER);
     //int i=0;
     /*
      \todo TODO FIXME
@@ -352,7 +352,7 @@ bool yarpWholeBodyStatesLocal::lockAndReadExternalForces(iCub::skinDynLib::skinC
     return true;
 }
 
-bool yarpWholeBodyStatesLocal::lockAndAddSensor(const SensorType st, const wbiId &sid)
+bool yarpWholeBodyStatesLocal::lockAndAddSensor(const SensorType st, const ID &sid)
 {
     estimator->mutex.wait();
     bool res = sensors->addSensor(st, sid);
@@ -360,7 +360,7 @@ bool yarpWholeBodyStatesLocal::lockAndAddSensor(const SensorType st, const wbiId
     return res;
 }
 
-int yarpWholeBodyStatesLocal::lockAndAddSensors(const SensorType st, const wbiIdList &sids)
+int yarpWholeBodyStatesLocal::lockAndAddSensors(const SensorType st, const IDList &sids)
 {
     estimator->mutex.wait();
     int res = sensors->addSensors(st, sids);
@@ -368,7 +368,7 @@ int yarpWholeBodyStatesLocal::lockAndAddSensors(const SensorType st, const wbiId
     return res;
 }
 
-bool yarpWholeBodyStatesLocal::lockAndRemoveSensor(const SensorType st, const wbiId &sid)
+bool yarpWholeBodyStatesLocal::lockAndRemoveSensor(const SensorType st, const ID &sid)
 {
     estimator->mutex.wait();
     bool res = sensors->removeSensor(st, sid);
@@ -376,10 +376,10 @@ bool yarpWholeBodyStatesLocal::lockAndRemoveSensor(const SensorType st, const wb
     return res;
 }
 
-wbiIdList yarpWholeBodyStatesLocal::lockAndGetSensorList(const SensorType st)
+IDList yarpWholeBodyStatesLocal::lockAndGetSensorList(const SensorType st)
 {
     estimator->mutex.wait();
-    wbiIdList res = sensors->getSensorList(st);
+    IDList res = sensors->getSensorList(st);
     estimator->mutex.post();
     return res;
 }
@@ -494,17 +494,17 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     tauMFilt    = new FirstOrderLowPassFilter(tauMCutFrequency, getRate()*1e-3, estimates.lastTauJ);
     pwmFilt     = new FirstOrderLowPassFilter(pwmCutFrequency, getRate()*1e-3, estimates.lastPwm);
 
-    wbiIdList available_ft_sensors = sensors->getSensorList(SENSOR_FORCE_TORQUE);
+    IDList available_ft_sensors = sensors->getSensorList(SENSOR_FORCE_TORQUE);
     for(int ft_numeric = 0; ft_numeric < (int)available_ft_sensors.size(); ft_numeric++ )
     {
-        wbiId wbi_id;
+        ID wbi_id;
         available_ft_sensors.numericIdToWbiId(ft_numeric,wbi_id);
         int ft_index = ft_numeric;
         sensors->readSensor(SENSOR_FORCE_TORQUE, ft_index, forcetorques[ft_index].data(), &(forcetorquesStamps[ft_index]),true );
         forcetorqueFilters[ft_index] = new FirstOrderLowPassFilter(forcetorqueCutFrequency,getRate()*1e-3,forcetorques[ft_index]); ///< low pass filter
     }
 
-     wbiIdList available_imu_sensors = sensors->getSensorList(SENSOR_IMU);
+     IDList available_imu_sensors = sensors->getSensorList(SENSOR_IMU);
      for(int numeric_imu_id = 0; numeric_imu_id < (int)available_imu_sensors.size(); numeric_imu_id++)
      {
          int imu_index = numeric_imu_id;
@@ -555,19 +555,19 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     std::string urdf_file_path = rf.findFile(urdf_file.c_str());
 
     std::vector<std::string> dof_serialization;
-    wbiIdList torque_estimation_list = sensors->getSensorList(SENSOR_ENCODER);
+    IDList torque_estimation_list = sensors->getSensorList(SENSOR_ENCODER);
     for(int dof=0; dof < (int)torque_estimation_list.size(); dof++)
     {
-        wbiId wbi_id;
+        ID wbi_id;
         torque_estimation_list.numericIdToWbiId(dof,wbi_id);
         dof_serialization.push_back(wbi_id.toString());
     }
 
     std::vector<std::string> ft_serialization;
-    wbiIdList ft_sensor_list = sensors->getSensorList(SENSOR_FORCE_TORQUE);
+    IDList ft_sensor_list = sensors->getSensorList(SENSOR_FORCE_TORQUE);
     for(int ft=0; ft < (int)ft_sensor_list.size(); ft++)
     {
-        wbiId wbi_id;
+        ID wbi_id;
         ft_sensor_list.numericIdToWbiId(ft,wbi_id);
         ft_serialization.push_back(wbi_id.toString());
     }
@@ -730,10 +730,10 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     right_sole_frame_idyntree_id = robot_estimation_model->getLinkIndex(right_sole_frame_id.toString());
     //YARP_ASSERT(right_sole_frame_idyntree_id >= 0);
 
-    wbiIdList available_encoders = sensors->getSensorList(wbi::SENSOR_ENCODER);
+    IDList available_encoders = sensors->getSensorList(wbi::SENSOR_ENCODER);
     for(int i = 0; i < (int)available_encoders.size(); i++ )
     {
-        wbiId enc;
+        ID enc;
         available_encoders.numericIdToWbiId(i,enc);
         if(!(robot_estimation_model->getDOFIndex(enc.toString()) == i))
         {
@@ -752,7 +752,7 @@ void yarpWholeBodyDynamicsEstimator::run()
     //Temporary workaround: yarpWholeBodyStatesLocal needs all the DOF present in the dynamical model
     if( sensors->getSensorNumber(wbi::SENSOR_ENCODER) != robot_estimation_model->getNrOfDOFs() )
     {
-        wbiIdList list = sensors->getSensorList(wbi::SENSOR_ENCODER);
+        IDList list = sensors->getSensorList(wbi::SENSOR_ENCODER);
 
         std::cerr << "Available encoders: " << list.toString() << std::endl;
 
@@ -784,7 +784,7 @@ void yarpWholeBodyDynamicsEstimator::run()
 
         ///< Read force/torque sensors
         ///< \todo TODO buffer value of available_ft_sensors to avoid memory allocation (?)
-        wbiIdList available_ft_sensors = sensors->getSensorList(SENSOR_FORCE_TORQUE);
+        IDList available_ft_sensors = sensors->getSensorList(SENSOR_FORCE_TORQUE);
         for(int ft_numeric = 0; ft_numeric < (int)available_ft_sensors.size(); ft_numeric++ )
         {
             int ft_index = ft_numeric;
@@ -800,7 +800,7 @@ void yarpWholeBodyDynamicsEstimator::run()
         ///< Read IMU
         ///< \todo TODO buffer value of available_imu_sensors to avoid memory allocation (?)
         ///< \todo TODO add filters for imu values ->
-        wbiIdList available_imu_sensors = sensors->getSensorList(SENSOR_IMU);
+        IDList available_imu_sensors = sensors->getSensorList(SENSOR_IMU);
         for(int imu_numeric = 0; imu_numeric < (int) available_imu_sensors.size(); imu_numeric++ )
         {
             int imu_index = imu_numeric;
@@ -1025,7 +1025,7 @@ void getEEWrench(const iCub::iDynTree::TorqueEstimationTree & icub_model,
     KDLtoYarp(f_gripper,gripper_wrench);
 }
 
-wbi::wbiId yarpWholeBodyDynamicsEstimator::linkOldIdToNewId(const int bodyPart, const int link_index)
+wbi::ID yarpWholeBodyDynamicsEstimator::linkOldIdToNewId(const int bodyPart, const int link_index)
 {
     // \todo TODO FIXME Remove hardcoded values
     if( bodyPart == LEFT_ARM && link_index == left_hand_link_old_id )
@@ -1044,7 +1044,7 @@ wbi::wbiId yarpWholeBodyDynamicsEstimator::linkOldIdToNewId(const int bodyPart, 
     {
         return right_foot_link_id;
     }
-    return wbiId();
+    return ID();
 }
 
 void yarpWholeBodyDynamicsEstimator::estimateExternalForcesAndJointTorques()
@@ -1152,7 +1152,7 @@ void yarpWholeBodyDynamicsEstimator::estimateExternalForcesAndJointTorques()
             skinContacts.push_back(skinContact(estimatedLastDynContacts[i]));
         contactFound = false;
 
-        wbiId contactLink = linkOldIdToNewId(estimatedLastDynContacts[i].getBodyPart(),estimatedLastDynContacts[i].getLinkNumber());
+        ID contactLink = linkOldIdToNewId(estimatedLastDynContacts[i].getBodyPart(),estimatedLastDynContacts[i].getLinkNumber());
 
         //If a dyn contact is found on the end effector, store its value
         if( contactLink == left_hand_link_id )
@@ -1246,7 +1246,7 @@ void yarpWholeBodyDynamicsEstimator::threadRelease()
     this->getEstUsed(avgTimeUsed, stdDevUsed);
     double period = this->getRate();
     printf("[PERFORMANCE INFORMATION][yarpWholeBodyDynamicsEstimator]:\n");
-    printf("Expected period %d ms.\nReal period: %3.1f+/-%3.1f ms.\n", period, avgTime, stdDev);
+    printf("Expected period %f ms.\nReal period: %3.1f+/-%3.1f ms.\n", period, avgTime, stdDev);
     printf("Real duration of 'run' method: %3.1f+/-%3.1f ms.\n", avgTimeUsed, stdDevUsed);
 
     return;
@@ -1356,7 +1356,7 @@ void copyVector(const yarp::sig::Vector & src, double * dest)
     memcpy(dest,src.data(),src.size()*sizeof(double));
 }
 
-bool yarpWholeBodyDynamicsEstimator::lockAndCopyExternalForceTorque(const wbiId & sid, double * dest)
+bool yarpWholeBodyDynamicsEstimator::lockAndCopyExternalForceTorque(const ID & sid, double * dest)
 {
     bool external_ft_available = false;
     if(dest==0)
@@ -1471,7 +1471,7 @@ bool yarpWholeBodyDynamicsEstimator::lockAndSetEstimationParameter(const Estimat
     return res;
 }
 
-bool yarpWholeBodyDynamicsEstimator::lockAndSetEstimationOffset(const EstimateType et, const wbiId & sid, const double *value)
+bool yarpWholeBodyDynamicsEstimator::lockAndSetEstimationOffset(const EstimateType et, const ID & sid, const double *value)
 {
     bool res = true;
     int ft_index;
@@ -1489,7 +1489,7 @@ bool yarpWholeBodyDynamicsEstimator::lockAndSetEstimationOffset(const EstimateTy
     return res;
 }
 
-bool yarpWholeBodyDynamicsEstimator::lockAndGetEstimationOffset(const EstimateType et, const wbiId & sid, double *value)
+bool yarpWholeBodyDynamicsEstimator::lockAndGetEstimationOffset(const EstimateType et, const ID & sid, double *value)
 {
     bool res = true;
     int ft_index;

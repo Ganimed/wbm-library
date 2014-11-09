@@ -82,7 +82,7 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
     for(int encoder_id = 0; encoder_id < (int)estimateIdList[SENSOR_ENCODER].size(); encoder_id++)
     {
         //search if coupling information is provided for each motor, if not return false
-        wbi::wbiId joint_encoder_name;
+        wbi::ID joint_encoder_name;
         estimateIdList[ESTIMATE_JOINT_POS].numericIdToWbiId(encoder_id,joint_encoder_name);
         if( !couplings_bot.check(joint_encoder_name.toString()) )
         {
@@ -115,11 +115,11 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
     }
 
     //Reset motor estimate list (the motor list will be induced by the joint list
-    estimateIdList[ESTIMATE_MOTOR_POS] = wbiIdList();
+    estimateIdList[ESTIMATE_MOTOR_POS] = IDList();
 
     for(int encoder_id = 0; encoder_id < (int)estimateIdList[SENSOR_ENCODER].size(); encoder_id++)
     {
-        wbi::wbiId joint_encoder_name;
+        wbi::ID joint_encoder_name;
         estimateIdList[ESTIMATE_JOINT_POS].numericIdToWbiId(encoder_id,joint_encoder_name);
 
         //Check coupling configuration is well formed
@@ -130,7 +130,7 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
         {
             std::string motor_name = joint_coupling_bot->get(coupled_motor).asList()->get(1).asString();
             //Add the motor name to all relevant estimates lists
-            estimateIdList[ESTIMATE_MOTOR_POS].addId(motor_name);
+            estimateIdList[ESTIMATE_MOTOR_POS].addID(motor_name);
         }
 
     }
@@ -151,7 +151,7 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
 
     for(int encoder_id = 0; encoder_id < (int)estimateIdList[SENSOR_ENCODER].size(); encoder_id++)
     {
-        wbi::wbiId joint_encoder_name;
+        wbi::ID joint_encoder_name;
         estimateIdList[ESTIMATE_JOINT_POS].numericIdToWbiId(encoder_id,joint_encoder_name);
 
         //Check coupling configuration is well formed
@@ -289,7 +289,7 @@ bool yarpWholeBodyStates::setWorldBasePosition(const wbi::Frame & xB)
     //return estimator->setWorldBasePosition(xB);
 }
 
-bool yarpWholeBodyStates::addEstimate(const EstimateType et, const wbiId &sid)
+bool yarpWholeBodyStates::addEstimate(const EstimateType et, const ID &sid)
 {
     if( initDone ) return false;
     /*
@@ -314,11 +314,11 @@ bool yarpWholeBodyStates::addEstimate(const EstimateType et, const wbiId &sid)
     }
     return false;
     */
-    estimateIdList[et].addId(sid);
+    estimateIdList[et].addID(sid);
     return true;
 }
 
-int yarpWholeBodyStates::addEstimates(const EstimateType et, const wbiIdList &sids)
+int yarpWholeBodyStates::addEstimates(const EstimateType et, const IDList &sids)
 {
     if( initDone ) return false;
     /*
@@ -343,11 +343,11 @@ int yarpWholeBodyStates::addEstimates(const EstimateType et, const wbiIdList &si
     }
     return false;
     */
-    estimateIdList[et].addIdList(sids);
+    estimateIdList[et].addIDList(sids);
     return true;
 }
 
-bool yarpWholeBodyStates::removeEstimate(const EstimateType et, const wbiId &sid)
+bool yarpWholeBodyStates::removeEstimate(const EstimateType et, const ID &sid)
 {
     if( initDone ) return false;
 
@@ -371,11 +371,11 @@ bool yarpWholeBodyStates::removeEstimate(const EstimateType et, const wbiId &sid
     }
     return false;
     */
-   estimateIdList[et].removeId(sid);
+   estimateIdList[et].removeID(sid);
    return true;
 }
 
-const wbiIdList& yarpWholeBodyStates::getEstimateList(const EstimateType et)
+const IDList& yarpWholeBodyStates::getEstimateList(const EstimateType et)
 {
     if( initDone )
     {
@@ -513,7 +513,7 @@ bool yarpWholeBodyStates::getMotorVel(double *data, double time, bool /*blocking
     bool res = estimator->lockAndCopyVector(estimator->estimates.lastDq, data);    ///< read joint vel
     if(!res) return false;
     /*
-    wbiIdList idList = lockAndGetSensorList(SENSOR_ENCODER);
+    IDList idList = lockAndGetSensorList(SENSOR_ENCODER);
     int i=0;
     FOR_ALL_OF(itBp, itJ, idList)   ///< manage coupled joints
     {
@@ -595,7 +595,7 @@ bool yarpWholeBodyStates::lockAndGetExternalWrench(const int numeric_id, double 
 }
 */
 
-bool yarpWholeBodyStates::lockAndAddSensor(const SensorType st, const wbiId &sid)
+bool yarpWholeBodyStates::lockAndAddSensor(const SensorType st, const ID &sid)
 {
     estimator->mutex.wait();
     bool res = sensors->addSensor(st, sid);
@@ -603,7 +603,7 @@ bool yarpWholeBodyStates::lockAndAddSensor(const SensorType st, const wbiId &sid
     return res;
 }
 
-int yarpWholeBodyStates::lockAndAddSensors(const SensorType st, const wbiIdList &sids)
+int yarpWholeBodyStates::lockAndAddSensors(const SensorType st, const IDList &sids)
 {
     estimator->mutex.wait();
     int res = sensors->addSensors(st, sids);
@@ -611,7 +611,7 @@ int yarpWholeBodyStates::lockAndAddSensors(const SensorType st, const wbiIdList 
     return res;
 }
 
-bool yarpWholeBodyStates::lockAndRemoveSensor(const SensorType st, const wbiId &sid)
+bool yarpWholeBodyStates::lockAndRemoveSensor(const SensorType st, const ID &sid)
 {
     estimator->mutex.wait();
     bool res = sensors->removeSensor(st, sid);
@@ -619,10 +619,10 @@ bool yarpWholeBodyStates::lockAndRemoveSensor(const SensorType st, const wbiId &
     return res;
 }
 
-wbiIdList yarpWholeBodyStates::lockAndGetSensorList(const SensorType st)
+IDList yarpWholeBodyStates::lockAndGetSensorList(const SensorType st)
 {
     estimator->mutex.wait();
-    wbiIdList res = sensors->getSensorList(st);
+    IDList res = sensors->getSensorList(st);
     estimator->mutex.post();
     return res;
 }
@@ -694,10 +694,10 @@ bool yarpWholeBodyEstimator::threadInit()
     //H_world_base.eye();
 
     /*
-    right_gripper_local_id = wbi::wbiId(RIGHT_ARM,8);
-    left_gripper_local_id = wbi::wbiId(LEFT_ARM,8);
-    left_sole_local_id = wbi::wbiId(LEFT_LEG,8);
-    right_sole_local_id = wbi::wbiId(RIGHT_LEG,8);
+    right_gripper_local_id = wbi::ID(RIGHT_ARM,8);
+    left_gripper_local_id = wbi::ID(LEFT_ARM,8);
+    left_sole_local_id = wbi::ID(LEFT_LEG,8);
+    right_sole_local_id = wbi::ID(RIGHT_LEG,8);
     */
 
     return ok;
@@ -820,7 +820,7 @@ void yarpWholeBodyEstimator::run()
 }
 
 /*
-bool yarpWholeBodyEstimator::openEEWrenchPorts(const wbi::wbiId & local_id)
+bool yarpWholeBodyEstimator::openEEWrenchPorts(const wbi::ID & local_id)
 {
     std::string wbd_module_name = "wholeBodyDynamicsTree";
     std::string part, remotePort;
@@ -860,7 +860,7 @@ bool yarpWholeBodyEstimator::openEEWrenchPorts(const wbi::wbiId & local_id)
     return true;
 }
 
-void yarpWholeBodyEstimator::readEEWrenches(const wbi::wbiId & local_id, yarp::sig::Vector & vec)
+void yarpWholeBodyEstimator::readEEWrenches(const wbi::ID & local_id, yarp::sig::Vector & vec)
 {
     vec.resize(6);
     vec.zero();
@@ -876,7 +876,7 @@ void yarpWholeBodyEstimator::readEEWrenches(const wbi::wbiId & local_id, yarp::s
     }
 }
 
-void yarpWholeBodyEstimator::closeEEWrenchPorts(const wbi::wbiId & local_id)
+void yarpWholeBodyEstimator::closeEEWrenchPorts(const wbi::ID & local_id)
 {
     if( ee_wrenches_enabled )
     {

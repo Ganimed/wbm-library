@@ -32,12 +32,12 @@ yarp::os::Bottle & getWBIYarpJointsOptions(yarp::os::Property & wbi_yarp_propert
 }
 
 bool appendNewControlBoardsToVector(yarp::os::Bottle & joints_config,
-                                    const wbi::wbiIdList & jointIdList,
+                                    const wbi::IDList & jointIdList,
                                     std::vector<std::string> & controlBoardNames)
 {
     for(int jnt=0; jnt < (int)jointIdList.size(); jnt++ )
     {
-        wbi::wbiId jnt_name;
+        wbi::ID jnt_name;
         jointIdList.numericIdToWbiId(jnt,jnt_name);
 
         if( !joints_config.check(jnt_name.toString().c_str()) )
@@ -65,7 +65,7 @@ bool appendNewControlBoardsToVector(yarp::os::Bottle & joints_config,
 }
 
 bool getControlBoardAxisList(yarp::os::Bottle & joints_config,
-                                                          const wbi::wbiIdList &jointIdList,
+                                                          const wbi::IDList &jointIdList,
                                                           const std::vector<std::string>& controlBoardNames,
                                                           std::vector< std::pair<int,int> > & controlBoardAxisList)
 {
@@ -76,7 +76,7 @@ bool getControlBoardAxisList(yarp::os::Bottle & joints_config,
     //Error check loop
     for(int wbi_jnt=0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++ )
     {
-        wbi::wbiId wbi_jnt_name;
+        wbi::ID wbi_jnt_name;
         jointIdList.numericIdToWbiId(wbi_jnt,wbi_jnt_name);
 
         //std::cout << joints_config.toString() << std::endl;
@@ -106,7 +106,7 @@ bool getControlBoardAxisList(yarp::os::Bottle & joints_config,
     controlBoardAxisList.resize(jointIdList.size());
     for(int wbi_jnt=0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++ )
     {
-        wbi::wbiId wbi_jnt_name;
+        wbi::ID wbi_jnt_name;
         jointIdList.numericIdToWbiId(wbi_jnt,wbi_jnt_name);
 
         yarp::os::Bottle * ctrlBoard_mapping = joints_config.find(wbi_jnt_name.toString().c_str()).asList();
@@ -148,7 +148,7 @@ std::map<std::string,int> getControlBoardIdsMap(const std::vector<std::string> &
 }
 
 bool loadJointsControlBoardFromConfig(yarp::os::Property & wbi_yarp_properties,
-                                      const wbi::wbiIdList & jointIdList,
+                                      const wbi::IDList & jointIdList,
                                       std::vector<std::string> & controlBoardNames,
                                       std::vector< std::pair<int,int> > & controlBoardAxisList)
 {
@@ -174,7 +174,7 @@ bool loadJointsControlBoardFromConfig(yarp::os::Property & wbi_yarp_properties,
     //we have to save this mapping
     for(int wbi_jnt=0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++ )
     {
-        wbi::wbiId wbi_jnt_name;
+        wbi::ID wbi_jnt_name;
         jointIdList.numericIdToWbiId(wbi_jnt,wbi_jnt_name);
 
         yarp::os::Bottle * ctrlBoard_mapping = joints_config.find(wbi_jnt_name.toString().c_str()).asList();
@@ -191,7 +191,7 @@ bool loadJointsControlBoardFromConfig(yarp::os::Property & wbi_yarp_properties,
 }
 
 bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
-                               wbi::wbiIdList & sensorIdList,
+                               wbi::IDList & sensorIdList,
                                std::vector<std::string> & ports,
                                const std::string group_name)
 {
@@ -201,7 +201,7 @@ bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
         return true;
     }
 
-    sensorIdList = wbi::wbiIdList();
+    sensorIdList = wbi::IDList();
     ports.resize(0);
 
     ports.resize(ports_list.size()-1);
@@ -212,7 +212,7 @@ bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
             return false;
         }
         std::string sensorId = port->get(0).asString().c_str();
-        sensorIdList.addId(wbi::wbiId(sensorId));
+        sensorIdList.addID(wbi::ID(sensorId));
         std::string port_name = port->get(1).asString().c_str();
         ports[port_id] = port_name;
     }
@@ -220,7 +220,7 @@ bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
 }
 
 bool loadFTSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
-                                 wbi::wbiIdList & sensorIdList,
+                                 wbi::IDList & sensorIdList,
                                  std::vector<std::string> & ports)
 {
     return loadSensorPortsFromConfig(wbi_yarp_properties,
@@ -230,7 +230,7 @@ bool loadFTSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
 }
 
 bool loadIMUSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
-                                 wbi::wbiIdList & sensorIdList,
+                                 wbi::IDList & sensorIdList,
                                  std::vector<std::string> & ports)
 {
     return loadSensorPortsFromConfig(wbi_yarp_properties,
@@ -365,7 +365,7 @@ bool loadIdListsFromConfigRecursiveHelper(std::string & requested_list,
 
 bool loadIdListFromConfig(std::string requested_list,
                           yarp::os::Property & wbi_yarp_properties,
-                          wbi::wbiIdList & requestedIdList)
+                          wbi::IDList & requestedIdList)
 {
     yarp::os::Bottle & list_bot = wbi_yarp_properties.findGroup("WBI_ID_LISTS");
     yarp::os::Value & requested_list_val = list_bot.find(requested_list.c_str());
@@ -388,11 +388,11 @@ bool loadIdListFromConfig(std::string requested_list,
         return false;
     }
 
-    requestedIdList = wbi::wbiIdList();
+    requestedIdList = wbi::IDList();
 
     for(int id = 0; id < (int)ids.size(); id++ )
     {
-        requestedIdList.addId(wbi::wbiId(ids[id]));
+        requestedIdList.addID(wbi::ID(ids[id]));
     }
 
     return ret;

@@ -32,6 +32,11 @@
 #include <map>
 
 
+namespace wbi {
+    class ID;
+    class IDList;
+}
+
 namespace yarpWbi
 {
 
@@ -54,26 +59,26 @@ namespace yarpWbi
 
         //List of controlboard related sensors
         ///< empty list of IDs to return in case of error
-        wbi::wbiIdList            emptyList;
+        wbi::IDList            emptyList;
 
         ///< list of encoder IDs
-        wbi::wbiIdList            encoderIdList;
+        wbi::IDList            encoderIdList;
         ///< list of controlboard numeric IDs (i.e. indeces of controlBoardNames vector) for which encoder are added
         std::vector<int>          encoderControlBoardList;
         ///< map from encoder numeric IDs (i.e. indeces of encoderIdList vector) to a pair of int that are: (controlboard id,axis)
         std::vector< std::pair<int,int> >  encoderControlBoardAxisList;
 
-        wbi::wbiIdList            pwmSensIdList;  // list of the motor PWM sensor ids
+        wbi::IDList            pwmSensIdList;  // list of the motor PWM sensor ids
         std::vector<int>          pwmControlBoardList;
         std::vector< std::pair<int,int> > pwmControlBoardAxisList;
 
-        wbi::wbiIdList            torqueSensorIdList; //list of the torque sensor ids
+        wbi::IDList            torqueSensorIdList; //list of the torque sensor ids
         std::vector<int>          torqueControlBoardList;
         std::vector< std::pair<int,int> > torqueControlBoardAxisList;
 
         //List of sensors that have their own device
-        wbi::wbiIdList            imuIdList;      // list of the IMU ids
-        wbi::wbiIdList            ftSensIdList;   // list of the force/torque sensor ids
+        wbi::IDList            imuIdList;      // list of the IMU ids
+        wbi::IDList            ftSensIdList;   // list of the force/torque sensor ids
 
         // LAST READING DATA (map controlboard numeric IDs (i.e. indeces of controlBoardNames vector) to data)
         std::vector<yarp::sig::Vector>            qLastRead;
@@ -110,20 +115,20 @@ namespace yarpWbi
         bool convertIMU(double * wbi_inertial_readings, const double * yarp_inertial_readings);
 
         // *** ENCODERS
-        virtual bool addEncoder(const wbi::wbiId &j);
-        virtual int addEncoders(const wbi::wbiIdList &j);
+        virtual bool addEncoder(const wbi::ID &j);
+        virtual int addEncoders(const wbi::IDList &j);
         // *** PWMs
-        virtual bool addPwm(const wbi::wbiId &j);
-        virtual int addPwms(const wbi::wbiIdList &j);
+        virtual bool addPwm(const wbi::ID &j);
+        virtual int addPwms(const wbi::IDList &j);
         // *** IMUs
-        virtual bool addIMU(const wbi::wbiId &i);
-        virtual int addIMUs(const wbi::wbiIdList &i);
+        virtual bool addIMU(const wbi::ID &i);
+        virtual int addIMUs(const wbi::IDList &i);
         // *** FORCE/TORQUE SENSORS
-        virtual bool addFTsensor(const wbi::wbiId &i);
-        virtual int addFTsensors(const wbi::wbiIdList &i);
+        virtual bool addFTsensor(const wbi::ID &i);
+        virtual int addFTsensors(const wbi::IDList &i);
         // *** TORQUE SENSORS *** //
-        virtual bool addTorqueSensor(const wbi::wbiId &i);
-        virtual int addTorqueSensors(const wbi::wbiIdList &i);
+        virtual bool addTorqueSensor(const wbi::ID &i);
+        virtual int addTorqueSensors(const wbi::IDList &i);
 
         virtual bool readEncoder(const int id, double *q, double *stamps=0, bool wait=true);
         virtual bool readPwm(const int id, double *pwm, double *stamps=0, bool wait=true);
@@ -168,7 +173,7 @@ namespace yarpWbi
          * @param sid Id of the sensor.
          * @return True if the sensor has been added, false otherwise (e.g. the sensor has been already added).
          */
-        virtual bool addSensor(const wbi::SensorType st, const wbi::wbiId &sid);
+        virtual bool addSensor(const wbi::SensorType st, const wbi::ID &sid);
 
         /**
          * Add the specified sensors so that they can be read.
@@ -176,7 +181,7 @@ namespace yarpWbi
          * @param sids Ids of the sensors.
          * @return True if the sensor has been added, false otherwise (e.g. the sensor has been already added).
          */
-        virtual int addSensors(const wbi::SensorType st, const wbi::wbiIdList &sids);
+        virtual int addSensors(const wbi::SensorType st, const wbi::IDList &sids);
 
         /**
          * Remove the specified sensor.
@@ -184,13 +189,13 @@ namespace yarpWbi
          * @param j Id of the sensor to remove.
          * @return True if the sensor has been removed, false otherwise.
          */
-        virtual bool removeSensor(const wbi::SensorType st, const wbi::wbiId &sid);
+        virtual bool removeSensor(const wbi::SensorType st, const wbi::ID &sid);
 
         /**
          * Get a copy of the sensor list of the specified sensor type.
          * @param st Type of sensors.
          * @return A copy of the sensor list. */
-        virtual const wbi::wbiIdList& getSensorList(const wbi::SensorType st);
+        virtual const wbi::IDList& getSensorList(const wbi::SensorType st);
 
         /**
          * Get the number of sensors of the specified type.

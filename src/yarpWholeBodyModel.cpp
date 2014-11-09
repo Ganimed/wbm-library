@@ -142,7 +142,7 @@ bool yarpWholeBodyModel::init()
     wbiToiDynTreeJointId.resize(jointIdList.size());
     for(int wbi_numeric_id =0;  wbi_numeric_id < (int)jointIdList.size(); wbi_numeric_id++ )
     {
-        wbi::wbiId joint_id;
+        wbi::ID joint_id;
         jointIdList.numericIdToWbiId(wbi_numeric_id,joint_id);
         int idyntree_id = p_model->getDOFIndex(joint_id.toString());
         if( idyntree_id == - 1 )
@@ -161,7 +161,7 @@ bool yarpWholeBodyModel::init()
     {
         std::string frame_name;
         p_model->getFrameName(frame_numeric_id,frame_name);
-        frameIdList.addId(frame_name);
+        frameIdList.addID(frame_name);
     }
 
 
@@ -195,7 +195,7 @@ bool yarpWholeBodyModel::close()
     return ok;
 }
 
-bool yarpWholeBodyModel::removeJoint(const wbi::wbiId &j)
+bool yarpWholeBodyModel::removeJoint(const wbi::ID &j)
 {
     return false;
 }
@@ -213,14 +213,14 @@ bool yarpWholeBodyModel::getYarpWbiProperties(yarp::os::Property & yarp_wbi_prop
 }
 
 
-bool yarpWholeBodyModel::addJoint(const wbi::wbiId &j)
+bool yarpWholeBodyModel::addJoint(const wbi::ID &j)
 {
     if( initDone )
     {
         return false;
     }
 
-    if(!jointIdList.addId(j))
+    if(!jointIdList.addID(j))
     {
         return false;
     }
@@ -228,9 +228,9 @@ bool yarpWholeBodyModel::addJoint(const wbi::wbiId &j)
     return true;
 }
 
-int yarpWholeBodyModel::addJoints(const wbi::wbiIdList &j)
+int yarpWholeBodyModel::addJoints(const wbi::IDList &j)
 {
-    int count = jointIdList.addIdList(j);
+    int count = jointIdList.addIDList(j);
     return count;
 }
 
@@ -741,12 +741,12 @@ bool yarpWholeBodyModel::computeCentroidalMomentum(double *q, const Frame &xBase
     return true;
 }
 
-const wbi::wbiIdList & yarpWholeBodyModel::getJointList()
+const wbi::IDList & yarpWholeBodyModel::getJointList()
 {
     return jointIdList;
 }
 
-const wbi::wbiIdList & yarpWholeBodyModel::getFrameList()
+const wbi::IDList & yarpWholeBodyModel::getFrameList()
 {
     return frameIdList;
 }

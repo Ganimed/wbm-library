@@ -42,6 +42,11 @@
 
 /* CODE UNDER DEVELOPMENT */
 
+namespace wbi {
+    class ID;
+    class IDList;
+}
+
 namespace yarpWbi
 {
 
@@ -72,7 +77,7 @@ namespace yarpWbi
         yarpWholeBodyModel      *modelInt;
         yarpWholeBodyStates     *stateInt;
 
-        wbi::wbiIdList empty_id_list;
+        wbi::IDList empty_id_list;
 
     public:
         // *** CONSTRUCTORS ***
@@ -97,18 +102,18 @@ namespace yarpWbi
         inline virtual ~yarpWholeBodyInterface(){ close(); }
         virtual bool init();
         virtual bool close();
-        virtual bool removeJoint(const wbi::wbiId &j);
-        virtual bool addJoint(const wbi::wbiId &j);
-        virtual int addJoints(const wbi::wbiIdList &j);
+        virtual bool removeJoint(const wbi::ID &j);
+        virtual bool addJoint(const wbi::ID &j);
+        virtual int addJoints(const wbi::IDList &j);
         
         yarp::os::Mutex& getInterfaceMutex();
 
         // ACTUATORS
         //virtual int getActuatorNumber(){                        return actuatorInt->getActuatorNumber(); }
-        virtual bool removeActuator(const wbi::wbiId &j){     return actuatorInt->removeActuator(j); }
-        virtual bool addActuator(const wbi::wbiId &j){        return actuatorInt->addActuator(j); }
-        virtual int addActuators(const wbi::wbiIdList &j){    return actuatorInt->addActuators(j); }
-        virtual const wbi::wbiIdList& getActuatorList(){      return actuatorInt->getActuatorList(); }
+        virtual bool removeActuator(const wbi::ID &j){     return actuatorInt->removeActuator(j); }
+        virtual bool addActuator(const wbi::ID &j){        return actuatorInt->addActuator(j); }
+        virtual int addActuators(const wbi::IDList &j){    return actuatorInt->addActuators(j); }
+        virtual const wbi::IDList& getActuatorList(){      return actuatorInt->getActuatorList(); }
         virtual bool setControlMode(wbi::ControlMode cm, double *ref=0, int jnt=-1)
         { return actuatorInt->setControlMode(cm, ref, jnt); }
         virtual bool setControlReference(double *ref, int jnt=-1)
@@ -117,10 +122,10 @@ namespace yarpWbi
         { return actuatorInt->setControlParam(parId, val, jnt); }
 
         // STATES
-        virtual bool addEstimate(const wbi::EstimateType st, const wbi::wbiId &sid){      return false; }
-        virtual int addEstimates(const wbi::EstimateType st, const wbi::wbiIdList &sids){ return 0; }
-        virtual bool removeEstimate(const wbi::EstimateType st, const wbi::wbiId &sid){   return false; }
-        virtual const wbi::wbiIdList& getEstimateList(const wbi::EstimateType st){        return empty_id_list; }
+        virtual bool addEstimate(const wbi::EstimateType st, const wbi::ID &sid){      return false; }
+        virtual int addEstimates(const wbi::EstimateType st, const wbi::IDList &sids){ return 0; }
+        virtual bool removeEstimate(const wbi::EstimateType st, const wbi::ID &sid){   return false; }
+        virtual const wbi::IDList& getEstimateList(const wbi::EstimateType st){        return empty_id_list; }
         virtual int getEstimateNumber(const wbi::EstimateType st){                          return 0; }
         virtual bool getEstimate(const wbi::EstimateType et, const int estimate_numeric_id, double *data, double time=-1.0, bool blocking=true)
         { return stateInt->getEstimate(et,estimate_numeric_id,data,time,blocking); }
@@ -131,8 +136,8 @@ namespace yarpWbi
 
         // MODEL
         virtual int getDoFs(){ return modelInt->getDoFs(); }
-        virtual const wbi::wbiIdList& getJointList(){ return modelInt->getJointList(); }
-        virtual const wbi::wbiIdList& getFrameList()
+        virtual const wbi::IDList& getJointList(){ return modelInt->getJointList(); }
+        virtual const wbi::IDList& getFrameList()
         { return modelInt->getFrameList(); }
         virtual bool getJointLimits(double *qMin, double *qMax, int joint=-1)
         { return modelInt->getJointLimits(qMin, qMax, joint); }

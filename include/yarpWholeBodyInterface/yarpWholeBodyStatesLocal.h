@@ -35,6 +35,11 @@
 
 #include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
 
+namespace wbi {
+    class ID;
+    class IDList;
+}
+
 namespace yarpWbi
 {
     class TorqueEstimationSubtree
@@ -120,15 +125,15 @@ namespace yarpWbi
         yarp::sig::Vector left_foot_ee_wrench;
         yarp::sig::Vector right_foot_ee_wrench;
 
-        wbi::wbiId left_hand_link_id;
-        wbi::wbiId right_hand_link_id;
-        wbi::wbiId left_foot_link_id;
-        wbi::wbiId right_foot_link_id;
+        wbi::ID left_hand_link_id;
+        wbi::ID right_hand_link_id;
+        wbi::ID left_foot_link_id;
+        wbi::ID right_foot_link_id;
 
-        wbi::wbiId left_gripper_frame_id;
-        wbi::wbiId right_gripper_frame_id;
-        wbi::wbiId left_sole_frame_id;
-        wbi::wbiId right_sole_frame_id;
+        wbi::ID left_gripper_frame_id;
+        wbi::ID right_gripper_frame_id;
+        wbi::ID left_sole_frame_id;
+        wbi::ID right_sole_frame_id;
 
         int left_hand_link_idyntree_id;
         int right_hand_link_idyntree_id;
@@ -155,7 +160,7 @@ namespace yarpWbi
         bool left_leg_ee_contact_found;
         bool right_leg_ee_contact_found;
 
-        wbi::wbiId linkOldIdToNewId(const int bodyPart, const int link_index);
+        wbi::ID linkOldIdToNewId(const int bodyPart, const int link_index);
 
         //Estimation options
         bool enable_omega_domega_IMU;
@@ -255,8 +260,8 @@ namespace yarpWbi
 
         bool lockAndSetEstimationParameter(const wbi::EstimateType et, const wbi::EstimationParameter ep, const void *value);
 
-        bool lockAndSetEstimationOffset(const wbi::EstimateType et, const wbi::wbiId & sid, const double *value);
-        bool lockAndGetEstimationOffset(const wbi::EstimateType et, const wbi::wbiId & sid, double *value);
+        bool lockAndSetEstimationOffset(const wbi::EstimateType et, const wbi::ID & sid, const double *value);
+        bool lockAndGetEstimationOffset(const wbi::EstimateType et, const wbi::ID & sid, double *value);
 
 
         bool threadInit();
@@ -272,16 +277,14 @@ namespace yarpWbi
         /** Take the mutex and copy the i-th Vector of a vector<Vector> of src into dest */
         bool lockAndCopyElementVectorFromVector(int i, const std::vector<yarp::sig::Vector> &src, double *dest);
         /** Take the mutex and copy the external force/torque acting on link sid */
-        bool lockAndCopyExternalForceTorque(const wbi::wbiId & sid, double * dest);
+        bool lockAndCopyExternalForceTorque(const wbi::ID & sid, double * dest);
 
 
 
     };
 
 
-
-
-     /**
+    /**
      * Class to access the estimates, by doing a local estimation
      */
     class yarpWholeBodyStatesLocal : public wbi::iWholeBodyStates
@@ -290,15 +293,15 @@ namespace yarpWbi
         yarpWholeBodySensors                *sensors;       // interface to access the robot sensors
         yarpWholeBodyDynamicsEstimator      *estimator;     // estimation thread
         yarp::os::BufferedPort<iCub::skinDynLib::skinContactList>                *skin_contacts_port; //port to the skin contacts
-        wbi::wbiIdList                    emptyList;      ///< empty list of IDs to return in case of error
+        wbi::IDList                    emptyList;      ///< empty list of IDs to return in case of error
         //double                      estWind;      // time window for the estimation
 
         virtual bool lockAndReadSensor(const wbi::SensorType st, int numeric_id, double *data, double time, bool blocking);
         virtual bool lockAndReadSensors(const wbi::SensorType st, double *data, double time, bool blocking);
-        virtual bool lockAndAddSensor(const wbi::SensorType st, const wbi::wbiId &sid);
-        virtual int lockAndAddSensors(const wbi::SensorType st, const wbi::wbiIdList &sids);
-        virtual bool lockAndRemoveSensor(const wbi::SensorType st, const wbi::wbiId &sid);
-        virtual wbi::wbiIdList lockAndGetSensorList(const wbi::SensorType st);
+        virtual bool lockAndAddSensor(const wbi::SensorType st, const wbi::ID &sid);
+        virtual int lockAndAddSensors(const wbi::SensorType st, const wbi::IDList &sids);
+        virtual bool lockAndRemoveSensor(const wbi::SensorType st, const wbi::ID &sid);
+        virtual wbi::IDList lockAndGetSensorList(const wbi::SensorType st);
         virtual int lockAndGetSensorNumber(const wbi::SensorType st);
 
         bool lockAndReadExternalForces(iCub::skinDynLib::skinContactList & external_forces_list);
@@ -327,26 +330,26 @@ namespace yarpWbi
          * @param sid Id of the estimate.
          * @return True if the estimate has been added, false otherwise (e.g. the estimate has been already added).
          */
-        virtual bool addEstimate(const wbi::EstimateType st, const wbi::wbiId &sid);
+        virtual bool addEstimate(const wbi::EstimateType st, const wbi::ID &sid);
 
         /** Add the specified estimates so that they can be read.
          * @param st Type of estimates.
          * @param sids Ids of the estimates.
          * @return True if the estimate has been added, false otherwise (e.g. the estimate has been already added).
          */
-        virtual int addEstimates(const wbi::EstimateType st, const wbi::wbiIdList &sids);
+        virtual int addEstimates(const wbi::EstimateType st, const wbi::IDList &sids);
 
         /** Remove the specified estimate.
          * @param st Type of the estimate to remove.
          * @param j Id of the estimate to remove.
          * @return True if the estimate has been removed, false otherwise.
          */
-        virtual bool removeEstimate(const wbi::EstimateType st, const wbi::wbiId &sid);
+        virtual bool removeEstimate(const wbi::EstimateType st, const wbi::ID &sid);
 
         /** Get a copy of the estimate list of the specified estimate type.
          * @param st Type of estimate.
          * @return A copy of the estimate list. */
-        virtual const wbi::wbiIdList& getEstimateList(const wbi::EstimateType st);
+        virtual const wbi::IDList& getEstimateList(const wbi::EstimateType st);
 
         /** Get the number of estimates of the specified type.
          * @return The number of estimates of the specified type. */
@@ -382,9 +385,9 @@ namespace yarpWbi
         /////////////////////////////////////////////////////
         ///< Implementation specific methods
         /////////////////////////////////////////////////////
-        bool setEstimationOffset(const wbi::EstimateType et, const wbi::wbiId & sid, const double *value);
+        bool setEstimationOffset(const wbi::EstimateType et, const wbi::ID & sid, const double *value);
 
-        bool getEstimationOffset(const wbi::EstimateType et, const wbi::wbiId & sid, double *value);
+        bool getEstimationOffset(const wbi::EstimateType et, const wbi::ID & sid, double *value);
 
 
         /** Get the estimated external force/torques

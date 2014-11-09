@@ -107,7 +107,7 @@ bool yarpWholeBodyInterface::close()
     return ok;
 }
 
-bool yarpWholeBodyInterface::removeJoint(const wbiId &j)
+bool yarpWholeBodyInterface::removeJoint(const ID &j)
 {
     bool ok = actuatorInt->removeActuator(j);
     for(int i=0; ok && i<JOINT_ESTIMATE_TYPES_SIZE; i++)
@@ -116,7 +116,7 @@ bool yarpWholeBodyInterface::removeJoint(const wbiId &j)
     return ok ? modelInt->removeJoint(j) : false;
 }
 
-bool yarpWholeBodyInterface::addJoint(const wbiId &j)
+bool yarpWholeBodyInterface::addJoint(const ID &j)
 {
     bool ok = actuatorInt->addActuator(j);
     for(int i=0; ok && i<JOINT_ESTIMATE_TYPES_SIZE; i++)
@@ -124,7 +124,7 @@ bool yarpWholeBodyInterface::addJoint(const wbiId &j)
     return ok ? modelInt->addJoint(j) : false;
 }
 
-int yarpWholeBodyInterface::addJoints(const wbiIdList &jList)
+int yarpWholeBodyInterface::addJoints(const IDList &jList)
 {
     int res1 = actuatorInt->addActuators(jList);
     for(int i=0; i<JOINT_ESTIMATE_TYPES_SIZE; i++)

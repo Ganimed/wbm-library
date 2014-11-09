@@ -51,8 +51,8 @@ namespace yarp {
 
 namespace wbi {
     class iWholeBodyActuators;
-    class wbiIdList;
-    class wbiId;
+    class IDList;
+    class ID;
 }
 
 namespace yarpWbi
@@ -102,7 +102,7 @@ namespace yarpWbi
         // name of the robot (used for robot yarp ports)
         std::string                        robot;
         // list of names of the joints controlled in the interface
-        wbi::wbiIdList                     jointIdList;
+        wbi::IDList                     jointIdList;
         // list of names of the control boards used in the interface
         std::vector<std::string>           controlBoardNames;
         // list of controlBoard/Axis pair for each joint
@@ -223,10 +223,10 @@ namespace yarpWbi
         virtual bool getYarpWbiProperties(yarp::os::Property & yarp_wbi_properties);
 
 
-        virtual bool removeActuator(const wbi::wbiId &j);
-        virtual bool addActuator(const wbi::wbiId &j);
-        virtual int addActuators(const wbi::wbiIdList &j);
-        inline virtual const wbi::wbiIdList& getActuatorList(){ return jointIdList; }
+        virtual bool removeActuator(const wbi::ID &j);
+        virtual bool addActuator(const wbi::ID &j);
+        virtual int addActuators(const wbi::IDList &j);
+        inline virtual const wbi::IDList& getActuatorList(){ return jointIdList; }
 
         /**
          * Set the control mode of the specified joint(s).

@@ -36,6 +36,11 @@
 #include <map>
 
 
+namespace wbi {
+    class ID;
+    class IDList;
+}
+
 namespace yarpWbi
 {
     /**
@@ -87,8 +92,8 @@ namespace yarpWbi
         bool setPwmCutFrequency(double fc);
 
         /*
-        std::map<wbi::wbiId, yarp::os::BufferedPort<yarp::sig::Vector>*>  portsEEWrenches;
-        std::map<wbi::wbiId, yarp::sig::Vector>  lastEEWrenches;
+        std::map<wbi::ID, yarp::os::BufferedPort<yarp::sig::Vector>*>  portsEEWrenches;
+        std::map<wbi::ID, yarp::sig::Vector>  lastEEWrenches;
 
         bool openEEWrenchPorts(const wbi::LocalId & local_id);
         void readEEWrenches(const wbi::LocalId & local_id,yarp::sig::Vector & vec);
@@ -109,10 +114,10 @@ namespace yarpWbi
         yarp::sig::Vector LLExtWrench;
 
 
-        wbi::wbiId right_gripper_local_id;
-        wbi::wbiId left_gripper_local_id;
-        wbi::wbiId left_sole_local_id;
-        wbi::wbiId right_sole_local_id;
+        wbi::ID right_gripper_local_id;
+        wbi::ID left_gripper_local_id;
+        wbi::ID left_sole_local_id;
+        wbi::ID right_sole_local_id;
         */
 
         yarp::os::Semaphore         mutex;          // mutex for access to class global variables
@@ -179,18 +184,18 @@ namespace yarpWbi
 
         yarpWbi::yarpWholeBodySensors        *sensors;       // interface to access the robot sensors
         yarpWholeBodyEstimator      *estimator;     // estimation thread
-        wbi::wbiIdList               emptyList;      ///< empty list of IDs to return in case of error
+        wbi::IDList               emptyList;      ///< empty list of IDs to return in case of error
         //double                      estWind;      // time window for the estimation
 
-        //List of wbiIdList for each estimate
-        std::vector<wbi::wbiIdList> estimateIdList;
+        //List of IDList for each estimate
+        std::vector<wbi::IDList> estimateIdList;
 
         virtual bool lockAndReadSensor(const wbi::SensorType st, const int numeric_id, double *data, double time, bool blocking);
         virtual bool lockAndReadSensors(const wbi::SensorType st, double *data, double time, bool blocking);
-        virtual bool lockAndAddSensor(const wbi::SensorType st, const wbi::wbiId &sid);
-        virtual int lockAndAddSensors(const wbi::SensorType st, const wbi::wbiIdList &sids);
-        virtual bool lockAndRemoveSensor(const wbi::SensorType st, const wbi::wbiId &sid);
-        virtual wbi::wbiIdList lockAndGetSensorList(const wbi::SensorType st);
+        virtual bool lockAndAddSensor(const wbi::SensorType st, const wbi::ID &sid);
+        virtual int lockAndAddSensors(const wbi::SensorType st, const wbi::IDList &sids);
+        virtual bool lockAndRemoveSensor(const wbi::SensorType st, const wbi::ID &sid);
+        virtual wbi::IDList lockAndGetSensorList(const wbi::SensorType st);
         virtual int lockAndGetSensorNumber(const wbi::SensorType st);
         //virtual bool lockAndGetExternalWrench(const wbi::LocalId sid, double * data);
 
@@ -232,26 +237,26 @@ namespace yarpWbi
          * @param sid Id of the estimate.
          * @return True if the estimate has been added, false otherwise (e.g. the estimate has been already added).
          */
-        virtual bool addEstimate(const wbi::EstimateType st, const wbi::wbiId &sid);
+        virtual bool addEstimate(const wbi::EstimateType st, const wbi::ID &sid);
 
         /** Add the specified estimates so that they can be read.
          * @param st Type of estimates.
          * @param sids Ids of the estimates.
          * @return True if the estimate has been added, false otherwise (e.g. the estimate has been already added).
          */
-        virtual int addEstimates(const wbi::EstimateType st, const wbi::wbiIdList &sids);
+        virtual int addEstimates(const wbi::EstimateType st, const wbi::IDList &sids);
 
         /** Remove the specified estimate.
          * @param st Type of the estimate to remove.
          * @param j Id of the estimate to remove.
          * @return True if the estimate has been removed, false otherwise.
          */
-        virtual bool removeEstimate(const wbi::EstimateType st, const wbi::wbiId &sid);
+        virtual bool removeEstimate(const wbi::EstimateType st, const wbi::ID &sid);
 
         /** Get a copy of the estimate list of the specified estimate type.
          * @param st Type of estimate.
          * @return A copy of the estimate list. */
-        virtual const wbi::wbiIdList& getEstimateList(const wbi::EstimateType st);
+        virtual const wbi::IDList& getEstimateList(const wbi::EstimateType st);
 
         /** Get the number of estimates of the specified type.
          * @return The number of estimates of the specified type. */
