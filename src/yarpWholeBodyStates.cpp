@@ -477,9 +477,7 @@ bool yarpWholeBodyStates::getEstimates(const EstimateType et, double *data, doub
 
     switch(et)
     {
-    case ESTIMATE_JOINT_POS:
-        printf("[DEBUG] yarpWholeBodyStates::getEstimates: called getEstimates ESTIMATE_JOINT_POS\n");
-        return estimator->lockAndCopyVector(estimator->estimates.lastQ, data);
+    case ESTIMATE_JOINT_POS:                return estimator->lockAndCopyVector(estimator->estimates.lastQ, data);
     case ESTIMATE_JOINT_VEL:                return estimator->lockAndCopyVector(estimator->estimates.lastDq, data);
     case ESTIMATE_JOINT_ACC:                return estimator->lockAndCopyVector(estimator->estimates.lastD2q, data);
     case ESTIMATE_JOINT_TORQUE:             return estimator->lockAndCopyVector(estimator->estimates.lastTauJ, data);
