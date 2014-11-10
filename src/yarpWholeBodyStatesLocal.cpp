@@ -229,7 +229,7 @@ bool yarpWholeBodyStatesLocal::getEstimate(const EstimateType et, const int nume
     case ESTIMATE_FORCE_TORQUE_SENSOR:
         return estimator->lockAndCopyElementVectorFromVector(numeric_id, estimator->estimates.lastForceTorques, data);
     case ESTIMATE_EXTERNAL_FORCE_TORQUE:
-        this->getEstimateList(wbi::ESTIMATE_EXTERNAL_FORCE_TORQUE).numericIdToWbiId(numeric_id,sid);
+        this->getEstimateList(wbi::ESTIMATE_EXTERNAL_FORCE_TORQUE).indexToID(numeric_id,sid);
         return estimator->lockAndCopyExternalForceTorque(sid,data);
     default: break;
     }
@@ -498,7 +498,7 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     for(int ft_numeric = 0; ft_numeric < (int)available_ft_sensors.size(); ft_numeric++ )
     {
         ID wbi_id;
-        available_ft_sensors.numericIdToWbiId(ft_numeric,wbi_id);
+        available_ft_sensors.indexToID(ft_numeric,wbi_id);
         int ft_index = ft_numeric;
         sensors->readSensor(SENSOR_FORCE_TORQUE, ft_index, forcetorques[ft_index].data(), &(forcetorquesStamps[ft_index]),true );
         forcetorqueFilters[ft_index] = new FirstOrderLowPassFilter(forcetorqueCutFrequency,getRate()*1e-3,forcetorques[ft_index]); ///< low pass filter
@@ -559,7 +559,7 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     for(int dof=0; dof < (int)torque_estimation_list.size(); dof++)
     {
         ID wbi_id;
-        torque_estimation_list.numericIdToWbiId(dof,wbi_id);
+        torque_estimation_list.indexToID(dof,wbi_id);
         dof_serialization.push_back(wbi_id.toString());
     }
 
@@ -568,7 +568,7 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     for(int ft=0; ft < (int)ft_sensor_list.size(); ft++)
     {
         ID wbi_id;
-        ft_sensor_list.numericIdToWbiId(ft,wbi_id);
+        ft_sensor_list.indexToID(ft,wbi_id);
         ft_serialization.push_back(wbi_id.toString());
     }
 
@@ -734,7 +734,7 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     for(int i = 0; i < (int)available_encoders.size(); i++ )
     {
         ID enc;
-        available_encoders.numericIdToWbiId(i,enc);
+        available_encoders.indexToID(i,enc);
         if(!(robot_estimation_model->getDOFIndex(enc.toString()) == i))
         {
             std::cerr << "[ERR] dof " << enc.toString() << " has ID " << robot_estimation_model->getDOFIndex(enc.toString())
@@ -1479,7 +1479,7 @@ bool yarpWholeBodyDynamicsEstimator::lockAndSetEstimationOffset(const EstimateTy
     switch(et)
     {
     case ESTIMATE_FORCE_TORQUE_SENSOR: ///< \todo TODO
-        sensors->getSensorList(SENSOR_FORCE_TORQUE).wbiIdToNumericId(sid,ft_index);
+        sensors->getSensorList(SENSOR_FORCE_TORQUE).idToIndex(sid,ft_index);
         memcpy(forcetorques_offset[ft_index].data(), (double*)value, sizeof(double)*sensorTypeDescriptions[SENSOR_FORCE_TORQUE].dataSize);
         break;
     default:
@@ -1497,7 +1497,7 @@ bool yarpWholeBodyDynamicsEstimator::lockAndGetEstimationOffset(const EstimateTy
     switch(et)
     {
     case ESTIMATE_FORCE_TORQUE_SENSOR: ///< \todo TODO
-        sensors->getSensorList(SENSOR_FORCE_TORQUE).wbiIdToNumericId(sid,ft_index);
+        sensors->getSensorList(SENSOR_FORCE_TORQUE).idToIndex(sid,ft_index);
         memcpy(value, forcetorques_offset[ft_index].data(), sizeof(double)*sensorTypeDescriptions[SENSOR_FORCE_TORQUE].dataSize);
         break;
     default:

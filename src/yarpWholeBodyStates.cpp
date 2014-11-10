@@ -83,7 +83,7 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
     {
         //search if coupling information is provided for each motor, if not return false
         wbi::ID joint_encoder_name;
-        estimateIdList[ESTIMATE_JOINT_POS].numericIdToWbiId(encoder_id,joint_encoder_name);
+        estimateIdList[ESTIMATE_JOINT_POS].indexToID(encoder_id,joint_encoder_name);
         if( !couplings_bot.check(joint_encoder_name.toString()) )
         {
             std::cerr << "[ERR] WBI_YARP_JOINTS_MOTOR_KINEMATIC_COUPLINGS group found, but no coupling found for joint "
@@ -120,7 +120,7 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
     for(int encoder_id = 0; encoder_id < (int)estimateIdList[SENSOR_ENCODER].size(); encoder_id++)
     {
         wbi::ID joint_encoder_name;
-        estimateIdList[ESTIMATE_JOINT_POS].numericIdToWbiId(encoder_id,joint_encoder_name);
+        estimateIdList[ESTIMATE_JOINT_POS].indexToID(encoder_id,joint_encoder_name);
 
         //Check coupling configuration is well formed
         Bottle * joint_coupling_bot = couplings_bot.find(joint_encoder_name.toString()).asList();
@@ -152,7 +152,7 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
     for(int encoder_id = 0; encoder_id < (int)estimateIdList[SENSOR_ENCODER].size(); encoder_id++)
     {
         wbi::ID joint_encoder_name;
-        estimateIdList[ESTIMATE_JOINT_POS].numericIdToWbiId(encoder_id,joint_encoder_name);
+        estimateIdList[ESTIMATE_JOINT_POS].indexToID(encoder_id,joint_encoder_name);
 
         //Check coupling configuration is well formed
         Bottle * joint_coupling_bot = couplings_bot.find(joint_encoder_name.toString()).asList();
@@ -163,7 +163,7 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
             double coupling_coefficient = joint_coupling_bot->get(coupled_motor).asList()->get(0).asDouble();
             std::string motor_name = joint_coupling_bot->get(coupled_motor).asList()->get(1).asString();
             int motor_id;
-            estimateIdList[ESTIMATE_MOTOR_POS].wbiIdToNumericId(motor_name,motor_id);
+            estimateIdList[ESTIMATE_MOTOR_POS].idToIndex(motor_name,motor_id);
 
             motor_to_joint_kinematic_coupling(encoder_id,motor_id) = coupling_coefficient;
         }

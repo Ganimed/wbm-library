@@ -143,7 +143,7 @@ bool yarpWholeBodyModel::init()
     for(int wbi_numeric_id =0;  wbi_numeric_id < (int)jointIdList.size(); wbi_numeric_id++ )
     {
         wbi::ID joint_id;
-        jointIdList.numericIdToWbiId(wbi_numeric_id,joint_id);
+        jointIdList.indexToID(wbi_numeric_id,joint_id);
         int idyntree_id = p_model->getDOFIndex(joint_id.toString());
         if( idyntree_id == - 1 )
         {

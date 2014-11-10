@@ -419,7 +419,7 @@ bool yarpWholeBodySensors::openImu(const int numeric_id, const std::string & por
     string remotePort = "/" + robot + port_name;
     stringstream localPort;
     wbi::ID wbi_id;
-    imuIdList.numericIdToWbiId(numeric_id,wbi_id);
+    imuIdList.indexToID(numeric_id,wbi_id);
     localPort << "/" << name << "/imu/" <<  wbi_id.toString() << ":i";
     portsIMU[numeric_id] = new BufferedPort<Vector>();
     if(!portsIMU[numeric_id]->open(localPort.str().c_str())) { // open local input port
@@ -447,7 +447,7 @@ bool yarpWholeBodySensors::openFTsens(const int ft_sens_numeric_id, const std::s
     string remotePort = "/" + robot + port_name;
     stringstream localPort;
     wbi::ID wbi_id;
-    ftSensIdList.numericIdToWbiId(ft_sens_numeric_id,wbi_id);
+    ftSensIdList.indexToID(ft_sens_numeric_id,wbi_id);
     localPort << "/" << name << "/ftSens/" << wbi_id.toString() << ":i";
     portsFTsens[ft_sens_numeric_id] = new BufferedPort<Vector>();
     if(!portsFTsens[ft_sens_numeric_id]->open(localPort.str().c_str())) {
