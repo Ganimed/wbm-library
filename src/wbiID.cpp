@@ -90,7 +90,7 @@ void IDList::pushID(const ID &id)
     storage.push_back(id);
 }
 
-bool IDList::wbiIdToNumericId(const ID &_wbiId, int & numericId) const
+bool IDList::idToIndex(const ID &_wbiId, int & numericId) const
 {
     ID wbi_id = _wbiId;
     std::vector<ID>::const_iterator it = std::find(storage.begin(), storage.end(), wbi_id);
@@ -103,7 +103,7 @@ bool IDList::wbiIdToNumericId(const ID &_wbiId, int & numericId) const
 }
 
 /** Convert a global id into a local id */
-bool IDList::numericIdToWbiId(const int numeridId, ID & wbi_id) const
+bool IDList::indexToID(const int numeridId, ID & wbi_id) const
 {
     if (numeridId < 0 && numeridId >= this->size())
     {
@@ -139,7 +139,7 @@ int IDList::addIDList(const IDList &addedList)
     ID added_id;
     for (int i = 0; i < addedList.size(); i++)
     {
-        addedList.numericIdToWbiId(i,added_id);
+        addedList.indexToID(i,added_id);
         if(!containsID(added_id))
         {
             pushID(added_id);

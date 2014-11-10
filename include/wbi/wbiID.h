@@ -98,13 +98,13 @@ namespace wbi
          * Return the numeric id (index) of the specified ID in this IDList.
          * @return true it the specified ID is found in the list, false otherwise.
          */
-        bool wbiIdToNumericId(const ID &wbi_id, int & numericId) const;
+        bool idToIndex(const ID &id, int & index) const;
         
         /**
          * Convert a numeric id to a ID
          * @return true it the specified ID is found in the list, false otherwise
          */
-        bool numericIdToWbiId(const int numeridId, ID & wbi_id) const;
+        bool indexToID(const int index, ID & id) const;
         
         /**
          * Remove the specified id from the list
