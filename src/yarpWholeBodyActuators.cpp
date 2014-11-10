@@ -462,7 +462,6 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
         switch(controlMode)
         {
             case CTRL_MODE_POS:
-            case CTRL_MODE_DIRECT_POSITION:
                 for(int j=0; j < (int)jointIdList.size(); j++ )
                 {
                     //Set only the joints that are not in the desired control mode
@@ -471,6 +470,21 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
                         if( !ok )
                         {
                             std::cerr << "yarpWholeBodyActuators::setControlMode error: setPositionMode on axis " <<
+                                         controlBoardAxisList[j].second << " of controlBoard " << controlBoardNames[controlBoardAxisList[j].first] << std::endl;
+                        }
+                    }
+                }
+                break;
+
+            case CTRL_MODE_DIRECT_POSITION:
+                for(int j=0; j < (int)jointIdList.size(); j++ )
+                {
+                    //Set only the joints that are not in the desired control mode
+                    if(currentCtrlModes[j] != controlMode) {
+                        ok = ok && icmd[controlBoardAxisList[j].first]->setControlMode(controlBoardAxisList[j].second,VOCAB_CM_POSITION_DIRECT);
+                        if( !ok )
+                        {
+                            std::cerr << "yarpWholeBodyActuators::setControlMode error: setDirectionPositionMode on axis " <<
                                          controlBoardAxisList[j].second << " of controlBoard " << controlBoardNames[controlBoardAxisList[j].first] << std::endl;
                         }
                     }
@@ -508,16 +522,13 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
                 break;
 
             case CTRL_MODE_MOTOR_PWM:
-                if(!isICubSimulator(robot)) ///< iCub simulator does not implement PWM motor control
-                {
                     for(int j=0; j < (int)jointIdList.size(); j++ )
                     {
                         if(currentCtrlModes[j] != controlMode)
                         {
-                            ok = ok && icmd[controlBoardAxisList[j].first]->setVelocityMode(controlBoardAxisList[j].second);
+                            ok = ok && icmd[controlBoardAxisList[j].first]->setOpenLoopMode(controlBoardAxisList[j].second);
                         }
                     }
-                }
                 break;
 
             default:
@@ -569,12 +580,14 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
         switch(controlMode)
         {
             case CTRL_MODE_POS:
+                                ok = icmd[bodyPart]->setPositionMode(controlBoardJointAxis); break;
             case CTRL_MODE_DIRECT_POSITION:
-                ok = icmd[bodyPart]->setPositionMode(controlBoardJointAxis); break;
+                                ok = icmd[bodyPart]->setControlMode(controlBoardJointAxis,VOCAB_CM_POSITION_DIRECT); break;
+
             case CTRL_MODE_VEL:         ok = icmd[bodyPart]->setVelocityMode(controlBoardJointAxis); break;
             case CTRL_MODE_TORQUE:      ok = icmd[bodyPart]->setTorqueMode(controlBoardJointAxis);   break;
             ///< iCub simulator does not implement PWM motor control
-            case CTRL_MODE_MOTOR_PWM:   ok = isICubSimulator(robot) ? true : icmd[bodyPart]->setOpenLoopMode(controlBoardJointAxis); break;
+            case CTRL_MODE_MOTOR_PWM:   ok = icmd[bodyPart]->setOpenLoopMode(controlBoardJointAxis); break;
             default: break;
         }
         if(ok)
@@ -633,9 +646,8 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
 #endif
                     return itrq[bodyPart]->setRefTorque(controlBoardAxis, *ref);
             }
-            ///< iCub simulator does not implement PWM motor control
             case CTRL_MODE_MOTOR_PWM:
-                return isICubSimulator(robot) ? true : iopl[bodyPart]->setRefOutput(controlBoardAxis, *ref);
+                return iopl[bodyPart]->setRefOutput(controlBoardAxis, *ref);
             default: break;
         }
         return false;
@@ -745,7 +757,6 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
             }
             else
             {
-                if( !isICubSimulator(robot) )
                 {
                     //Otherwise send all the commands together, but packing them for iVelocityControl interface
                     for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfVelocityControlledJointsInControlBoard; controlBoard_jnt++ )
@@ -761,16 +772,6 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                         std::cerr << "yarpWholeBodyActuators::setControlReference error:"
                               << " unable to command velocities for controlboard " << controlBoardNames[wbi_controlboard_id] << std::endl;
                         return false;
-                    }
-                }
-                else
-                {
-                    //iCub simulator does not support the new velocityMove, so fall back to the old single joint control mode
-                    for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfVelocityControlledJointsInControlBoard; controlBoard_jnt++ )
-                    {
-                        int wbi_id = controlledJointsForControlBoard.velocityControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
-                        int yarp_controlboard_axis =  controlledJointsForControlBoard.velocityControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
-                        ok = ivel[wbi_controlboard_id]->velocityMove(yarp_controlboard_axis,CTRL_RAD2DEG*ref[wbi_id]);
                     }
                 }
 

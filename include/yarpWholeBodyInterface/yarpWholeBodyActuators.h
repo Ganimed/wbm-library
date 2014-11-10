@@ -128,7 +128,7 @@ namespace yarpWbi
         std::vector<yarp::dev::IPositionDirect*>      positionDirectInterface;
         std::vector<yarp::dev::ITorqueControl*>       itrq;
         std::vector<yarp::dev::IImpedanceControl*>    iimp;
-        std::vector<yarp::dev::IControlMode*>         icmd;
+        std::vector<yarp::dev::IControlMode2*>         icmd;
         std::vector<yarp::dev::IVelocityControl2*>    ivel;
         std::vector<yarp::dev::IOpenLoopControl*>     iopl;
         std::vector<yarp::dev::PolyDriver*>           dd;

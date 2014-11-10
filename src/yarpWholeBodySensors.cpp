@@ -20,10 +20,11 @@
 
 #include <yarp/os/Time.h>
 #include <yarp/os/Stamp.h>
-#include <iCub/ctrl/math.h>
 #include <string>
 #include <sstream>
 #include <cassert>
+
+#include <yarp/os/Log.h>
 
 using namespace std;
 using namespace wbi;
@@ -473,10 +474,6 @@ bool yarpWholeBodySensors::openFTsens(const int ft_sens_numeric_id, const std::s
 
 bool yarpWholeBodySensors::openTorqueSensor(const int bp)
 {
-    ///< check that we are not in simulation, because iCub simulator does not implement torque sensors
-    if(isICubSimulator(robot))
-        return true;
-
     ///< check whether the joint control interface is already open
     if(itrq[bp])
         return true;
@@ -663,13 +660,10 @@ bool yarpWholeBodySensors::readEncoders(double *q, double *stamps, bool wait)
 bool yarpWholeBodySensors::readPwms(double *pwm, double *stamps, bool wait)
 {
     //Do not support stamps on pwm
-    assert(stamps == 0);
-
-    ///< check that we are not in simulation, because iCub simulator does not implement pwm control
-    if(isICubSimulator(robot))
+    if(stamps != 0)
     {
-        memset(pwm, 0, sizeof(double) * pwmSensIdList.size());
-        return true;
+
+        return false;
     }
 
     double pwmTemp[MAX_NJ];
@@ -731,13 +725,6 @@ bool yarpWholeBodySensors::readIMUs(double *inertial, double *stamps, bool wait)
 
 bool yarpWholeBodySensors::readFTsensors(double *ftSens, double *stamps, bool wait)
 {
-    ///< iCub simulator does not implement the force/torque sensors
-    if(isICubSimulator(robot))
-    {
-        memset(ftSens, 0, sizeof(double) * portsFTsens.size());
-        return true;
-    }
-
     Vector *v;
     for(int i=0; i < (int)ftSensIdList.size(); i++)
     {
@@ -760,12 +747,6 @@ bool yarpWholeBodySensors::readFTsensors(double *ftSens, double *stamps, bool wa
 
 bool yarpWholeBodySensors::readTorqueSensors(double *jointSens, double *stamps, bool wait)
 {
-    if(isICubSimulator(robot))
-    {
-        memset(jointSens, 0, sizeof(double) * torqueSensorIdList.size());
-        return true;
-    }
-
     bool res = true, update=false;
    //Do not support stamps on torque sensors
 
@@ -832,11 +813,9 @@ bool yarpWholeBodySensors::readEncoder(const int encoder_numeric_id, double *q, 
 
 bool yarpWholeBodySensors::readPwm(const int pwm_numeric_id, double *pwm, double *stamps, bool wait)
 {
-    assert(stamps == 0);
-    if(isICubSimulator(robot))
+    if(stamps != 0)
     {
-        pwm[0] = 0.0;   // iCub simulator does not have pwm sensors
-        return true;    // does not return false, so programs can be tested in simulation
+        yWarning("yarpWholeBodySensors::readPwm does not support timestamp reading at the moment");
     }
 
     bool update=false;
@@ -902,12 +881,6 @@ bool yarpWholeBodySensors::readFTsensor(const int ft_sensor_numeric_id, double *
     }
     #endif
 
-    if(isICubSimulator(robot))    // icub simulator doesn't have force/torque sensors
-    {
-        ftSens[0] = 0.0;
-        return true;
-    }
-
     Vector *v = portsFTsens[ft_sensor_numeric_id]->read(wait);
     if(v!=NULL) {
         ftSensLastRead[ft_sensor_numeric_id] = *v;
@@ -925,11 +898,6 @@ bool yarpWholeBodySensors::readFTsensor(const int ft_sensor_numeric_id, double *
 
 bool yarpWholeBodySensors::readTorqueSensor(const int numeric_torque_id, double *jointTorque, double *stamps, bool wait)
 {
-    if(isICubSimulator(robot))
-    {
-        jointTorque[0] = 0.0;   // iCub simulator does not have joint torque sensors
-        return true;            // does not return false, so programs can be tested in simulation
-    }
     double torqueTemp;
     bool update=false;
 

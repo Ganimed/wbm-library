@@ -33,15 +33,6 @@
 
 namespace yarpWbi
 {
-    /** Return true if the robotName is "icubSim", false otherwise (deprecated function, do not use). */
-    inline bool isICubSimulator(const std::string &robotName)
-    { return robotName=="icubSim"; }
-
-
-    /** Return true if the robotName is "icubSim" , false otherwise (deprecated function, do not use). */
-    inline bool isRobotSimulator(const std::string &robotName)
-    { return isICubSimulator(robotName); }
-
     /** Open a remote control board driver for the specified body part.
      * @param localName Name to use as stem for the names of the YARP ports to open.
      * @param robotName Name of the robot to connect to.
