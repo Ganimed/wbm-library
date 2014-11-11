@@ -784,8 +784,11 @@ void yarpWholeBodyEstimator::run()
             el.data = tauJ;
             estimates.lastDtauJ = dTauJFilt->estimate(el);  ///< derivative filter
 
-            el.data = estimates.lastTauM;
-            estimates.lastDtauM = dTauMFilt->estimate(el);  ///< derivative filter
+            if( this->motor_quantites_estimation_enabled )
+            {
+                el.data = estimates.lastTauM;
+                estimates.lastDtauM = dTauMFilt->estimate(el);  ///< derivative filter
+            }
         }
 
         ///< Read motor pwm
