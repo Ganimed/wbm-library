@@ -1,17 +1,25 @@
+option(CODYCO_INSTALL_ALL_ROBOTS "Installation of all available robots" ON)
 
 set(ROBOT_NAME "$ENV{YARP_ROBOT_NAME}" CACHE PATH
     "Name of your robot")
 
 set(ROBOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${ROBOT_NAME}")
 
-# Let's install for now iCubGenova03
-add_subdirectory(iCubGenova03)
-add_subdirectory(icubGazeboSim)
+# If no env variable YARP_ROBOT_NAME is defined
+if(CODYCO_INSTALL_ALL_ROBOTS)
+  add_subdirectory(iCubGenova03)
+  add_subdirectory(icubGazeboSim)
+else()
+  if(ROBOT_NAME)
+    add_subdirectory(${ROBOT_NAME})
+  endif()
+endif() 
+  
 
 #setup symbolic link (on UNIX...)
 
 if ("${ROBOT_NAME}" STREQUAL "")
-  message(STATUS "No robot name")
+  message(STATUS "No environmental variable YARP_ROBOT_NAME set up. Installing all robots by default")
 else ("${ROBOT_NAME}" STREQUAL "")
   if (EXISTS ${ROBOT_DIR})
     
