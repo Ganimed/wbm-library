@@ -39,26 +39,7 @@ namespace yarpWbi
      * @param pd Pointer to the poly driver to instanciate.
      * @param bodyPartName Name of the body part for which to open the poly driver.
      * @return True if the operation succeeded, false otherwise. */
-    inline bool openPolyDriver(const std::string &localName, const std::string &robotName, yarp::dev::PolyDriver *&pd, const std::string &bodyPartName)
-    {
-        std::string localPort  = "/" + localName + "/" + bodyPartName;
-        std::string remotePort = "/" + robotName + "/" + bodyPartName;
-        yarp::os::Property options;
-        options.put("robot",robotName.c_str());
-        options.put("part",bodyPartName.c_str());
-        options.put("device","remote_controlboard");
-        options.put("local",localPort.c_str());
-        options.put("remote",remotePort.c_str());
-
-        pd = new yarp::dev::PolyDriver(options);
-        if(!pd || !(pd->isValid()))
-        {
-            std::fprintf(stderr,"Problems instantiating the device driver %s\n", bodyPartName.c_str());
-            return false;
-        }
-        return true;
-    }
-
+    bool openPolyDriver(const std::string &localName, const std::string &robotName, yarp::dev::PolyDriver *&pd, const std::string &bodyPartName);
 
 
     /*

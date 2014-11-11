@@ -26,6 +26,27 @@ static const std::string WBI_YARP_JOINTS_GROUP = "WBI_YARP_JOINTS";
 namespace yarpWbi
 {
 
+bool openPolyDriver(const std::string &localName, const std::string &robotName, yarp::dev::PolyDriver *&pd, const std::string &bodyPartName)
+{
+    std::string localPort  = "/" + localName + "/" + bodyPartName;
+    std::string remotePort = "/" + robotName + "/" + bodyPartName;
+    yarp::os::Property options;
+    options.put("robot",robotName.c_str());
+    options.put("part",bodyPartName.c_str());
+    options.put("device","remote_controlboard");
+    options.put("local",localPort.c_str());
+    options.put("remote",remotePort.c_str());
+    options.put("writeStrict","on");
+
+    pd = new yarp::dev::PolyDriver(options);
+    if(!pd || !(pd->isValid()))
+    {
+        std::fprintf(stderr,"Problems instantiating the device driver %s\n", bodyPartName.c_str());
+        return false;
+    }
+    return true;
+}
+
 yarp::os::Bottle & getWBIYarpJointsOptions(yarp::os::Property & wbi_yarp_properties)
 {
     return wbi_yarp_properties.findGroup(WBI_YARP_JOINTS_GROUP);
