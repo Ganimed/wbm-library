@@ -129,13 +129,21 @@ bool yarpWholeBodyActuators::init()
     bool ok = false;
 
     //Loading configuration
-    if( !wbi_yarp_properties.check("robotName") )
+    if( wbi_yarp_properties.check("robot") )
     {
-        std::cerr << "[ERR] yarpWholeBodySensors error: robotName not found in configuration files" << std::endl;
+        robot = wbi_yarp_properties.find("robot").asString().c_str();
+    }
+    else if (wbi_yarp_properties.check("robotName") )
+    {
+        std::cerr << "[WARN] yarpWholeBodyActuators: robot option not found, using robotName" << std::endl;
+        robot = wbi_yarp_properties.find("robotName").asString().c_str();
+    }
+    else
+    {
+        std::cerr << "[ERR] yarpWholeBodyActuators: robot option not found" << std::endl;
         return false;
     }
 
-    robot = wbi_yarp_properties.find("robotName").asString().c_str();
 
     ok = loadJointsControlBoardFromConfig(wbi_yarp_properties,
                                                jointIdList,

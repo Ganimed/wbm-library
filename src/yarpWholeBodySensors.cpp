@@ -79,14 +79,22 @@ bool yarpWholeBodySensors::init()
                                                                imuIdList.size() << " IMUs " << std::endl;
     #endif
 
-    if( !wbi_yarp_properties.check("robotName") )
+    //Loading configuration
+    if( wbi_yarp_properties.check("robot") )
     {
-        std::cerr << "yarpWholeBodySensors error: robotName not found in configuration files" << std::endl;
+        robot = wbi_yarp_properties.find("robot").asString().c_str();
+    }
+    else if (wbi_yarp_properties.check("robotName") )
+    {
+        std::cerr << "[WARN] yarpWholeBodySensors: robot option not found, using robotName" << std::endl;
+        robot = wbi_yarp_properties.find("robotName").asString().c_str();
+    }
+    else
+    {
+        std::cerr << "[ERR] yarpWholeBodySensors: robot option not found" << std::endl;
         return false;
     }
-
-    robot = wbi_yarp_properties.find("robotName").asString().c_str();
-
+    
     yarp::os::Bottle & joints_config = getWBIYarpJointsOptions(wbi_yarp_properties);
     controlBoardNames.clear();
     initDone = appendNewControlBoardsToVector(joints_config,encoderIdList,controlBoardNames);

@@ -72,14 +72,21 @@ bool yarpWholeBodyModel::init()
 {
     if( this->initDone ) return true;
 
-    //Load configuration
-    if( !wbi_yarp_properties.check("robotName") )
+    //Loading configuration
+    if( wbi_yarp_properties.check("robot") )
     {
-        std::cerr << "yarpWholeBodyModel error: robotName not found in configuration files" << std::endl;
+        robot = wbi_yarp_properties.find("robot").asString().c_str();
+    }
+    else if (wbi_yarp_properties.check("robotName") )
+    {
+        std::cerr << "[WARN] yarpWholeBodyModel: robot option not found, using robotName" << std::endl;
+        robot = wbi_yarp_properties.find("robotName").asString().c_str();
+    }
+    else
+    {
+        std::cerr << "[ERR] yarpWholeBodyModel: robot option not found" << std::endl;
         return false;
     }
-
-    robot = wbi_yarp_properties.find("robotName").asString().c_str();
 
     if( !wbi_yarp_properties.check("urdf_file") )
     {

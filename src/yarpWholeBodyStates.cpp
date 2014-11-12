@@ -188,14 +188,23 @@ bool yarpWholeBodyStates::init()
 {
     if( initDone ) return false;
 
-    if( !wbi_yarp_properties.check("robotName") )
+    std::string robot;
+
+    //Loading configuration
+    if( wbi_yarp_properties.check("robot") )
     {
-        std::cerr << "[ERR] yarpWholeBodyStates::init : robotName not found in configuration files" << std::endl;
-        std::cerr << "[ERR] yarpWholeBodyStates::init : halting initialization routine" << std::endl;
+        robot = wbi_yarp_properties.find("robot").asString().c_str();
+    }
+    else if (wbi_yarp_properties.check("robotName") )
+    {
+        std::cerr << "[WARN] yarpWholeBodyStates: robot option not found, using robotName" << std::endl;
+        robot = wbi_yarp_properties.find("robotName").asString().c_str();
+    }
+    else
+    {
+        std::cerr << "[ERR] yarpWholeBodyStates: robot option not found" << std::endl;
         return false;
     }
-
-    std::string robot = wbi_yarp_properties.find("robotName").asString().c_str();
 
     sensors = new yarpWholeBodySensors(name.c_str(), wbi_yarp_properties);              // sensor interface
     estimator = new yarpWholeBodyEstimator(ESTIMATOR_PERIOD, sensors);  // estimation thread
