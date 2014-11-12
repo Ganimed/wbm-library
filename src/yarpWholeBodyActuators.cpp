@@ -635,7 +635,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                 //std::cout << "~~~~~~~~~~~~ Setting control position reference " << std::endl;
                 return ipos[bodyPart]->positionMove(controlBoardAxis, CTRL_RAD2DEG*(*ref));
             case CTRL_MODE_DIRECT_POSITION:
-                return positionDirectInterface[bodyPart]->setPosition(controlBoardAxis, CTRL_RAD2DEG*(*ref));
+                return ipositionDirect[bodyPart]->setPosition(controlBoardAxis, CTRL_RAD2DEG*(*ref));
             case CTRL_MODE_VEL:
                 return ivel[bodyPart]->velocityMove(controlBoardAxis, CTRL_RAD2DEG*(*ref));
             case CTRL_MODE_TORQUE:
@@ -725,7 +725,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                     int yarp_controlboard_axis =  controlledJointsForControlBoard.positionDirectedControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
                     buf_references[yarp_controlboard_axis] = CTRL_RAD2DEG*ref[wbi_id];
                 }
-                ok = positionDirectInterface[wbi_controlboard_id]->setPositions(buf_references);
+                ok = ipositionDirect[wbi_controlboard_id]->setPositions(buf_references);
                 if(!ok)
                 {
                     std::cerr << "yarpWholeBodyActuators::setControlReference error:"
@@ -740,7 +740,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                 {
                     int wbi_id = controlledJointsForControlBoard.positionDirectedControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
                     int yarp_controlboard_axis =  controlledJointsForControlBoard.positionDirectedControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
-                    ok = positionDirectInterface[wbi_controlboard_id]->setPosition(yarp_controlboard_axis,CTRL_RAD2DEG*ref[wbi_id]);
+                    ok = ipositionDirect[wbi_controlboard_id]->setPosition(yarp_controlboard_axis,CTRL_RAD2DEG*ref[wbi_id]);
                 }
             }
         }
