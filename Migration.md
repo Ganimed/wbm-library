@@ -64,6 +64,8 @@ if( !rf.check("wbi_conf_file") )
 }
 std::string wbiConfFile = rf.findFile("wbi_conf_file");
 yarpWbiOptions.fromConfigFile(wbiConfFile);
+//Overwrite the robot parameter that could be present in wbi_conf_file
+yarpWbiOptions.put("robot",robotName);
 robotInterface = new yarpWholeBodyInterface(moduleName.c_str(), yarpWbiOptions);
 ```
 
