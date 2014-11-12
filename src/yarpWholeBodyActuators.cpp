@@ -466,6 +466,7 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
                 {
                     //Set only the joints that are not in the desired control mode
                     if(currentCtrlModes[j] != controlMode) {
+
                         ok = ok && icmd[controlBoardAxisList[j].first]->setPositionMode(controlBoardAxisList[j].second);
                         if( !ok )
                         {
@@ -580,15 +581,22 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
         switch(controlMode)
         {
             case CTRL_MODE_POS:
-                                ok = icmd[bodyPart]->setPositionMode(controlBoardJointAxis); break;
+                ok = icmd[bodyPart]->setControlMode(controlBoardJointAxis,VOCAB_CM_POSITION);
+                break;
             case CTRL_MODE_DIRECT_POSITION:
-                                ok = icmd[bodyPart]->setControlMode(controlBoardJointAxis,VOCAB_CM_POSITION_DIRECT); break;
-
-            case CTRL_MODE_VEL:         ok = icmd[bodyPart]->setVelocityMode(controlBoardJointAxis); break;
-            case CTRL_MODE_TORQUE:      ok = icmd[bodyPart]->setTorqueMode(controlBoardJointAxis);   break;
-            ///< iCub simulator does not implement PWM motor control
-            case CTRL_MODE_MOTOR_PWM:   ok = icmd[bodyPart]->setOpenLoopMode(controlBoardJointAxis); break;
-            default: break;
+                ok = icmd[bodyPart]->setControlMode(controlBoardJointAxis,VOCAB_CM_POSITION_DIRECT);
+                break;
+            case CTRL_MODE_VEL:
+                ok = icmd[bodyPart]->setControlMode(controlBoardJointAxis,VOCAB_CM_VELOCITY);
+                break;
+            case CTRL_MODE_TORQUE:
+                ok = icmd[bodyPart]->setControlMode(controlBoardJointAxis,VOCAB_CM_TORQUE);
+                break;
+            case CTRL_MODE_MOTOR_PWM:
+                ok = icmd[bodyPart]->setControlMode(controlBoardJointAxis,VOCAB_CM_OPENLOOP);
+                break;
+            default:
+                break;
         }
         if(ok)
         {
