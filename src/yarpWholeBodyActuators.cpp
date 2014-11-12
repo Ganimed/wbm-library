@@ -97,7 +97,7 @@ bool yarpWholeBodyActuators::openControlBoardDrivers(int bp)
                      " but the total number of bodyparts considered in the interface is " << controlBoardNames.size() << std::endl;
         return false;
     }
-    itrq[bp]=0; iimp[bp]=0; icmd[bp]=0; ivel[bp]=0; ipos[bp]=0; iopl[bp]=0;  dd[bp]=0;
+    itrq[bp]=0; iimp[bp]=0; icmd[bp]=0; ivel[bp]=0; ipos[bp]=0; iopl[bp]=0;  dd[bp]=0; ipositionDirect[bp]=0; iinteraction[bp]=0;
     if(!openPolyDriver(name, robot, dd[bp], controlBoardNames[bp].c_str()))
     {
         std::cerr << "yarpWholeBodyActuators::openDrivers error: enable to open controlboard " << controlBoardNames[bp]
@@ -108,7 +108,7 @@ bool yarpWholeBodyActuators::openControlBoardDrivers(int bp)
     //Open all necessary interfaces
     bool ok = dd[bp]->view(itrq[bp]) && dd[bp]->view(iimp[bp]) && dd[bp]->view(icmd[bp])
               && dd[bp]->view(ivel[bp]) && dd[bp]->view(ipos[bp]) && dd[bp]->view(iopl[bp])
-              && dd[bp]->view(positionDirectInterface[bp]);
+              && dd[bp]->view(ipositionDirect[bp]) && dd[bp]->view(iinteraction[bp]);
 
 
     if(!ok)
@@ -175,8 +175,10 @@ bool yarpWholeBodyActuators::init()
     ivel.resize(controlBoardNames.size());
     ipos.resize(controlBoardNames.size());
     iopl.resize(controlBoardNames.size());
-    positionDirectInterface.resize(controlBoardNames.size());
+    ipositionDirect.resize(controlBoardNames.size());
+    iinteraction.resize(controlBoardNames.size());
     dd.resize(controlBoardNames.size());
+
 
     //Open necessary yarp controlboard drivers
     //iterate all used body parts
@@ -582,12 +584,15 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
         {
             case CTRL_MODE_POS:
                 ok = icmd[bodyPart]->setControlMode(controlBoardJointAxis,VOCAB_CM_POSITION);
+                ok = ok && iinteraction[bodyPart]->setInteractionMode(controlBoardJointAxis,VOCAB_IM_STIFF);
                 break;
             case CTRL_MODE_DIRECT_POSITION:
                 ok = icmd[bodyPart]->setControlMode(controlBoardJointAxis,VOCAB_CM_POSITION_DIRECT);
+                ok = ok && iinteraction[bodyPart]->setInteractionMode(controlBoardJointAxis,VOCAB_IM_STIFF);
                 break;
             case CTRL_MODE_VEL:
                 ok = icmd[bodyPart]->setControlMode(controlBoardJointAxis,VOCAB_CM_VELOCITY);
+                ok = ok && iinteraction[bodyPart]->setInteractionMode(controlBoardJointAxis,VOCAB_IM_STIFF);
                 break;
             case CTRL_MODE_TORQUE:
                 ok = icmd[bodyPart]->setControlMode(controlBoardJointAxis,VOCAB_CM_TORQUE);

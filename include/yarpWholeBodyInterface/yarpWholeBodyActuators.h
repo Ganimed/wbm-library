@@ -125,10 +125,11 @@ namespace yarpWbi
 
          // yarp drivers vector whose index is given by relative index of the bodyPartNames vector
         std::vector<yarp::dev::IPositionControl*>     ipos;
-        std::vector<yarp::dev::IPositionDirect*>      positionDirectInterface;
+        std::vector<yarp::dev::IPositionDirect*>      ipositionDirect;
         std::vector<yarp::dev::ITorqueControl*>       itrq;
         std::vector<yarp::dev::IImpedanceControl*>    iimp;
-        std::vector<yarp::dev::IControlMode2*>         icmd;
+        std::vector<yarp::dev::IControlMode2*>        icmd;
+        std::vector<yarp::dev::IInteractionMode*>     iinteraction;
         std::vector<yarp::dev::IVelocityControl2*>    ivel;
         std::vector<yarp::dev::IOpenLoopControl*>     iopl;
         std::vector<yarp::dev::PolyDriver*>           dd;
