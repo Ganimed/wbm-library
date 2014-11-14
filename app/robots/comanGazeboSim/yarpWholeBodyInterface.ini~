@@ -1,0 +1,64 @@
+#include "../../../../../main/codyco-modules/src/misc/inertiaObserver/src/iCubStateEstimator.h"
+robot comanGazeboSim
+urdf_file model.urdf
+#[WBI-TOOLBOX_OPTIONS]
+localName     simulink
+worldRefFrame LAnkSag
+robot_fixed    true
+
+#joints
+#IMU
+#FTS
+#FOR COMAN
+[WBI_YARP_JOINTS]
+WaistSag        = (torso, 0)
+WaistLat        = (torso, 1)
+WaistYaw        = (torso, 2)
+LHipSag         = (left_leg, 0)
+LHipLat         = (left_leg, 1)
+LHipYaw         = (left_leg, 2)
+LKneeSag        = (left_leg, 3)
+LAnkLat         = (left_leg, 4)
+LAnkSag         = (left_leg, 5)
+RHipSag         = (right_leg, 0)
+RHipLat         = (right_leg, 1)
+RHipYaw         = (right_leg, 2)
+RKneeSag        = (right_leg, 3)
+RAnkLat         = (right_leg, 4)
+RAnkSag         = (right_leg, 5)
+LShSag          = (left_arm, 0)
+LShLat          = (left_arm, 1)
+LShYaw          = (left_arm, 2)
+LElbj           = (left_arm, 3)
+LForearmPlate   = (left_arm, 4)
+RShSag          = (right_arm, 0)
+RShLat          = (right_arm, 1)
+RShYaw          = (right_arm, 2)
+RElbj           = (right_arm, 3)
+RForearmPlate   = (right_arm, 4)
+
+[WBI_YARP_IMU_PORTS]
+imu_frame /inertial
+
+[WBI_YARP_FT_PORTS]
+l_leg_ft_sensor /left_leg/analog:o
+r_leg_ft_sensor /right_leg/analog:o
+l_arm_ft_sensor /left_arm/analog:o
+r_arm_ft_sensor /right_arm/analog:o
+
+[WBI_ID_LISTS]
+COMAN_LEFT_ARM_JOINTS = (LShSag, LShLat, LShYaw, LElbj, LForearmPlate)
+COMAN_RIGHT_ARM_JOINTS = (RShSag, RShLat, RShYaw, RElbj, RForearmPlate)
+COMAN_TORSO_JOINTS = (WaistSag, WaistLat, WaistYaw)
+COMAN_LEFT_LEG_JOINTS = (LHipSag, LHipLatm LKneeSag, LAnkLat, LAnkSag)
+COMAN_RIGHT_LEG_JOINTS = (RHipSag, RHipLatm, RKneeSag, RAnkLat, RAnkSag)
+COMAN_TORSO_LEGS = (COMAN_TORSO_JOINTS,COMAN_LEFT_LEG_JOINTS,COMAN_RIGHT_LEG_JOINTS)
+COMAN_DYNAMIC_MODEL_JOINTS = (COMAN_TORSO_LEGS, COMAN_LEFT_ARM_JOINTS, COMAN_RIGHT_ARM_JOINTS)
+
+COMAN_MAIN_IMUS = (imu_frame)
+
+COMAN_LEFT_LEG_FTS = (l_leg_ft_sensor)
+COMAN_RIGHT_LEG_FTS = (r_leg_ft_sensor)
+
+COMAN_MAIN_FTS = (COMAN_LEFT_LEG_FTS,COMAN_RIGHT_LEG_FTS)
+
