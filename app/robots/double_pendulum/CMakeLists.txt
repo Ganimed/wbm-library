@@ -1,4 +1,4 @@
-set(robotname doublePendulum)
+set(robotname double_pendulum)
 
 file(GLOB ini ${CMAKE_CURRENT_SOURCE_DIR}/*.ini)
 file(GLOB urdf ${CMAKE_CURRENT_SOURCE_DIR}/*.urdf)
