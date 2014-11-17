@@ -7,6 +7,7 @@ PROJECT(yarpWholeBodyInterfaceExample)
 
 find_package(YCM REQUIRED)
 find_package(YARP REQUIRED)
+find_package(ICUB REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(iDynTree REQUIRED)
 find_package(yarpWholeBodyInterface REQUIRED)
@@ -24,6 +25,8 @@ SOURCE_GROUP("Header Files" FILES ${folder_header})
 
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 include_directories(${yarpWholeBodyInterface_INCLUDE_DIRS})
+
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ICUB_LINK_FLAGS}")
 
 ADD_EXECUTABLE(yarpWholeBodyInterfaceExample ${folder_source} ${folder_header})
 
