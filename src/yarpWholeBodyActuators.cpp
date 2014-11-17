@@ -639,7 +639,6 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
         switch(currentCtrlModes[joint])
         {
             case CTRL_MODE_POS:
-                std::cout << "~~~~~~~~~~~~ Setting control position reference for bodyPart " << bodyPart << " axis " << controlBoardAxis << std::endl;
                 return ipos[bodyPart]->positionMove(controlBoardAxis, CTRL_RAD2DEG*(*ref));
             case CTRL_MODE_DIRECT_POSITION:
                 return ipositionDirect[bodyPart]->setPosition(controlBoardAxis, CTRL_RAD2DEG*(*ref));
