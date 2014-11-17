@@ -98,7 +98,7 @@ int main(int argc, char * argv[])
     std::string RobotMainJointsListName = "ROBOT_TORQUE_CONTROL_JOINTS";
     if( !yarpWbi::loadIdListFromConfig(RobotMainJointsListName,yarpWbiConfiguration,RobotMainJoints) )
     {
-        fprintf(stderr, "[ERR] locomotionControl: impossible to load wbiId joint list with name %s\n",RobotMainJointsListName.c_str());
+        fprintf(stderr, "[ERR] yarpWholeBodyInterface: impossible to load wbiId joint list with name %s\n",RobotMainJointsListName.c_str());
     }
     yarpRobot->addJoints(RobotMainJoints);
 
