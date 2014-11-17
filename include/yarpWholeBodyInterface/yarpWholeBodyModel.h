@@ -111,6 +111,7 @@ namespace yarpWbi
 
         bool convertGeneralizedTorques(yarp::sig::Vector idyntree_base_force, yarp::sig::Vector idyntree_torques, double * tau);
 
+
     public:
          /**
           * @param _name Local name of the interface (used as stem of port names)
@@ -121,6 +122,7 @@ namespace yarpWbi
 
 
         virtual ~yarpWholeBodyModel();
+
         virtual bool init();
         virtual bool close();
 
@@ -190,7 +192,7 @@ namespace yarpWbi
           * @param q Joint angles.
           * @param xBase Rototranslation from world frame to robot base frame
           * @param linkId Id of the link.
-          * @param x Output 7-dim pose vector (3 for pos, 4 for quaternion orientation).
+          * @param x Output 7-dim pose vector (3 for pos, 4 for orientation expressed in axis/angle).
           * @return True if the operation succeeded, false otherwise. */
         virtual bool forwardKinematics(double *q, const wbi::Frame &xBase, int linkId, double *x);
 
