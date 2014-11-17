@@ -12,9 +12,10 @@ if(CODYCO_INSTALL_ALL_ROBOTS)
   add_subdirectory(iCubHeidelberg01)
   add_subdirectory(coman)
   add_subdirectory(comanGazeboSim)
+  add_subdirectory(double_pendulum)
 else()
   if(ROBOT_NAME)
     add_subdirectory(${ROBOT_NAME})
   endif()
-endif() 
-  
+endif()
+

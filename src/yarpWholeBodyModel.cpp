@@ -88,13 +88,22 @@ bool yarpWholeBodyModel::init()
         return false;
     }
 
-    if( !wbi_yarp_properties.check("urdf_file") )
+    if(  !wbi_yarp_properties.check("urdf") && !wbi_yarp_properties.check("urdf_file") )
     {
-        std::cerr << "yarpWholeBodyModel error: urdf_file not found in configuration files" << std::endl;
+        std::cerr << "yarpWholeBodyModel error: urdf not found in configuration files" << std::endl;
         return false;
     }
 
-    std::string urdf_file = wbi_yarp_properties.find("urdf_file").asString().c_str();
+    std::string urdf_file;
+    if( wbi_yarp_properties.check("urdf") )
+    {
+        urdf_file = wbi_yarp_properties.find("urdf").asString().c_str();
+    }
+    else
+    {
+        urdf_file = wbi_yarp_properties.find("urdf_file").asString().c_str();
+    }
+
     yarp::os::ResourceFinder rf;
     std::string urdf_file_path = rf.findFile(urdf_file.c_str());
 

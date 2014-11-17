@@ -8,133 +8,145 @@
 /**
  * \infile Example for wholeBodyInterface
  */
+
+// Yarp Headers
 #include <yarp/os/Network.h>
 #include <yarp/os/Time.h>
 #include <yarp/os/Property.h>
-
-#include <yarp/os/Property.h>
-
 #include <yarp/math/Math.h>
 #include <yarp/sig/Vector.h>
 #include <yarp/math/Rand.h>
+#include <yarp/os/ResourceFinder.h>
 
-#include <iCub/skinDynLib/common.h>
+// wholeBodyInterface headers
+#include <wbi/wholeBodyInterface.h>
 
-#include <wbiIcub/wholeBodyInterfaceIcub.h>
+// yarpWholeBodyInterface headers
+#include <yarpWholeBodyInterface/yarpWholeBodyInterface.h>
 
-#include <stdio.h>
-#include <math.h>
-#include <string>
-
-#include <iostream>
-#include <typeinfo>
 
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace yarp::math;
-using namespace iCub::skinDynLib;
 using namespace std;
-using namespace wbi;
-using namespace wbiIcub;
-using namespace Eigen;
 
 const double TOL = 1e-8;
 
 
 int main(int argc, char * argv[])
 {
-    Network yarp; 
-    Property options;
-    options.fromCommand(argc,argv);
-    
-	//Parse options from command line
-    std::string robotName;
-    if(options.check("robot")) {
-      robotName = options.find("robot").asString();
-    } else {
-      robotName = "icubGazeboSim";
-    }
-    
-    bool use_urdf = false;
-    
-    std::string urdf_file;
-    if(options.check("urdf")) { 
-        use_urdf = true;
-        urdf_file = options.find("urdf").asString();
-    } else {
-        use_urdf = false;
-    }
-    
-    
-    // Create yarpWholeBodyInterface
-    std::string localName = "wbiTest";
-    
-    wholeBodyInterface *icub;
-    iCub::iDynTree::iCubTree_version_tag icub_version;
+    Network yarp;
+    ResourceFinder rf;
+    rf.configure(argc,argv);
 
-	int neck_version = 2;
-    int leg_version = 2;
-    int has_feet_ft_sensors = true;
-    if( use_urdf ) {
-    	icub_version = iCub::iDynTree::iCubTree_version_tag (neck_version, leg_version, has_feet_ft_sensors, use_urdf, urdf_file);
-	} else {
-		icub_version = iCub::iDynTree::iCubTree_version_tag (neck_version, leg_version, has_feet_ft_sensors);
-	}
 
-    icub = new icubWholeBodyInterface (localName.c_str(), robotName.c_str(), icub_version);
-    
-    std::cout << "icubWholeBodyInterface created, adding joints" << std::endl;
-    
-    //controlling just the torso and the arms
-    icub->addJoints(LocalIdList(RIGHT_ARM,0,1,2,3,4));
-    icub->addJoints(LocalIdList(LEFT_ARM,0,1,2,3,4));
-    icub->addJoints(LocalIdList(TORSO,0,1,2));
-    
-    //but you can also control the 25 joints of iCub that is possible to control in torque mode
-    //icub->addJoints(ICUB_MAIN_JOINTS);
-    
-    std::cout << "Joints added, calling init method" <<  std::endl;
-
-    if(!icub->init())
+    if( rf.check("help") )
     {
+        std::cout << "yarpWholeBodyInterface example, available options:" << std::endl;
+        std::cout << "  --wbi_conf_file filename : specify the configuration file used by the wbi," << std::endl
+                  << "                             that is searched using the standard ResourceFinder" << std::endl
+                  << "                             policies (see http://wiki.icub.org/yarpdoc/yarp_resource_finder_tutorials.html)" << std::endl
+                  << "                             (default value : yarpWholeBodyInterface.ini)" << std::endl;
+        std::cout << "  --robot robotName       : yarp port prefix used by the robot." << std::endl
+                  << "                            (default value: the one contained in wbi_conf_file file ) " << std::endl;
+        std::cout << "  --urdf  urdf_filename   : specify the URDF file used by the wbi. Also this file is found using" << std::endl
+                  << "                            the standard ResouceFinder policy." << std::endl
+                  << "                            (default value: the one contained in wbi_conf_file file ) " << std::endl;
+
 
         return 0;
     }
-    
+
+    //Parse options from command line
+    // first find the configuration file use to configure the wbi
+    // if a file is specified with the wbi_conf_file option, use that one
+    // otherwise use the standard yarpWholeBodyInterface.ini name.
+    //
+    // In both cases, the specified file name is searched using the
+    // standard ResourceFinder policy.
+    // For more informations see http://wiki.icub.org/yarpdoc/yarp_data_dirs.html
+    yarp::os::Property yarpWbiConfiguration;
+    std::string yarpWbiConfigurationFile;
+
+    if(rf.check("wbi_conf_file") && rf.find("wbi_conf_file").isString())
+    {
+        yarpWbiConfigurationFile = rf.findFile("wbi_conf_file");
+    }
+    else
+    {
+        yarpWbiConfigurationFile = rf.findFileByName("yarpWholeBodyInterface.ini");
+    }
+
+    //It may be convenient to overload some option of the configuration file,
+    // so we load in the yarpWbiConfiguration also the option passed in the command line
+    yarpWbiConfiguration.fromConfigFile(yarpWbiConfigurationFile);
+
+    yarpWbiConfiguration.fromConfig(rf.toString().c_str(),false);
+
+    // Create yarpWholeBodyInterface
+    std::string localName = "wbiTest";
+
+    wbi::wholeBodyInterface *yarpRobot = new yarpWbi::yarpWholeBodyInterface (localName.c_str(), yarpWbiConfiguration);
+
+    std::cout << "yarpWholeBodyInterface created, adding joints" << std::endl;
+    wbi::IDList RobotMainJoints;
+    std::string RobotMainJointsListName = "ROBOT_TORQUE_CONTROL_JOINTS";
+    if( !yarpWbi::loadIdListFromConfig(RobotMainJointsListName,yarpWbiConfiguration,RobotMainJoints) )
+    {
+        fprintf(stderr, "[ERR] locomotionControl: impossible to load wbiId joint list with name %s\n",RobotMainJointsListName.c_str());
+    }
+    yarpRobot->addJoints(RobotMainJoints);
+
+    std::cout << "Joints added, calling init method" <<  std::endl;
+
+    if(!yarpRobot->init())
+    {
+        std::cout << "Error: init() method failed" << std::endl;
+        return -1;
+    }
+
     Time::delay(0.5);
-    
-    //Get the number of internal degrees of freedom of the robot
-    int dof = icub->getDoFs();
-    printf("Joint list: %s\n", icub->getJointList().toString().c_str());
-    printf("Number of (internal) DoFs: %d\n", dof);
-    
+
+    //Get the number of controlled degrees of freedom of the robot
+    int dof = yarpRobot->getDoFs();
+    printf("Controlled joint list: %s\n", yarpRobot->getJointList().toString().c_str());
+    printf("Number of (internal) controlled DoFs: %d\n", dof);
+
 	//Allocate yarp vector of the right dimensions
     Vector q(dof), dq(dof), d2q(dof), qInit(dof), qd(dof), trq(dof);
 
     //Read position and torque estimates
-    icub->getEstimates(wbi::ESTIMATE_JOINT_POS, q.data());
-    icub->getEstimates(wbi::ESTIMATE_JOINT_TORQUE, trq.data());
+    yarpRobot->getEstimates(wbi::ESTIMATE_JOINT_POS, q.data());
+    yarpRobot->getEstimates(wbi::ESTIMATE_JOINT_TORQUE, trq.data());
 
-    //Set a bunch of desired positions, by just adding 15 degrees to the current position of the joints 
+    //Set a bunch of desired positions, by just adding 15 degrees to the current position of the joints
     qd = q;
     qInit = q;
     qd = 15.0*CTRL_DEG2RAD;
     printf("Q:   %s\n", (CTRL_RAD2DEG*q).toString(1).c_str());
     printf("Qd:  %s\n", (CTRL_RAD2DEG*qd).toString(1).c_str());
-    
+
+    //Set the robot in position control mode
+    yarpRobot->setControlMode(wbi::CTRL_MODE_POS);
+
     //Set trajectory velocity parameters
     Vector refSpeed(dof, CTRL_DEG2RAD*10.0);
-    icub->setControlParam(CTRL_PARAM_REF_VEL, refSpeed.data());
-    icub->setControlReference(qd.data());
-   
+    yarpRobot->setControlParam(wbi::CTRL_PARAM_REF_VEL, refSpeed.data());
+    yarpRobot->setControlReference(qd.data());
+
     //The wbi is indipendent uses just double * in its interfaces
     //so is compatible with yarp vector data type, eigen data types
     //and with all data types that expose a pointer to their data
-    //storage 
-    Eigen::Matrix<double,6,Dynamic,RowMajor> jacob; 
+    //storage
+    Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> jacob;
+    Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor> fb_mass_matrix;
 
-    //For more information on the dimension of the jacobian, check 
+
+    //For more information on the dimension of the jacobian
+    //check iWholeBodyModel doxygen documentation
     jacob.resize(6,dof+6);
+    fb_mass_matrix.resize(dof+6,dof+6);
+
     Vector com(7,0.0);
 
     //Just looping for 15 seconds
@@ -143,33 +155,33 @@ int main(int argc, char * argv[])
 
         wbi::Frame world2base;
         world2base.identity();
-        
+
         Time::delay(1);
-        icub->getEstimates(ESTIMATE_JOINT_POS, q.data());
-        icub->getEstimates(ESTIMATE_JOINT_VEL, dq.data());
-        icub->getEstimates(ESTIMATE_JOINT_ACC,d2q.data());
-        
-        icub->computeJacobian(q.data(),world2base,wbi::iWholeBodyModel::COM_LINK_ID,jacob.data());
-        //cout<<"COM Jacobian: "<<jacob<<endl;
-        
-        icub->forwardKinematics(q.data(),world2base,wbi::iWholeBodyModel::COM_LINK_ID,com.data());
-        printf("Center of Mass:  %.10f \t %.10f \t %.10f\n",com[0],com[1],com[2]);
-                
+        yarpRobot->getEstimates(wbi::ESTIMATE_JOINT_POS, q.data());
+        yarpRobot->getEstimates(wbi::ESTIMATE_JOINT_VEL, dq.data());
+        yarpRobot->getEstimates(wbi::ESTIMATE_JOINT_ACC,d2q.data());
+
+        yarpRobot->computeJacobian(q.data(),world2base,wbi::iWholeBodyModel::COM_LINK_ID,jacob.data());
+
+        yarpRobot->computeMassMatrix(q.data(),world2base,fb_mass_matrix.data());
+
+        yarpRobot->forwardKinematics(q.data(),world2base,wbi::iWholeBodyModel::COM_LINK_ID,com.data());
+
     }
- 
+
     //Go back to original position
     std::cout << "Setting position " << std::endl;
     qd -= CTRL_DEG2RAD*15.0;
-    icub->setControlMode(CTRL_MODE_POS);
-    icub->setControlReference(qInit.data());
+    yarpRobot->setControlMode(wbi::CTRL_MODE_POS);
+    yarpRobot->setControlReference(qInit.data());
 
     Time::delay(20.0);
-   
- 
-    icub->close();
-    
-    delete icub;
-    
+
+
+    yarpRobot->close();
+
+    delete yarpRobot;
+
     printf("Main returning...\n");
     return 0;
 }
