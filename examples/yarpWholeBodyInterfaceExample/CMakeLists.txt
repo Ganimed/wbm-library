@@ -5,6 +5,7 @@
 cmake_minimum_required(VERSION 2.8.9)
 PROJECT(yarpWholeBodyInterfaceExample)
 
+find_package(YCM REQUIRED)
 find_package(YARP REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(iDynTree REQUIRED)
