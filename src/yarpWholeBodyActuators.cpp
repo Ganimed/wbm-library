@@ -294,7 +294,6 @@ bool yarpWholeBodyActuatorsControlledJoints::reset(const int nrOfControlBoards)
 
 bool yarpWholeBodyActuators::updateControlledJointsForEachControlBoard()
 {
-    std::cout << "||||||||||||||||||||||||||||||||||||||||||| updateControlledJointsForEachControlBoard" << std::endl;
     controlledJointsForControlBoard.reset(controlBoardNames.size());
 
     #ifndef NDEBUG
@@ -640,7 +639,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
         switch(currentCtrlModes[joint])
         {
             case CTRL_MODE_POS:
-                //std::cout << "~~~~~~~~~~~~ Setting control position reference " << std::endl;
+                std::cout << "~~~~~~~~~~~~ Setting control position reference for bodyPart " << bodyPart << " axis " << controlBoardAxis << std::endl;
                 return ipos[bodyPart]->positionMove(controlBoardAxis, CTRL_RAD2DEG*(*ref));
             case CTRL_MODE_DIRECT_POSITION:
                 return ipositionDirect[bodyPart]->setPosition(controlBoardAxis, CTRL_RAD2DEG*(*ref));
@@ -648,24 +647,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                 return ivel[bodyPart]->velocityMove(controlBoardAxis, CTRL_RAD2DEG*(*ref));
             case CTRL_MODE_TORQUE:
             {
-#ifdef WBI_ICUB_COMPILE_PARAM_HELP
-                //TEMP
-                if (_torqueModuleConnection) {
-                    _torqueRefs.zero();
-                    //assume that the wbi serialization of this interface and the one of jointTorqueControl coincide
-                    int gid = joint;
-                    if (gid < 0 || gid >= jointTorqueControl::N_DOF) {
-                        return false;
-                    }
-                    else {
-                        _torqueRefs[gid] = *ref;
-                        return _torqueModuleConnection->sendStreamParams();
-                    }
-                }
-                else
-                //END TEMP
-#endif
-                    return itrq[bodyPart]->setRefTorque(controlBoardAxis, *ref);
+                return itrq[bodyPart]->setRefTorque(controlBoardAxis, *ref);
             }
             case CTRL_MODE_MOTOR_PWM:
                 return iopl[bodyPart]->setRefOutput(controlBoardAxis, *ref);
@@ -685,11 +667,10 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
         //Sending references for position controlled joints
         ///////////////////////////////////////////////////
         int nrOfPosControlledJointsInControlBoard = controlledJointsForControlBoard.positionControlledJoints[wbi_controlboard_id].size();
-        std::cerr << nrOfPosControlledJointsInControlBoard << std::endl;
         if( nrOfPosControlledJointsInControlBoard > 0 )
         {
              if( nrOfPosControlledJointsInControlBoard == totalAxesInControlBoard[wbi_controlboard_id] )
-            {
+             {
                 //If the wbi controls all the joint in the control board, use the usual interface setPositions
                 for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfPosControlledJointsInControlBoard; controlBoard_jnt++ )
                 {
@@ -697,8 +678,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                      int yarp_controlboard_axis =  controlledJointsForControlBoard.positionControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
                      buf_references[yarp_controlboard_axis] = CTRL_RAD2DEG*ref[wbi_id];
                 }
-                //std::cout << "~~~~~~~~~~~~ Setting control position reference " << std::endl;
-                //ok = ipos[wbi_controlboard_id]->positionMove(buf_references);
+                ok = ipos[wbi_controlboard_id]->positionMove(buf_references);
                 if(!ok)
                 {
                     std::cerr << "[ERR] yarpWholeBodyActuators::setControlReference error:"

@@ -52,7 +52,8 @@ int main(int argc, char * argv[])
         std::cout << "  --urdf  urdf_filename   : specify the URDF file used by the wbi. Also this file is found using" << std::endl
                   << "                            the standard ResouceFinder policy." << std::endl
                   << "                            (default value: the one contained in wbi_conf_file file ) " << std::endl;
-
+        std::cout << "  --local localName        : yarp port prefix used by this example to open yarp ports. " << std::endl;
+        std::cout << "                           : (default value: wbiTest)" << std::endl;
 
         return 0;
     }
@@ -81,10 +82,14 @@ int main(int argc, char * argv[])
     // so we load in the yarpWbiConfiguration also the option passed in the command line
     yarpWbiConfiguration.fromConfigFile(yarpWbiConfigurationFile);
 
-    yarpWbiConfiguration.fromConfig(rf.toString().c_str(),false);
+    yarpWbiConfiguration.fromString(rf.toString().c_str(),false);
 
     // Create yarpWholeBodyInterface
     std::string localName = "wbiTest";
+    if( rf.check("local") )
+    {
+        localName = rf.find("local").asString();
+    }
 
     wbi::wholeBodyInterface *yarpRobot = new yarpWbi::yarpWholeBodyInterface (localName.c_str(), yarpWbiConfiguration);
 
@@ -109,7 +114,6 @@ int main(int argc, char * argv[])
 
     //Get the number of controlled degrees of freedom of the robot
     int dof = yarpRobot->getDoFs();
-    printf("Controlled joint list: %s\n", yarpRobot->getJointList().toString().c_str());
     printf("Number of (internal) controlled DoFs: %d\n", dof);
 
 	//Allocate yarp vector of the right dimensions
@@ -122,7 +126,8 @@ int main(int argc, char * argv[])
     //Set a bunch of desired positions, by just adding 15 degrees to the current position of the joints
     qd = q;
     qInit = q;
-    qd = 15.0*CTRL_DEG2RAD;
+    qd = 45.0*CTRL_DEG2RAD+q;
+    printf("Current and desired position:\n");
     printf("Q:   %s\n", (CTRL_RAD2DEG*q).toString(1).c_str());
     printf("Qd:  %s\n", (CTRL_RAD2DEG*qd).toString(1).c_str());
 
@@ -130,8 +135,10 @@ int main(int argc, char * argv[])
     yarpRobot->setControlMode(wbi::CTRL_MODE_POS);
 
     //Set trajectory velocity parameters
-    Vector refSpeed(dof, CTRL_DEG2RAD*10.0);
+    Vector refSpeed(dof, CTRL_DEG2RAD*20.0);
     yarpRobot->setControlParam(wbi::CTRL_PARAM_REF_VEL, refSpeed.data());
+
+   printf("Set control reference to qd:\n");
     yarpRobot->setControlReference(qd.data());
 
     //The wbi is indipendent uses just double * in its interfaces
