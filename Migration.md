@@ -76,10 +76,10 @@ constant list. In version 0.2, list of IDs are loaded at configuration time from
 Again, for an example of configuration file check:
 https://github.com/robotology/icub-main/blob/d4b6c70076876bc6ce2947b1a1969101328b1af5/app/robots/iCubHeidelberg01/wholeBodyInterface.ini
 
-For the time being we left the old list names, but in short time we should also add some lists with a precise definition for being more robot-indipendent. For example `ICUB_MAIN_JOINTS` could become something like
-`ROBOT_TORQUE_CONTROLLED_JOINTS` and it should contain all the joints of the robot that can be torque controlled,
-or `ICUB_DYNAMIC_MODEL_JOINTS` could become `ROBOT_DYNAMIC_MODEL_JOINTS` and it should contained all the joints used
-in the dynamic model of the robot.
+We started using "pseudo" standard names for joint ID lists, with some semantical meaning attached.
+For now we are using: 
+  * `ROBOT_TORQUE_CONTROL_JOINTS` : the set of all joints in the robot for which torque control is enabled.
+  * `ROBOT_DYNAMIC_MODEL_JOINTS`  : the set of joints typicaly used for the dynamical model of the robot (i.e. typically things like the fingers are not included in this list). 
 
 #### Relevant code changes
 ```
@@ -87,7 +87,7 @@ robotInterface->addJoints(ICUB_MAIN_JOINTS);
 ```
 becomes (just an example, details can vary):
 ```
-wbiIdList RobotMainJoints;
+IDList RobotMainJoints;
 std::string RobotMainJointsListName = "ICUB_MAIN_JOINTS";
 if( !loadIdListFromConfig(RobotMainJointsListName,yarpWbiOptions,RobotMainJoints) )
 {
