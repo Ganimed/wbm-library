@@ -19,7 +19,7 @@ list of joints/sensors/estimates cannot be changed.
 ### All the geometric iWholeBodyModel methods now accept frames id
 Relevant discussion: https://github.com/robotology/codyco-modules/issues/39
 
-Accordingly, a `virtual const wbiIdList& getFrameList()` method has been addeed
+Accordingly, a `virtual const wbiIdList& getFrameList()` method has been added
 to the iWholeBodyModel. This is substituting the ugly `getLinkId` method.
 
 #### Relevant code changes
