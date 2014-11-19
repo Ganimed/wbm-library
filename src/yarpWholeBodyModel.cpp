@@ -54,6 +54,7 @@ yarpWholeBodyModel::yarpWholeBodyModel(const char* _name,
     : initDone(false),
       dof(0),
       wbi_yarp_properties(_wbi_yarp_conf),
+      p_model(0),
       six_elem_buffer(6,0.0),
       three_elem_buffer(3,0.0)
 {
