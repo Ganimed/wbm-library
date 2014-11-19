@@ -46,7 +46,11 @@ using namespace yarp::math;
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 yarpWholeBodyStates::yarpWholeBodyStates(const char* _name, const yarp::os::Property & opt):
-initDone(false), name(_name), wbi_yarp_properties(opt)
+initDone(false), 
+name(_name), 
+wbi_yarp_properties(opt),
+sensors(0),
+estimator(0)
 {
     estimateIdList.resize(wbi::ESTIMATE_TYPE_SIZE);
 }
