@@ -45,7 +45,7 @@ using namespace iCub::ctrl;
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 yarpWholeBodySensors::yarpWholeBodySensors(const char* _name, const yarp::os::Property & opt):
-initDone(false), name(_name), wbi_yarp_properties(opt)
+initDone(false), name(_name), wbi_yarp_properties(opt), sensorIdList(wbi::SENSOR_TYPE_SIZE)
 {
 }
 
