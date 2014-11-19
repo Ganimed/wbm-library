@@ -31,17 +31,6 @@
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
 #include <map>
 
-//*********TEMP************** -> for actuators //
-#ifdef WBI_ICUB_COMPILE_PARAM_HELP
-#include <yarp/os/RpcClient.h>
-#include <yarp/os/RpcServer.h>
-#include <yarp/sig/Vector.h>
-namespace paramHelp {
-    class ParamHelperClient;
-}
-#endif
-//*********END TEMP**********//
-
 namespace yarp {
     namespace os {
         class Property;
@@ -151,17 +140,6 @@ namespace yarpWbi
         /** Set the reference speed for the position control of the specified joint(s). */
         virtual bool setReferenceSpeed(double *rspd, int joint=-1);
 
-        //*********TEMP**************//
-        #ifdef WBI_ICUB_COMPILE_PARAM_HELP
-        bool _rpcAutoConnect;
-        std::string _rpcLocalName;
-        std::string _rpcRemoteName;
-        yarp::os::RpcClient _torqueModuleRPCClientPort;
-        paramHelp::ParamHelperClient *_torqueModuleConnection; /*< connection to the torque control module */
-        yarp::sig::Vector _torqueRefs;
-        #endif
-        //*********END TEMP**********//
-
         /** Set the proportional, derivative and integrale gain for the current joint(s) controller.
          * If you want to leave some values unchanged simply pass NULL to the corresponding gain
          * @param pValue Value(s) of the proportional gain.
@@ -193,11 +171,6 @@ namespace yarpWbi
         virtual ~yarpWholeBodyActuators();
         virtual bool init();
         virtual bool close();
-
-        /* Configuration parameters section */
-        static const std::string icubWholeBodyActuatorsUseExternalTorqueModule; /*< initialization parameter for iCub actuator class. The value associated is a boolean value. Default to false */
-        static const std::string icubWholeBodyActuatorsExternalTorqueModuleAutoconnect; /*< initialization parameter for iCub actuator class. The value associated is a boolean value. It specifies if the external torque module should be started automatically by the WBI. Default to false */
-        static const std::string icubWholeBodyActuatorsExternalTorqueModuleName; /*< initialization parameter for iCub actuator class. Name of the torque external module */
 
         /**
          * @brief Sets an initialization parameter.

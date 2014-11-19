@@ -22,13 +22,6 @@
 #include <string>
 #include <cassert>
 
-//*********TEMP**************//
-#ifdef WBI_ICUB_COMPILE_PARAM_HELP
-#include <paramHelp/paramHelperClient.h>
-#include <motorFrictionIdentificationLib/jointTorqueControlParams.h>
-#endif
-//*********END TEMP**********//
-
 using namespace std;
 using namespace wbi;
 using namespace yarpWbi;
@@ -39,33 +32,17 @@ using namespace yarp::dev;
 #define WAIT_TIME 0.001         ///< waiting time in seconds before retrying to perform an operation that has failed
 #define DEFAULT_REF_SPEED 10.0  ///< default reference joint speed for the joint position control
 
-//constants
-const std::string yarpWholeBodyActuators::icubWholeBodyActuatorsUseExternalTorqueModule = "icubWholeBodyActuactorsUseExternalTorqueModuleKey";
-const std::string yarpWholeBodyActuators::icubWholeBodyActuatorsExternalTorqueModuleAutoconnect = "icubWholeBodyActuactorsExternalTorqueModuleNameKey";
-const std::string yarpWholeBodyActuators::icubWholeBodyActuatorsExternalTorqueModuleName = "icubWholeBodyActuactorsExternalTorqueModuleAutoconnect";
 
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 //                                          YARP WHOLE BODY ACTUATOR
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-//yarpWholeBodyActuators::yarpWholeBodyActuators(const char* _name,
-//                                               const char* _robotName,
-//                                               const std::vector<std::string> &_bodyPartNames)
-//: m_commandedParts(0), initDone(false), jointIdList.size()(0), name(_name), robot(_robotName), bodyPartNames(_bodyPartNames), reverse_torso_joints(true)
-//#ifdef WBI_ICUB_COMPILE_PARAM_HELP
-//,_torqueModuleConnection(0)
-//#endif
-//{}
-
 
 
 yarpWholeBodyActuators::yarpWholeBodyActuators(const char* _name,
                                                const yarp::os::Property & yarp_wbi_properties)
 : initDone(false), name(_name), wbi_yarp_properties(yarp_wbi_properties)
-#ifdef WBI_ICUB_COMPILE_PARAM_HELP
-,_torqueModuleConnection(0)
-#endif
 {
 }
 
@@ -221,53 +198,6 @@ bool yarpWholeBodyActuators::init()
     }
 
 
-#ifdef WBI_ICUB_COMPILE_PARAM_HELP
-    ///TEMP
-    if (_torqueModuleConnection) {
-        _torqueModuleConnection->close();
-        delete _torqueModuleConnection; _torqueModuleConnection = NULL;
-    }
-    if (ok) {
-        //read options
-        yarp::os::Value found;
-        _rpcAutoConnect = false;
-        found = wbi_yarp_properties.find(yarpWholeBodyActuatorsExternalTorqueModuleAutoconnect.c_str());
-
-        if (!found.isNull() && found.isBool()) {
-            _rpcAutoConnect = found.asBool();
-        }
-        found = wbi_yarp_properties.find(yarpWholeBodyActuatorsUseExternalTorqueModule.c_str());
-        if (!found.isNull() && found.isBool() && found.asBool()) {
-            found = wbi_yarp_properties.find(yarpWholeBodyActuatorsExternalTorqueModuleName.c_str());
-            if (found.isNull()) {
-                ok = false;
-            }
-            else {
-
-                _torqueModuleConnection = new paramHelp::ParamHelperClient(jointTorqueControl::jointTorqueControlParamDescr, jointTorqueControl::PARAM_ID_SIZE,
-                                                                           jointTorqueControl::jointTorqueControlCommandDescr, jointTorqueControl::COMMAND_ID_SIZE);
-
-                Bottle initMsg;
-                if (!_torqueModuleConnection || !_torqueModuleConnection->init(name, found.asString().c_str(), initMsg)) {
-                    ok = false;
-                }
-                else {
-                    _torqueRefs.resize(jointTorqueControl::N_DOF);
-                    ok = _torqueModuleConnection->linkParam(jointTorqueControl::PARAM_ID_TAU_OFFSET, _torqueRefs.data());
-                    if (_rpcAutoConnect) {
-                        _rpcLocalName = "/" + name + "/rpc:o";
-                        _rpcRemoteName = "/" + found.asString() + "/rpc";
-                        ok = ok && _torqueModuleRPCClientPort.open(_rpcLocalName);
-                        ok = ok && Network::connect(_rpcLocalName, _rpcRemoteName);
-                    }
-                }
-            }
-        }
-    }
-    ///END TEMP
-#endif
-
-
     initDone = true;
     return ok;
 }
@@ -383,18 +313,6 @@ bool yarpWholeBodyActuators::close()
         }
     }
 
-#ifdef WBI_ICUB_COMPILE_PARAM_HELP
-    ///TEMP
-    if (_torqueModuleConnection) {
-        _torqueModuleConnection->close();
-        delete _torqueModuleConnection; _torqueModuleConnection = NULL;
-    }
-    if (_rpcAutoConnect) {
-        Network::disconnect(_rpcLocalName, _rpcRemoteName);
-        _torqueModuleRPCClientPort.close();
-    }
-#endif
-
     return ok;
 }
 
@@ -465,9 +383,6 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
     if(joint<0)     ///< set all joints to the specified control mode
     {
 
-#ifdef WBI_ICUB_COMPILE_PARAM_HELP
-        bool controlModeChanged = false;
-#endif
         switch(controlMode)
         {
             case CTRL_MODE_POS:
@@ -516,14 +431,6 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
                 {
                     if(currentCtrlModes[j]!=controlMode)
                     {
-#ifdef WBI_ICUB_COMPILE_PARAM_HELP
-                        controlModeChanged = true;
-                        if (_torqueModuleConnection) {
-                            //if torque control connection is true I do not set the torqueMode
-                            ok = ok && true;
-                        }
-                        else
-#endif
                         {
                             ok = ok && icmd[controlBoardAxisList[j].first]->setTorqueMode(controlBoardAxisList[j].second);
                         }
@@ -564,22 +471,6 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
                     }
            }
         }
-#ifdef WBI_ICUB_COMPILE_PARAM_HELP
-        //send start or stop via RPC to torque module
-        if (_rpcAutoConnect) {
-            Bottle startCmd;
-            if (controlMode == CTRL_MODE_TORQUE) {
-                if (controlModeChanged) {
-                    startCmd.addString("start");
-                    ok = ok && _torqueModuleRPCClientPort.write(startCmd);
-                }
-            } else if (controlMode == CTRL_MODE_POS) {
-                startCmd.addString("stop");
-                ok = ok && _torqueModuleRPCClientPort.write(startCmd);
-            }
-
-        }
-#endif
         return ok;
     }
 
@@ -793,13 +684,6 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                     int yarp_controlboard_axis =  controlledJointsForControlBoard.torqueControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
                     buf_references[yarp_controlboard_axis] = ref[wbi_id];
                 }
-                #ifdef WBI_ICUB_COMPILE_PARAM_HELP
-                if (_torqueModuleConnection)
-                {
-                    _torqueRefs[wbi_id] = ref[wbi_id];
-                }
-                else
-                #endif
                     ok = itrq[wbi_controlboard_id]->setRefTorques(buf_references);
                 if(!ok)
                 {
@@ -857,15 +741,6 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
 
     }
 
-
-#ifdef WBI_ICUB_COMPILE_PARAM_HELP
-    //TEMP
-    if (_torqueModuleConnection)
-    {
-        ok = ok && _torqueModuleConnection->sendStreamParams();
-    }
-    //END TEMP
-#endif
 
     return ok;
 }
