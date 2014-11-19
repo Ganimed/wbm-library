@@ -81,7 +81,7 @@ namespace yarpWbi
     std::vector< int > getControlBoardList(const std::vector< std::pair<int,int> > & controlBoardAxisList);
 
     bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
-                               wbi::IDList & sensorIdList,
+                               const wbi::IDList & sensorIdList,
                                std::vector<std::string> & ports,
                                const std::string group_name);
 
