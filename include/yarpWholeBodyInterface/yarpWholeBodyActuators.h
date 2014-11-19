@@ -173,17 +173,6 @@ namespace yarpWbi
         virtual bool close();
 
         /**
-         * @brief Sets an initialization parameter.
-         *
-         * Sets a key-value pair parameter to be used during the initialization phase.
-         * Note: this function must be called before init, otherwise it takes no effect
-         * @param parameterName key for the parameter
-         * @param parameterValue value for the parameter.
-         * @return true if, false otherwise
-        */
-        virtual bool setConfigurationParameter(const std::string& parameterName, const yarp::os::Value& parameterValue);
-
-        /**
          * Set the properties of the yarpWbiActuactors interface
          * Note: this function must be called before init, otherwise it takes no effect
          * @param yarp_wbi_properties the properties of the yarpWholeBodyActuators object

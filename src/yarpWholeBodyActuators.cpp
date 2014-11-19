@@ -316,35 +316,6 @@ bool yarpWholeBodyActuators::close()
     return ok;
 }
 
-bool yarpWholeBodyActuators::setConfigurationParameter(const std::string &parameterName, const yarp::os::Value &parameterValue)
-{
-    /*Note to developers: we can move the functionalities offered by the configuration map to an external class in order to make it more generic */
-    if (initDone) return false;
-    //check allowed parameters
-    if (parameterName.compare(icubWholeBodyActuatorsUseExternalTorqueModule) == 0) {
-        if (parameterValue.isBool()) {
-            wbi_yarp_properties.put(parameterName.c_str(), parameterValue);
-            return true;
-        }
-        return false;
-    } else if (parameterName.compare(icubWholeBodyActuatorsExternalTorqueModuleAutoconnect) == 0) {
-        if (parameterValue.isBool()) {
-            wbi_yarp_properties.put(parameterName.c_str(), parameterValue);
-            return true;
-        }
-        return false;
-    } else if (parameterName.compare(icubWholeBodyActuatorsExternalTorqueModuleName) == 0) {
-        //simply check value has some length
-        if (parameterValue.isString() && parameterValue.asString().length() > 0) {
-            wbi_yarp_properties.put(parameterName.c_str(), parameterValue);
-            return true;
-        }
-        return false;
-    }
-
-    return false;
-}
-
 bool yarpWholeBodyActuators::removeActuator(const ID &j)
 {
     if (initDone) return false;
