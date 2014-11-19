@@ -47,12 +47,6 @@ using namespace iCub::ctrl;
 yarpWholeBodySensors::yarpWholeBodySensors(const char* _name, const yarp::os::Property & opt):
 initDone(false), name(_name), wbi_yarp_properties(opt)
 {
-    /*
-    loadBodyPartsFromConfig(opt,controlBoardNames);
-    loadReverseTorsoJointsFromConfig(opt,reverse_torso_joints);
-    loadFTSensorPortsFromConfig(opt,controlBoardNames,ftSens_2_port);
-    loadIMUSensorPortsFromConfig(opt,controlBoardNames,imu_2_port);
-    */
 }
 
 bool yarpWholeBodySensors::setYarpWbiProperties(const yarp::os::Property & yarp_wbi_properties)
@@ -67,17 +61,19 @@ bool yarpWholeBodySensors::getYarpWbiProperties(yarp::os::Property & yarp_wbi_pr
     return true;
 }
 
+
 bool yarpWholeBodySensors::init()
 {
     if( initDone ) return true;
 
     //Get encoders
     #ifndef NDEBUG
-    std::cout << "[INFO] yarpWholeBodySensors: initializing with " << encoderIdList.size() << " encoders " <<
-                                                               pwmSensIdList.size() << " pwm sensors " <<
-                                                               ftSensIdList.size() << " F/T sensors " <<
-                                                               imuIdList.size() << " IMUs " << std::endl;
+    std::cout << "[INFO] yarpWholeBodySensors: initializing with " << sensorIdList[wbi::SENSOR_ENCODER].size() << " encoders " <<
+                                                               sensorIdList[wbi::SENSOR_PWM].size() << " pwm sensors " <<
+                                                               sensorIdList[wbi::SENSOR_FORCE_TORQUE].size() << " F/T sensors " <<
+                                                               sensorIdList[wbi::SENSOR_IMU].size() << " IMUs " << std::endl;
     #endif
+
 
     //Loading configuration
     if( wbi_yarp_properties.check("robot") )
@@ -94,12 +90,12 @@ bool yarpWholeBodySensors::init()
         std::cerr << "[ERR] yarpWholeBodySensors: robot option not found" << std::endl;
         return false;
     }
-    
+
     yarp::os::Bottle & joints_config = getWBIYarpJointsOptions(wbi_yarp_properties);
     controlBoardNames.clear();
-    initDone = appendNewControlBoardsToVector(joints_config,encoderIdList,controlBoardNames);
-    initDone = initDone && appendNewControlBoardsToVector(joints_config,pwmSensIdList,controlBoardNames);
-    initDone = initDone && appendNewControlBoardsToVector(joints_config,torqueSensorIdList,controlBoardNames);
+    initDone = appendNewControlBoardsToVector(joints_config,sensorIdList[wbi::SENSOR_ENCODER],controlBoardNames);
+    initDone = initDone && appendNewControlBoardsToVector(joints_config,sensorIdList[wbi::SENSOR_PWM],controlBoardNames);
+    initDone = initDone && appendNewControlBoardsToVector(joints_config,sensorIdList[wbi::SENSOR_TORQUE],controlBoardNames);
     if( !initDone )
     {
         return false;
@@ -118,9 +114,9 @@ bool yarpWholeBodySensors::init()
     pwmLastRead.resize(nrOfControlBoards);
     torqueSensorsLastRead.resize(nrOfControlBoards);
 
-    getControlBoardAxisList(joints_config,encoderIdList,controlBoardNames,encoderControlBoardAxisList);
-    getControlBoardAxisList(joints_config,pwmSensIdList,controlBoardNames,pwmControlBoardAxisList);
-    getControlBoardAxisList(joints_config,torqueSensorIdList,controlBoardNames,torqueControlBoardAxisList);
+    getControlBoardAxisList(joints_config,sensorIdList[wbi::SENSOR_ENCODER],controlBoardNames,encoderControlBoardAxisList);
+    getControlBoardAxisList(joints_config,sensorIdList[wbi::SENSOR_PWM],controlBoardNames,pwmControlBoardAxisList);
+    getControlBoardAxisList(joints_config,sensorIdList[wbi::SENSOR_TORQUE],controlBoardNames,torqueControlBoardAxisList);
 
     encoderControlBoardList = getControlBoardList(encoderControlBoardAxisList);
     pwmControlBoardList     = getControlBoardList(pwmControlBoardAxisList);
@@ -161,29 +157,54 @@ bool yarpWholeBodySensors::init()
         return false;
     }
 
-
-    //Load imu and ft sensors information
-    std::vector<string> imu_ports, ft_ports;
-    bool ret = loadFTSensorPortsFromConfig(wbi_yarp_properties,ftSensIdList,ft_ports);
-    ret = ret && loadIMUSensorPortsFromConfig(wbi_yarp_properties,imuIdList,imu_ports);
+    //Load accelerometers information: this is tricky
+    //as depending on the accelerometer type we have to add some IMU to the system
+    std::vector< AccelerometerConfigurationInfo > acc_infos;
+    bool ret = this->loadAccelerometerInfoFromConfig(wbi_yarp_properties,sensorIdList[wbi::SENSOR_ACCELEROMETER],acc_infos);
     if( ! ret )
     {
-        std::cerr << "yarpWholeBodySensors::init() error: failing in loading configuration of IMU and FT sensors." << std::endl;
+        std::cerr << "[ERR] yarpWholeBodySensors::init() error: failing in loading configuration of IMU and FT sensors." << std::endl;
         return false;
     }
 
+    for(int acc_index = 0; acc_index < (int)sensorIdList[wbi::SENSOR_ACCELEROMETER].size(); acc_index++)
+    {
+        if( acc_infos[acc_index].type == IMU_STYLE )
+        {
+            sensorIdList[SENSOR_IMU].addID(acc_infos[acc_index].type_option);
+        }
+    }
+
+    //Load imu and ft sensors information
+    std::vector<string> imu_ports, ft_ports;
+    ret = loadFTSensorPortsFromConfig(wbi_yarp_properties,sensorIdList[wbi::SENSOR_FORCE_TORQUE],ft_ports);
+    ret = ret && loadIMUSensorPortsFromConfig(wbi_yarp_properties,sensorIdList[wbi::SENSOR_IMU],imu_ports);
+    if( ! ret )
+    {
+        std::cerr << "[ERR] yarpWholeBodySensors::init() error: failing in loading configuration of IMU and FT sensors." << std::endl;
+        return false;
+    }
+
+    if( !initDone )
+    {
+        std::cerr << "[ERR] yarpWholeBodySensors::init() error: failing in opening force/torque sensors." << std::endl;
+        return false;
+    }
+
+
     //Resize all the data structure that depend on the number of fts
-    int nrOfFtSensors = ftSensIdList.size();
+    int nrOfFtSensors = sensorIdList[wbi::SENSOR_FORCE_TORQUE].size();
     ftSensLastRead.resize(nrOfFtSensors);
     ftStampSensLastRead.resize(nrOfFtSensors);
     portsFTsens.resize(nrOfFtSensors);
 
-    int nrOfImuSensors = imuIdList.size();
+    int nrOfImuSensors = sensorIdList[wbi::SENSOR_IMU].size();
     imuLastRead.resize(nrOfImuSensors);
     imuStampLastRead.resize(nrOfImuSensors);
     portsIMU.resize(nrOfImuSensors);
 
-    for(int ft_numeric_id = 0; ft_numeric_id < (int)ftSensIdList.size(); ft_numeric_id++)
+
+    for(int ft_numeric_id = 0; ft_numeric_id < (int)sensorIdList[wbi::SENSOR_FORCE_TORQUE].size(); ft_numeric_id++)
     {
             initDone = initDone && openFTsens(ft_numeric_id,ft_ports[ft_numeric_id]);
     }
@@ -194,7 +215,7 @@ bool yarpWholeBodySensors::init()
         return false;
     }
 
-    for(int imu_numeric_id = 0; imu_numeric_id < (int)imuIdList.size(); imu_numeric_id++)
+    for(int imu_numeric_id = 0; imu_numeric_id < (int)sensorIdList[wbi::SENSOR_IMU].size(); imu_numeric_id++)
     {
             initDone = initDone && openImu(imu_numeric_id,imu_ports[imu_numeric_id]);
     }
@@ -202,6 +223,22 @@ bool yarpWholeBodySensors::init()
     if( !initDone )
     {
         std::cerr << "[ERR] yarpWholeBodySensors::init() error: failing in opening imu sensors." << std::endl;
+        return false;
+    }
+
+    int nrOfAccSensors = sensorIdList[wbi::SENSOR_ACCELEROMETER].size();
+    accLastRead.resize(nrOfAccSensors);
+    accStampLastRead.resize(nrOfAccSensors);
+    accelerometersReferenceIndeces.resize(nrOfAccSensors);
+
+    for(int acc_index = 0; acc_index < (int)sensorIdList[wbi::SENSOR_ACCELEROMETER].size(); acc_index++)
+    {
+            initDone = initDone && openAccelerometer(acc_index,acc_infos[acc_index]);
+    }
+
+    if( !initDone )
+    {
+        std::cerr << "[ERR] yarpWholeBodySensors::init() error: failing in opening accelerometers." << std::endl;
         return false;
     }
 
@@ -270,16 +307,14 @@ bool yarpWholeBodySensors::addSensor(const SensorType st, const ID &sid)
         return false;
     }
 
-    switch(st)
+    if( st >= 0 && st < wbi::SENSOR_TYPE_SIZE )
     {
-    case SENSOR_ENCODER:        return addEncoder(sid);
-    case SENSOR_PWM:            return addPwm(sid);
-    case SENSOR_IMU:            return addIMU(sid);
-    case SENSOR_FORCE_TORQUE:   return addFTsensor(sid);
-    case SENSOR_TORQUE:         return addTorqueSensor(sid);
-    default: break;
+        return sensorIdList[st].addID(sid);
     }
-    return false;
+    else
+    {
+        return false;
+    }
 }
 
 int yarpWholeBodySensors::addSensors(const SensorType st, const IDList &sids)
@@ -289,16 +324,14 @@ int yarpWholeBodySensors::addSensors(const SensorType st, const IDList &sids)
         return 0;
     }
 
-    switch(st)
+    if( st >= 0 && st < wbi::SENSOR_TYPE_SIZE )
     {
-    case SENSOR_ENCODER:        return addEncoders(sids);
-    case SENSOR_PWM:            return addPwms(sids);
-    case SENSOR_IMU:            return addIMUs(sids);
-    case SENSOR_FORCE_TORQUE:   return addFTsensors(sids);
-    case SENSOR_TORQUE:         return addTorqueSensors(sids);
-    default: break;
+        return sensorIdList[st].addIDList(sids);
     }
-    return false;
+    else
+    {
+        return 0;
+    }
 }
 
 bool yarpWholeBodySensors::removeSensor(const SensorType st, const ID &sid)
@@ -308,30 +341,26 @@ bool yarpWholeBodySensors::removeSensor(const SensorType st, const ID &sid)
 
 const IDList& yarpWholeBodySensors::getSensorList(const SensorType st)
 {
-    switch(st)
+    if( st >= 0 && st < wbi::SENSOR_TYPE_SIZE )
     {
-    case SENSOR_ENCODER:        return encoderIdList;
-    case SENSOR_PWM:            return pwmSensIdList;
-    case SENSOR_IMU:            return imuIdList;
-    case SENSOR_FORCE_TORQUE:   return ftSensIdList;
-    case SENSOR_TORQUE:         return torqueSensorIdList;
-    default:break;
+        return sensorIdList[st];
     }
-    return emptyList;
+    else
+    {
+        return emptyList;
+    }
 }
 
 int yarpWholeBodySensors::getSensorNumber(const SensorType st)
 {
-    switch(st)
+    if( st >= 0 && st < wbi::SENSOR_TYPE_SIZE )
     {
-    case SENSOR_ENCODER:        return encoderIdList.size();
-    case SENSOR_PWM:            return pwmSensIdList.size();
-    case SENSOR_IMU:            return imuIdList.size();
-    case SENSOR_FORCE_TORQUE:   return ftSensIdList.size();
-    case SENSOR_TORQUE:         return torqueSensorIdList.size();
-    default: break;
+        return sensorIdList[st].size();
     }
-    return 0;
+    else
+    {
+        return 0;
+    }
 }
 
 bool yarpWholeBodySensors::readSensor(const SensorType st, const int sid, double *data, double *stamps, bool blocking)
@@ -343,6 +372,7 @@ bool yarpWholeBodySensors::readSensor(const SensorType st, const int sid, double
     case SENSOR_IMU:            return readIMU(sid, data, stamps, blocking);
     case SENSOR_FORCE_TORQUE:   return readFTsensor(sid, data, stamps, blocking);
     case SENSOR_TORQUE:         return readTorqueSensor(sid, data, stamps, blocking);
+    case SENSOR_ACCELEROMETER:  return readAccelerometer(sid, data, stamps, blocking);
     default: break;
     }
     return false;
@@ -357,6 +387,7 @@ bool yarpWholeBodySensors::readSensors(const SensorType st, double *data, double
     case SENSOR_IMU:            return readIMUs(data, stamps, blocking);
     case SENSOR_FORCE_TORQUE:   return readFTsensors(data, stamps, blocking);
     case SENSOR_TORQUE:         return readTorqueSensors(data, stamps, blocking);
+    case SENSOR_ACCELEROMETER:  return readAccelerometers(data, stamps, blocking);
     default: break;
     }
     return false;
@@ -418,9 +449,75 @@ bool yarpWholeBodySensors::openPwm(const int bp)
     return true;
 }
 
+bool yarpWholeBodySensors::loadAccelerometerInfoFromConfig(const Searchable& opts, const IDList& list, vector< AccelerometerConfigurationInfo >& infos)
+{
+    std::string accelerometers_info_group_name = "WBI_YARP_ACCELEROMETERS";
+    yarp::os::Bottle info_lists = wbi_yarp_properties.findGroup(accelerometers_info_group_name);
+    if( info_lists.isNull() || info_lists.size() == 0 ) {
+        if( infos.size() == 0 )
+        {
+            infos.resize(0);
+            return true;
+        }
+        else
+        {
+            std::cout << "yarpWbi::loadAccelerometerInfoFromConfig error: group "
+                      << accelerometers_info_group_name << " not found in yarpWholeBodyInterface configuration file."  << std::endl;
+            return false;
+        }
+    }
+
+    infos.resize(list.size());
+
+    for(int acc_index = 0; acc_index < (int)list.size(); acc_index++ )
+    {
+        wbi::ID acc_ID;
+        list.indexToID(acc_index,acc_ID);
+        yarp::os::Bottle * port = info_lists.find(acc_ID.toString()).asList();
+        if( port == NULL
+            || port->size() != 2
+            || !(port->get(0).isString())
+            || !(port->get(1).isString()) )
+        {
+            std::cout << "yarpWbi::loadAccelerometerInfoFromConfig error: " << info_lists.toString() << " has a malformed element" << std::endl;
+            return false;
+        }
+        std::string accelerometer_type = port->get(1).asList()->get(0).asString();
+        std::string accelerometer_type_option = port->get(1).asList()->get(1).asString();
+        if( accelerometer_type == "imu" )
+        {
+            infos[acc_index].type = IMU_STYLE;
+            infos[acc_index].type_option = accelerometer_type_option;
+        }
+        else
+        {
+            std::cout << "yarpWbi::loadAccelerometerInfoFromConfig error: "
+                       << "accelerometer type " << accelerometer_type << "not recognized" << std::endl;
+            return false;
+        }
+    }
+    return true;
+}
+
+bool yarpWholeBodySensors::openAccelerometer(const int acc_index, const AccelerometerConfigurationInfo & info)
+{
+    bool ret = true;
+    switch( info.type )
+    {
+        case IMU_STYLE:
+            int reference_imu_sensor_index;
+            ret = sensorIdList[SENSOR_IMU].idToIndex(info.type_option,reference_imu_sensor_index);
+            accelerometersReferenceIndeces[acc_index].type = info.type;
+            accelerometersReferenceIndeces[acc_index].type_reference_index = reference_imu_sensor_index;
+        default:
+            ret = false;
+    }
+    return ret;
+}
+
 bool yarpWholeBodySensors::openImu(const int numeric_id, const std::string & port_name)
 {
-    if( numeric_id < 0 || numeric_id >= (int)imuIdList.size() )
+    if( numeric_id < 0 || numeric_id >= (int)sensorIdList[SENSOR_IMU].size() )
     {
         return false;
     }
@@ -428,7 +525,7 @@ bool yarpWholeBodySensors::openImu(const int numeric_id, const std::string & por
     string remotePort = "/" + robot + port_name;
     stringstream localPort;
     wbi::ID wbi_id;
-    imuIdList.indexToID(numeric_id,wbi_id);
+    sensorIdList[SENSOR_IMU].indexToID(numeric_id,wbi_id);
     localPort << "/" << name << "/imu/" <<  wbi_id.toString() << ":i";
     portsIMU[numeric_id] = new BufferedPort<Vector>();
     if(!portsIMU[numeric_id]->open(localPort.str().c_str())) { // open local input port
@@ -456,7 +553,7 @@ bool yarpWholeBodySensors::openFTsens(const int ft_sens_numeric_id, const std::s
     string remotePort = "/" + robot + port_name;
     stringstream localPort;
     wbi::ID wbi_id;
-    ftSensIdList.indexToID(ft_sens_numeric_id,wbi_id);
+    sensorIdList[SENSOR_FORCE_TORQUE].indexToID(ft_sens_numeric_id,wbi_id);
     localPort << "/" << name << "/ftSens/" << wbi_id.toString() << ":i";
     portsFTsens[ft_sens_numeric_id] = new BufferedPort<Vector>();
     if(!portsFTsens[ft_sens_numeric_id]->open(localPort.str().c_str())) {
@@ -505,116 +602,6 @@ bool yarpWholeBodySensors::openTorqueSensor(const int bp)
     return true;
 }
 
-/********************************************** ADD *******************************************************/
-
-bool yarpWholeBodySensors::addEncoder(const ID &j)
-{
-    // if initialization was done, no sensors can be added
-    if(initDone)
-    {
-        return false;
-    }
-
-    // if initialization was not done, drivers will be opened during initialization
-    return encoderIdList.addID(j);
-}
-
-int yarpWholeBodySensors::addEncoders(const IDList &jList)
-{
-    if(initDone)
-    {
-        return false;
-    }
-
-    // if initialization was not done, drivers will be opened during initialization
-    return encoderIdList.addIDList(jList);
-}
-
-bool yarpWholeBodySensors::addPwm(const ID &j)
-{
-    if(initDone)
-    {
-        return false;
-    }
-
-    return pwmSensIdList.addID(j);
-}
-
-int yarpWholeBodySensors::addPwms(const IDList &jList)
-{
-    if( initDone )
-    {
-        return false;
-    }
-
-    return pwmSensIdList.addIDList(jList);
-}
-
-bool yarpWholeBodySensors::addIMU(const wbi::ID &i)
-{
-    // if initialization was not done, ports will be opened during initialization
-    if(initDone)
-    {
-            return false;
-    }
-
-    return imuIdList.addID(i);
-}
-
-int yarpWholeBodySensors::addIMUs(const wbi::IDList &jList)
-{
-    // if initialization was done, then open port of specified IMU
-    // if initialization was not done, ports will be opened during initialization
-    if(initDone)
-    {
-        return 0;
-    }
-
-    return imuIdList.addIDList(jList);
-}
-
-bool yarpWholeBodySensors::addFTsensor(const wbi::ID &i)
-{
-    // if initialization was done, then open port of specified F/T sensor
-    // if initialization was not done, ports will be opened during initialization
-    if(initDone)
-    {
-        return false;
-    }
-
-    return ftSensIdList.addID(i);
-}
-
-int yarpWholeBodySensors::addFTsensors(const wbi::IDList &jList)
-{
-    if(initDone)
-    {
-        return 0;
-    }
-
-    return ftSensIdList.addIDList(jList);
-}
-
-bool yarpWholeBodySensors::addTorqueSensor(const wbi::ID &i)
-{
-    if(initDone)
-    {
-        return false;
-    }
-
-    return torqueSensorIdList.addID(i);
-}
-
-int yarpWholeBodySensors::addTorqueSensors(const wbi::IDList &jList)
-{
-    if(initDone)
-    {
-        return 0;
-    }
-
-    return torqueSensorIdList.addIDList(jList);
-}
-
 /**************************** READ ************************/
 
 bool yarpWholeBodySensors::readEncoders(double *q, double *stamps, bool wait)
@@ -652,7 +639,7 @@ bool yarpWholeBodySensors::readEncoders(double *q, double *stamps, bool wait)
     }
 
      //Copy readed data in the output vector
-    for(int encNumericId = 0; encNumericId < (int)encoderIdList.size(); encNumericId++)
+    for(int encNumericId = 0; encNumericId < (int)sensorIdList[SENSOR_ENCODER].size(); encNumericId++)
     {
         int encControlBoard = encoderControlBoardAxisList[encNumericId].first;
         int encAxis = encoderControlBoardAxisList[encNumericId].second;
@@ -698,7 +685,7 @@ bool yarpWholeBodySensors::readPwms(double *pwm, double *stamps, bool wait)
     }
 
     //Copy readed data in the output vector
-    for(int pwmNumericId = 0; pwmNumericId < (int)pwmSensIdList.size(); pwmNumericId++)
+    for(int pwmNumericId = 0; pwmNumericId < (int)sensorIdList[SENSOR_PWM].size(); pwmNumericId++)
     {
         int pwmControlBoard = pwmControlBoardAxisList[pwmNumericId].first;
         int pwmAxes = pwmControlBoardAxisList[pwmNumericId].second;
@@ -708,12 +695,22 @@ bool yarpWholeBodySensors::readPwms(double *pwm, double *stamps, bool wait)
     return res || wait;
 }
 
+bool yarpWholeBodySensors::readAccelerometers(double *accs, double *stamps, bool wait)
+{
+    bool ret = true;
+    for(int i=0; i < (int)sensorIdList[SENSOR_ACCELEROMETER].size(); i++)
+    {
+        ret = ret && this->readAccelerometer(i,accs+(sensorTypeDescriptions[SENSOR_ACCELEROMETER].dataSize)*i,stamps+i,wait);
+    }
+    return ret;
+}
+
 bool yarpWholeBodySensors::readIMUs(double *inertial, double *stamps, bool wait)
 {
     assert(false);
     return false;
     Vector *v;
-    for(int i=0; i < (int)imuIdList.size(); i++)
+    for(int i=0; i < (int)sensorIdList[SENSOR_IMU].size(); i++)
     {
         v = portsIMU[i]->read(wait);
         if(v!=0)
@@ -734,7 +731,7 @@ bool yarpWholeBodySensors::readIMUs(double *inertial, double *stamps, bool wait)
 bool yarpWholeBodySensors::readFTsensors(double *ftSens, double *stamps, bool wait)
 {
     Vector *v;
-    for(int i=0; i < (int)ftSensIdList.size(); i++)
+    for(int i=0; i < (int)sensorIdList[SENSOR_FORCE_TORQUE].size(); i++)
     {
         v = portsFTsens[i]->read(wait);
         if(v!=0)
@@ -770,7 +767,7 @@ bool yarpWholeBodySensors::readTorqueSensors(double *jointSens, double *stamps, 
     }
 
     //Copy readed data in the output vector
-    for(int torqueNumericId = 0; torqueNumericId < (int)torqueSensorIdList.size(); torqueNumericId++)
+    for(int torqueNumericId = 0; torqueNumericId < (int)sensorIdList[SENSOR_TORQUE].size(); torqueNumericId++)
     {
         int torqueControlBoard = torqueControlBoardAxisList[torqueNumericId].first;
         int torqueAxis = torqueControlBoardAxisList[torqueNumericId].second;
@@ -780,7 +777,7 @@ bool yarpWholeBodySensors::readTorqueSensors(double *jointSens, double *stamps, 
     if(stamps != 0)
     {
         double now = yarp::os::Time::now();
-        for(int torqueNumericId = 0; torqueNumericId < (int)torqueSensorIdList.size(); torqueNumericId++)
+        for(int torqueNumericId = 0; torqueNumericId < (int)sensorIdList[SENSOR_TORQUE].size(); torqueNumericId++)
         {
             stamps[torqueNumericId] = now;
         }
@@ -856,10 +853,33 @@ bool yarpWholeBodySensors::convertIMU(double * wbi_imu_readings, const double * 
     return true;
 }
 
+bool yarpWholeBodySensors::readAccelerometer(const int accelerometer_index, double *acc, double *stamps, bool wait)
+{
+    bool ret = true;
+    if( accelerometersReferenceIndeces[accelerometer_index].type == IMU_STYLE )
+    {
+        int accelerometer_imu_index = accelerometersReferenceIndeces[accelerometer_index].type_reference_index;
+        if( stamps != 0 )
+        {
+            *stamps = imuStampLastRead[accelerometer_imu_index];
+        }
+
+        acc[0] = imuLastRead[accelerometer_imu_index][4];
+        acc[1] = imuLastRead[accelerometer_imu_index][5];
+        acc[2] = imuLastRead[accelerometer_imu_index][6];
+        ret = true;
+    }
+    else
+    {
+        ret = false;
+    }
+    return ret;
+}
+
 bool yarpWholeBodySensors::readIMU(const int imu_sensor_numeric_id, double *inertial, double *stamps, bool wait)
 {
     #ifndef NDEBUG
-    if( imu_sensor_numeric_id < 0 || imu_sensor_numeric_id >= (int)imuIdList.size() ) {
+    if( imu_sensor_numeric_id < 0 || imu_sensor_numeric_id >= (int)sensorIdList[SENSOR_IMU].size() ) {
         std::cerr << "yarpWholeBodySensors::readIMU(..) error: no port found for imu with numeric id " << imu_sensor_numeric_id<< std::endl;
         return false;
     }
@@ -883,7 +903,7 @@ bool yarpWholeBodySensors::readIMU(const int imu_sensor_numeric_id, double *iner
 bool yarpWholeBodySensors::readFTsensor(const int ft_sensor_numeric_id, double *ftSens, double *stamps, bool wait)
 {
     #ifndef NDEBUG
-    if( ft_sensor_numeric_id < 0 && ft_sensor_numeric_id >= (int)ftSensIdList.size() ) {
+    if( ft_sensor_numeric_id < 0 && ft_sensor_numeric_id >= (int)sensorIdList[SENSOR_FORCE_TORQUE].size() ) {
         std::cerr << "yarpWholeBodySensors::readFTsensor(..) error: no port found for ft sensor " << ft_sensor_numeric_id  << std::endl;
         return false;
     }

@@ -212,7 +212,7 @@ bool loadJointsControlBoardFromConfig(yarp::os::Property & wbi_yarp_properties,
 }
 
 bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
-                               wbi::IDList & sensorIdList,
+                               const wbi::IDList & sensorIdList,
                                std::vector<std::string> & ports,
                                const std::string group_name)
 {
@@ -222,23 +222,24 @@ bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
         return true;
     }
 
-    sensorIdList = wbi::IDList();
-    ports.resize(0);
+    ports.resize(sensorIdList.size());
 
-    ports.resize(ports_list.size()-1);
-    for(int port_id = 0; port_id < ports_list.size()-1; port_id++ ) {
-        yarp::os::Bottle * port = ports_list.get(port_id+1).asList();
-        if( port == NULL || port->size() != 2 ) {
+
+    for(int sensor_index = 0; sensor_index < (int)sensorIdList.size(); sensor_index++ ) {
+        wbi::ID sensorID;
+        sensorIdList.indexToID(sensor_index,sensorID);
+        yarp::os::Value & port = ports_list.find(sensorID.toString());
+        if( !(port.isNull()) || !(port.isString()) ) {
             std::cout << "yarpWbi::loadSensorPortsFromConfig error: " << ports_list.toString() << " has a malformed element" << std::endl;
             return false;
         }
-        std::string sensorId = port->get(0).asString().c_str();
-        sensorIdList.addID(wbi::ID(sensorId));
-        std::string port_name = port->get(1).asString().c_str();
-        ports[port_id] = port_name;
+        std::string port_name = port.asString().c_str();
+        ports[sensor_index] = port_name;
     }
     return true;
 }
+
+
 
 bool loadFTSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
                                  wbi::IDList & sensorIdList,
@@ -386,9 +387,10 @@ bool loadIdListsFromConfigRecursiveHelper(std::string & requested_list,
 
 bool loadIdListFromConfig(std::string requested_list,
                           yarp::os::Property & wbi_yarp_properties,
-                          wbi::IDList & requestedIdList)
+                          wbi::IDList & requestedIdList,
+                          std::string list_group)
 {
-    yarp::os::Bottle & list_bot = wbi_yarp_properties.findGroup("WBI_ID_LISTS");
+    yarp::os::Bottle & list_bot = wbi_yarp_properties.findGroup(list_group);
     yarp::os::Value & requested_list_val = list_bot.find(requested_list.c_str());
     yarp::os::Bottle * requested_list_bot = requested_list_val.asList();
 

@@ -39,6 +39,27 @@ namespace wbi {
 
 namespace yarpWbi
 {
+    enum AccelerometerType { IMU_STYLE };
+
+    /**
+     * Struct for holding information about loaded accelerometers
+     */
+    struct AccelerometerConfigurationInfo
+    {
+        AccelerometerType type;
+        std::string type_option;
+    };
+
+    /**
+     * Struct for holding information about loaded accelerometers
+     */
+    struct AccelerometerRuntimeInfo
+    {
+        AccelerometerType type;
+        int type_reference_index;
+    };
+
+
 
     /**
      * Class for reading the sensors of a yarp robot.
@@ -61,24 +82,24 @@ namespace yarpWbi
         ///< empty list of IDs to return in case of error
         wbi::IDList            emptyList;
 
-        ///< list of encoder IDs
-        wbi::IDList            encoderIdList;
+        ///< list of sensor IDs, indexed by wbi::SensorType enum
+        std::vector<wbi::IDList>            sensorIdList;
         ///< list of controlboard numeric IDs (i.e. indeces of controlBoardNames vector) for which encoder are added
         std::vector<int>          encoderControlBoardList;
         ///< map from encoder numeric IDs (i.e. indeces of encoderIdList vector) to a pair of int that are: (controlboard id,axis)
         std::vector< std::pair<int,int> >  encoderControlBoardAxisList;
 
-        wbi::IDList            pwmSensIdList;  // list of the motor PWM sensor ids
+        //wbi::IDList            pwmSensIdList;  // list of the motor PWM sensor ids
         std::vector<int>          pwmControlBoardList;
         std::vector< std::pair<int,int> > pwmControlBoardAxisList;
 
-        wbi::IDList            torqueSensorIdList; //list of the torque sensor ids
+        //wbi::IDList            torqueSensorIdList; //list of the torque sensor ids
         std::vector<int>          torqueControlBoardList;
         std::vector< std::pair<int,int> > torqueControlBoardAxisList;
 
         //List of sensors that have their own device
-        wbi::IDList            imuIdList;      // list of the IMU ids
-        wbi::IDList            ftSensIdList;   // list of the force/torque sensor ids
+        //wbi::IDList            imuIdList;      // list of the IMU ids
+        //wbi::IDList            ftSensIdList;   // list of the force/torque sensor ids
 
         // LAST READING DATA (map controlboard numeric IDs (i.e. indeces of controlBoardNames vector) to data)
         std::vector<yarp::sig::Vector>            qLastRead;
@@ -88,9 +109,11 @@ namespace yarpWbi
 
         // the "key" of these vectors is the wbi numeric id
         std::vector<yarp::sig::Vector>  imuLastRead;
-        std::vector<yarp::sig::Vector>  ftSensLastRead;
         std::vector<double>  imuStampLastRead;
+        std::vector<yarp::sig::Vector>  ftSensLastRead;
         std::vector<double>  ftStampSensLastRead;
+        std::vector<yarp::sig::Vector> accLastRead;
+        std::vector<double>  accStampLastRead;
 
         // yarp interfaces (the "key" of these vector is wbi numeric controlboard id
         std::vector<yarp::dev::IEncodersTimed*>       ienc;   // interface to read encoders
@@ -103,44 +126,43 @@ namespace yarpWbi
         std::vector< yarp::os::BufferedPort<yarp::sig::Vector>*>   portsIMU;
         std::vector< yarp::os::BufferedPort<yarp::sig::Vector>*>   portsTorqueSensor;
 
+        // reference to other sensor (for accelerometers we always get their information
+        //  from another sensor, such as the IMU)
+        std::vector< AccelerometerRuntimeInfo > accelerometersReferenceIndeces;
+
+
+
         //ControlBoard oriented sensors
         bool openPwm(const int controlBoard);
         bool openEncoder(const int controlBoard);
         bool openTorqueSensor(const int controlBoard);
 
+        //
+        bool loadAccelerometerInfoFromConfig(const yarp::os::Searchable & opts,
+                                        const wbi::IDList & list,
+                                        std::vector<AccelerometerConfigurationInfo> & infos);
+
         //Indipendent sensors
         bool openImu(const int id, const std::string & port_name);
         bool openFTsens(const int id, const std::string & port_name);
+        bool openAccelerometer(const int id, const AccelerometerConfigurationInfo & info);
 
         bool convertIMU(double * wbi_inertial_readings, const double * yarp_inertial_readings);
 
-        // *** ENCODERS
-        virtual bool addEncoder(const wbi::ID &j);
-        virtual int addEncoders(const wbi::IDList &j);
-        // *** PWMs
-        virtual bool addPwm(const wbi::ID &j);
-        virtual int addPwms(const wbi::IDList &j);
-        // *** IMUs
-        virtual bool addIMU(const wbi::ID &i);
-        virtual int addIMUs(const wbi::IDList &i);
-        // *** FORCE/TORQUE SENSORS
-        virtual bool addFTsensor(const wbi::ID &i);
-        virtual int addFTsensors(const wbi::IDList &i);
-        // *** TORQUE SENSORS *** //
-        virtual bool addTorqueSensor(const wbi::ID &i);
-        virtual int addTorqueSensors(const wbi::IDList &i);
 
         virtual bool readEncoder(const int id, double *q, double *stamps=0, bool wait=true);
         virtual bool readPwm(const int id, double *pwm, double *stamps=0, bool wait=true);
         virtual bool readIMU(const int id, double *inertial, double *stamps=0, bool wait=true);
         virtual bool readFTsensor(const int id, double *ftSens, double *stamps=0, bool wait=true);
         virtual bool readTorqueSensor(const int id, double *jointTorque, double *stamps=0, bool wait=true);
+        virtual bool readAccelerometer(const int id, double *acc, double *stamps=0, bool wait=true);
 
         virtual bool readEncoders(double *q, double *stamps=0, bool wait=true);
         virtual bool readPwms(double *pwm, double *stamps=0, bool wait=true);
         virtual bool readIMUs(double *inertial, double *stamps=0, bool wait=true);
         virtual bool readFTsensors(double *ftSens, double *stamps=0, bool wait=true);
         virtual bool readTorqueSensors(double *jointTorques, double *stamps=0, bool wait=true);
+        virtual bool readAccelerometers(double *accs, double *stamps=0, bool wait=true);
 
     public:
         /**
