@@ -386,7 +386,7 @@ bool loadIdListsFromConfigRecursiveHelper(std::string & requested_list,
 }
 
 bool loadIdListFromConfig(std::string requested_list,
-                          yarp::os::Property & wbi_yarp_properties,
+                          const yarp::os::Searchable & wbi_yarp_properties,
                           wbi::IDList & requestedIdList,
                           std::string list_group)
 {

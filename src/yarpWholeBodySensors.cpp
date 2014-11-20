@@ -37,6 +37,7 @@ using namespace iCub::ctrl;
 
 #define MAX_NJ 20 ///< Maximum number of joints for body part (used for buffers to avoid dynamic memory allocation)
 #define WAIT_TIME 0.001
+#define BLOCKING_SENSOR_TIMEOUT 0.1
 #define INITIAL_TIMESTAMP -1000.0
 
 // *********************************************************************************************************************
@@ -618,10 +619,18 @@ bool yarpWholeBodySensors::readEncoders(double *q, double *stamps, bool wait)
         // std::cout << "|||||||||| getEncodersTimed " << std::endl;
         qTemp[0] = -10.0;
         qTemp[1] = -10.0;
+        double waiting_time = 0;
         while( !(update=ienc[*ctrlBoard]->getEncodersTimed(qTemp, tTemp)) && wait)
         {
             //std::cout << "waitign " << qTemp[0] << " " << qTemp[1] << std::endl;
             Time::delay(WAIT_TIME);
+            waiting_time += WAIT_TIME;
+
+            if( waiting_time > BLOCKING_SENSOR_TIMEOUT )
+            {
+                yError("yarpWholeBodySensors::readEncoders failed for timeout");
+                return false;
+            }
         }
 
         // if reading has succeeded, update last read data
@@ -669,8 +678,19 @@ bool yarpWholeBodySensors::readPwms(double *pwm, double *stamps, bool wait)
         ctrlBoard != pwmControlBoardList.end(); ctrlBoard++ )
     {
         // read data
+        double waiting_time = 0;
         while( !(update=iopl[*ctrlBoard]->getOutputs(pwmTemp)) && wait)
+        {
             Time::delay(WAIT_TIME);
+
+            waiting_time += WAIT_TIME;
+
+            if( waiting_time > BLOCKING_SENSOR_TIMEOUT )
+            {
+                yError("yarpWholeBodySensors::readEncoders failed for timeout");
+                return false;
+            }
+        }
 
         // if reading has succeeded, update last read data
         if(update)
@@ -760,8 +780,19 @@ bool yarpWholeBodySensors::readTorqueSensors(double *jointSens, double *stamps, 
         ctrlBoard != torqueControlBoardList.end(); ctrlBoard++ )
     {
         // read data
+        double waiting_time = 0;
         while( !(update=itrq[*ctrlBoard]->getTorques(torqueSensorsLastRead[*ctrlBoard].data())) && wait)
+        {
             Time::delay(WAIT_TIME);
+
+            waiting_time += WAIT_TIME;
+
+            if( waiting_time > BLOCKING_SENSOR_TIMEOUT )
+            {
+                yError("yarpWholeBodySensors::readTorqueSensors failed for timeout");
+                return false;
+            }
+        }
 
         res = res && update;
     }
@@ -795,8 +826,19 @@ bool yarpWholeBodySensors::readEncoder(const int encoder_numeric_id, double *q, 
     double qTemp[MAX_NJ], tTemp[MAX_NJ];
 
     // read encoders
+    double waiting_time = 0;
     while( !(update=ienc[encoderCtrlBoard]->getEncodersTimed(qTemp,tTemp)) && wait)
+    {
         Time::delay(WAIT_TIME);
+
+        waiting_time += WAIT_TIME;
+
+        if( waiting_time > BLOCKING_SENSOR_TIMEOUT )
+        {
+            yError("yarpWholeBodySensors::readEncoder failed for timeout");
+            return false;
+        }
+    }
 
     if( update )
     {
@@ -828,8 +870,19 @@ bool yarpWholeBodySensors::readPwm(const int pwm_numeric_id, double *pwm, double
     int pwmCtrlBoardAxis = pwmControlBoardAxisList[pwm_numeric_id].second;
 
     // read pwm sensors
+    double waiting_time = 0.0;
     while( !(update=iopl[pwmCtrlBoard]->getOutputs(pwmLastRead[pwmCtrlBoard].data())) && wait)
+    {
         Time::delay(WAIT_TIME);
+
+        waiting_time += WAIT_TIME;
+
+        if( waiting_time > BLOCKING_SENSOR_TIMEOUT )
+        {
+            yError("yarpWholeBodySensors::readPwm failed for timeout");
+            return false;
+        }
+    }
 
     // copy most recent data into output variables
     pwm[0] = pwmLastRead[pwmCtrlBoard][pwmCtrlBoardAxis];
@@ -935,8 +988,19 @@ bool yarpWholeBodySensors::readTorqueSensor(const int numeric_torque_id, double 
     assert(itrq[torqueCtrlBoard]!=0);
 
     // read joint torque
+    double waiting_time = 0.0;
     while(!(update = itrq[torqueCtrlBoard]->getTorque(torqueCtrlBoardAxis, &torqueTemp)) && wait)
+    {
         Time::delay(WAIT_TIME);
+
+        waiting_time += WAIT_TIME;
+
+        if( waiting_time > BLOCKING_SENSOR_TIMEOUT )
+        {
+            yError("yarpWholeBodySensors::readTorqueSensor failed for timeout");
+            return false;
+        }
+    }
 
     // if read succeeded => update data
     if(update)

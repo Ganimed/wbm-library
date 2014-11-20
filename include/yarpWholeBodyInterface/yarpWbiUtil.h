@@ -94,22 +94,27 @@ namespace yarpWbi
                                       std::vector<std::string> & ports);
 
     /**
-     * Get the requested joint id list from a yarp os Property
+     * Get the requested joint id list from a yarp::os::Searchable
      *
-     * The Property object should contain a WBI_ID_LISTS group
+     * The Searchable should contain a group
      * under which the list are defined as Yarp lists.
      *
      * It is also possible to define a list as a sequence of lists,
      *  as long as the list are defined in the same property.
      *
+     * @param requested_list name of the requested list
+     * @param wbi_yarp_properties Searchable that contains the list group
+     * @param requestedIdList reference of an IDList object in which to load the list
+     * @param list_group name of the group in which to find the lists (default: WBI_ID_LISTS)
+     * @return true if the list was loaded correctly, false otherwise
      */
     bool loadIdListFromConfig(std::string requested_list,
-                              yarp::os::Property & wbi_yarp_properties,
+                              const yarp::os::Searchable & wbi_yarp_properties,
                               wbi::IDList & requestedIdList,
                               std::string list_group = "WBI_ID_LISTS");
 
 
 
-} // end namespace wbiIcub
+} // end namespace yarpWbi
 
 #endif
