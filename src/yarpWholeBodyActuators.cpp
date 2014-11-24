@@ -343,109 +343,12 @@ int yarpWholeBodyActuators::addActuators(const IDList &jList)
     return count;
 }
 
-bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref, int joint)
+bool yarpWholeBodyActuators::setControlModeSingleJoint(ControlMode controlMode, double *ref, int joint)
 {
-    if(joint>=(int)jointIdList.size())
-    {
-        return false;
-    }
-
-    bool ok = true;
-    if(joint<0)     ///< set all joints to the specified control mode
-    {
-
-        switch(controlMode)
-        {
-            case CTRL_MODE_POS:
-                for(int j=0; j < (int)jointIdList.size(); j++ )
-                {
-                    //Set only the joints that are not in the desired control mode
-                    if(currentCtrlModes[j] != controlMode) {
-
-                        ok = ok && icmd[controlBoardAxisList[j].first]->setPositionMode(controlBoardAxisList[j].second);
-                        if( !ok )
-                        {
-                            std::cerr << "yarpWholeBodyActuators::setControlMode error: setPositionMode on axis " <<
-                                         controlBoardAxisList[j].second << " of controlBoard " << controlBoardNames[controlBoardAxisList[j].first] << std::endl;
-                        }
-                    }
-                }
-                break;
-
-            case CTRL_MODE_DIRECT_POSITION:
-                for(int j=0; j < (int)jointIdList.size(); j++ )
-                {
-                    //Set only the joints that are not in the desired control mode
-                    if(currentCtrlModes[j] != controlMode) {
-                        ok = ok && icmd[controlBoardAxisList[j].first]->setControlMode(controlBoardAxisList[j].second,VOCAB_CM_POSITION_DIRECT);
-                        if( !ok )
-                        {
-                            std::cerr << "yarpWholeBodyActuators::setControlMode error: setDirectionPositionMode on axis " <<
-                                         controlBoardAxisList[j].second << " of controlBoard " << controlBoardNames[controlBoardAxisList[j].first] << std::endl;
-                        }
-                    }
-                }
-                break;
-
-            case CTRL_MODE_VEL:
-                for(int j=0; j < (int)jointIdList.size(); j++ )
-                {
-                    if(currentCtrlModes[j] != controlMode)
-                    {
-                        ok = ok && icmd[controlBoardAxisList[j].first]->setVelocityMode(controlBoardAxisList[j].second);
-                    }
-                }
-                break;
-
-            case CTRL_MODE_TORQUE:
-                for(int j=0; j < (int)jointIdList.size(); j++ )
-                {
-                    if(currentCtrlModes[j]!=controlMode)
-                    {
-                        {
-                            ok = ok && icmd[controlBoardAxisList[j].first]->setTorqueMode(controlBoardAxisList[j].second);
-                        }
-                    }
-                }
-                break;
-
-            case CTRL_MODE_MOTOR_PWM:
-                    for(int j=0; j < (int)jointIdList.size(); j++ )
-                    {
-                        if(currentCtrlModes[j] != controlMode)
-                        {
-                            ok = ok && icmd[controlBoardAxisList[j].first]->setOpenLoopMode(controlBoardAxisList[j].second);
-                        }
-                    }
-                break;
-
-            default:
-                return false;
-        }
-
-
-        //Update internal structure
-        ok = ok && this->updateControlledJointsForEachControlBoard();
-
-
-
-        if(ok)
-        {
-            for(int j=0; j < (int)jointIdList.size(); j++ )
-            {
-                currentCtrlModes[j] = controlMode;
-                if(ref!=0)
-                    ok = ok && setControlReference(ref);
-                    if( !ok )
-                    {
-                        std::cerr << "yarpWholeBodyActuators::setControlMode error: setControlReference on jnt " << j << " failed " << std::endl;
-                    }
-           }
-        }
-        return ok;
-    }
-
-    if(currentCtrlModes[joint]!=controlMode)   ///< check that joint is not already in the specified control mode
+    bool ok;
+    ///< check that joint is not already in the specified control mode
+    // commented out for now
+    //if(currentCtrlModes[joint]!=controlMode)
     {
         int bodyPart = controlBoardAxisList[joint].first;
         int controlBoardJointAxis = controlBoardAxisList[joint].second;
@@ -472,17 +375,52 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
             default:
                 break;
         }
+
         if(ok)
         {
             currentCtrlModes[joint] = controlMode;
         }
+
+        this->updateControlledJointsForEachControlBoard();
+
+        if(ref != 0)
+        {
+            setControlReference(ref,joint);
+        }
     }
 
-    //Update internal structure
-    this->updateControlledJointsForEachControlBoard();
+    return ok;
+}
 
-    if(ok &&ref!=0)
-        ok = setControlReference(ref, joint);   ///< set specified control reference (if any)
+bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref, int joint)
+{
+    if(joint>=(int)jointIdList.size())
+    {
+        return false;
+    }
+
+    bool ok = true;
+    ///< set all joints to the specified control mode
+    if(joint<0)
+    {
+        for(int j=0; j < (int)jointIdList.size(); j++ )
+        {
+            if(ref != 0)
+            {
+                setControlModeSingleJoint(controlMode,ref+j,j);
+            }
+            else
+            {
+                setControlModeSingleJoint(controlMode,0,j);
+            }
+        }
+    }
+    else //set a single joint
+    {
+        assert(joint >=0 && joint < (int)jointIdList.size());
+        setControlModeSingleJoint(controlMode,ref,joint);
+    }
+
     return ok;
 }
 

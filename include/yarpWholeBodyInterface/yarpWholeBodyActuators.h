@@ -155,6 +155,12 @@ namespace yarpWbi
          * @return True if operation succeeded, false otherwise. */
         bool setControlOffset(const double *value, int joint = -1);
 
+        /**
+         * Private, single joint only version of setControlMode
+         */
+        bool setControlModeSingleJoint(wbi::ControlMode controlMode, double *ref, int joint);
+
+
     public:
         /**
          * Constructor.
