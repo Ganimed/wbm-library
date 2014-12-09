@@ -687,7 +687,7 @@ bool yarpWholeBodySensors::readPwms(double *pwm, double *stamps, bool wait)
 
             if( waiting_time > BLOCKING_SENSOR_TIMEOUT )
             {
-                yError("yarpWholeBodySensors::readEncoders failed for timeout");
+                yError("yarpWholeBodySensors::readPwms failed for timeout");
                 return false;
             }
         }

@@ -29,7 +29,7 @@
 #include <yarp/os/Mutex.h>
 #include <iCub/ctrl/adaptWinPolyEstimator.h>
 #include <iCub/ctrl/filters.h>
-#include <iCub/iDynTree/iCubTree.h>
+#include <iCub/iDynTree/TorqueEstimationTree.h>
 #include <iCub/skinDynLib/skinContactList.h>
 #include <map>
 
@@ -71,7 +71,7 @@ namespace yarpWbi
     {
     private:
         yarp::os::Mutex wbiMutex;
-        
+
     protected:
         yarpWholeBodyActuators  *actuatorInt;
         yarpWholeBodyModel      *modelInt;
@@ -105,7 +105,7 @@ namespace yarpWbi
         virtual bool removeJoint(const wbi::ID &j);
         virtual bool addJoint(const wbi::ID &j);
         virtual int addJoints(const wbi::IDList &j);
-        
+
         yarp::os::Mutex& getInterfaceMutex();
 
         // ACTUATORS
