@@ -88,7 +88,7 @@ robotInterface->addJoints(ICUB_MAIN_JOINTS);
 becomes (just an example, details can vary):
 ```
 IDList RobotMainJoints;
-std::string RobotMainJointsListName = "ICUB_MAIN_JOINTS";
+std::string RobotMainJointsListName = "ROBOT_MAIN_JOINTS";
 if( !loadIdListFromConfig(RobotMainJointsListName,yarpWbiOptions,RobotMainJoints) )
 {
     fprintf(stderr, "[ERR] locomotionControl: impossible to load wbiId joint list with name %s\n",RobotMainJointsListName.c_str());
@@ -100,3 +100,10 @@ robotInterface->addJoints(RobotMainJoints);
 `isICubSimulator` and `isRobotSimulator` have been dropped, being hardcoded function
 that checked just the robotname. They can be substituted by alternative wbi configuration
 files for simulator that lack some sensors, or eventually checks in the user code. 
+
+### iCub naming changes 
+Even if this is not something directly related to the yarp-wholebodyinterface, it 
+is worth mentioning that some names in the iCub models changed, for more information
+check https://github.com/robotology/icub-main/issues/57 . 
+One of the most important changes is that the two links `l_shank` and `r_shank` are now
+named `l_leg` and `r_leg`. 
