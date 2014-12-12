@@ -229,8 +229,9 @@ bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
         wbi::ID sensorID;
         sensorIdList.indexToID(sensor_index,sensorID);
         yarp::os::Value & port = ports_list.find(sensorID.toString());
-        if( !(port.isNull()) || !(port.isString()) ) {
-            std::cout << "yarpWbi::loadSensorPortsFromConfig error: " << ports_list.toString() << " has a malformed element" << std::endl;
+        if( (port.isNull()) || !(port.isString()) ) {
+            std::cout << "yarpWbi::loadSensorPortsFromConfig error: " << ports_list.toString() <<
+                         " returned an error when search for port of sensor " << sensorID.toString() << std::endl;
             return false;
         }
         std::string port_name = port.asString().c_str();

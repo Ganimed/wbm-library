@@ -252,20 +252,22 @@ bool yarpWholeBodySensors::close()
     for(int i=0; i < (int)encoderControlBoardList.size(); i++ )
     {
         int ctrlBoard = encoderControlBoardList[i];
-        assert(dd[ctrlBoard]!=NULL);
-        ok = ok && dd[ctrlBoard]->close();
-        delete dd[ctrlBoard];
-        dd[ctrlBoard] = NULL;
+        if(dd[ctrlBoard])
+        {
+            ok = ok && dd[ctrlBoard]->close();
+            delete dd[ctrlBoard];
+            dd[ctrlBoard] = 0;
+        }
     }
 
     for(int i=0; i < (int)pwmControlBoardList.size(); i++ )
     {
         int ctrlBoard = pwmControlBoardList[i];
-        if(dd[ctrlBoard]!=NULL)
+        if(dd[ctrlBoard])
         {
             ok = ok && dd[ctrlBoard]->close();
             delete dd[ctrlBoard];
-            dd[ctrlBoard] = NULL;
+            dd[ctrlBoard] = 0;
         }
     }
 
@@ -276,7 +278,7 @@ bool yarpWholeBodySensors::close()
         {
             ok = ok && dd[ctrlBoard]->close();
             delete dd[ctrlBoard];
-            dd[ctrlBoard] = NULL;
+            dd[ctrlBoard] = 0;
         }
     }
 

@@ -320,7 +320,7 @@ namespace yarpWbi
                                  yarp::os::Property & _wbi_yarp_conf);
 
 
-        inline virtual ~yarpWholeBodyStatesLocal(){ close(); }
+        ~yarpWholeBodyStatesLocal(){ close(); }
 
         virtual bool init();
         virtual bool close();

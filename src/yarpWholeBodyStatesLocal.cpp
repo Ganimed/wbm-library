@@ -63,9 +63,21 @@ yarpWholeBodyStatesLocal::yarpWholeBodyStatesLocal(const char* _name,
 bool yarpWholeBodyStatesLocal::init()
 {
     bool ok = sensors->init();              // initialize sensor interface
-    if( !ok ) { std::cerr << "yarpWholeBodyStatesLocal::init() failed: error in sensor initialization." << std::endl; return false; }
+    if( !ok )
+    {
+        std::cerr << "yarpWholeBodyStatesLocal::init() failed: error in sensor initialization." << std::endl;
+        close();
+        return false;
+    }
+
     ok = estimator->start();
-    if( !ok ) { std::cerr << "yarpWholeBodyStatesLocal::init() failed: error in estimator initialization." << std::endl; return false; }
+    if( !ok )
+    {
+        std::cerr << "yarpWholeBodyStatesLocal::init() failed: error in estimator initialization." << std::endl;
+        close();
+        return false;
+    }
+
     return ok; // start estimation thread
 }
 
@@ -76,9 +88,12 @@ bool yarpWholeBodyStatesLocal::close()
     std::cout << "[INFO]yarpWholeBodyStatesLocal::close() : closing sensor interface" << std::endl;
     bool ok = (sensors ? sensors->close() : true);
     std::cout << "[INFO]yarpWholeBodyStatesLocal::close() : closing skin_contacts_port" << std::endl;
-    skin_contacts_port->close();
-    //
-    //delete skin_contacts_port;
+    if( skin_contacts_port )
+    {
+        skin_contacts_port->close();
+        delete skin_contacts_port;
+        skin_contacts_port = 0;
+    }
     std::cout << "yarpWholeBodyStatesLocal::close() : deleting sensor interface" << std::endl;
     if(sensors) { delete sensors; sensors = 0; }
     std::cout << "yarpWholeBodyStatesLocal::close() : deleting estimator thread" << std::endl;
@@ -561,7 +576,7 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     }
 
     yarp::os::ResourceFinder rf;
-    std::string urdf_file_path = rf.findFile(urdf_file.c_str());
+    std::string urdf_file_path = rf.findFileByName(urdf_file.c_str());
 
     std::vector<std::string> dof_serialization;
     IDList torque_estimation_list = sensors->getSensorList(SENSOR_ENCODER);
@@ -583,6 +598,7 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
 
     model_mutex.wait();
     {
+        std::cerr << "[DEBUG] Create TorqueEstimationTree with " << ft_serialization.size() << " ft sensors" << std::endl;
         if( !assume_fixed_base )
         {
             robot_estimation_model = new iCub::iDynTree::TorqueEstimationTree(urdf_file_path,dof_serialization,ft_serialization);
