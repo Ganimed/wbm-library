@@ -979,9 +979,16 @@ void yarpWholeBodyDynamicsEstimator::readSkinContacts()
         model_mutex.wait();
         int link_index = robot_estimation_model->getLinkFromSkinDynLibID(body_part,local_link_index);
         model_mutex.post();
-        // \todo TODO FIXME properly address when you find an unexpcted contact id without crashing
-        YARP_ASSERT(link_index >0);
-        contacts_for_given_subtree[link2subtree[link_index]]++;
+        // \todo TODO FIXME properly address when you find an unexpcted contact id without crashing 
+        if( link_index < 0 )
+        {
+            fprintf(stdout,"yarpWholeBodyStatesLocal: unexpected contact from bodyPart %d link with local id %d",body_part,local_link_index);
+            yError("yarpWholeBodyStatesLocal: unexpected contact from bodyPart %d link with local id %d",body_part,local_link_index);
+        }
+        else 
+        {
+            contacts_for_given_subtree[link2subtree[link_index]]++;
+        }
     }
 
     for(int subtree=0; subtree < (int)torque_estimation_subtrees.size(); subtree++ )
