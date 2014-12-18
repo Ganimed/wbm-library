@@ -28,7 +28,7 @@ option(ENABLE_TESTS "Enable unit testing using Gazebo simulator" FALSE)
 add_definitions(-DIDYNTREE_USES_ICUB)
 
 
-find_package(YARP REQUIRED)
+find_package(YARP 2.3.63.2 REQUIRED)
 find_package(ICUB REQUIRED)
 find_package(iDynTree REQUIRED)
 find_package(wholeBodyInterface 0.2.0 REQUIRED)
@@ -47,14 +47,6 @@ SET(folder_header include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
                   include/yarpWholeBodyInterface/yarpWholeBodyActuators.h
                   include/yarpWholeBodyInterface/yarpWholeBodySensors.h
                   include/yarpWholeBodyInterface/yarpWbiUtil.h)
-
-#take in account the new pwm interface
-if(YARP_VERSION VERSION_LESS 2.3.62.3)
-    message(STATUS "found YARP (${YARP_VERSION}) has the old motor interface")
-else()
-    message(STATUS "found YARP (${YARP_VERSION}) has the new interaction mode motor interface interface")
-    add_definitions(-DYARP_INTERACTION_MODE_MOTOR_INTERFACE)
-endif()
 
 source_group("Source Files" FILES ${folder_source})
 source_group("Header Files" FILES ${folder_header})
