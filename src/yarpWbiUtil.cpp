@@ -266,9 +266,9 @@ bool loadIMUSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
 bool loadIdListsFromConfigRecursiveHelper(std::string & requested_list,
                                           std::vector<std::string> & lists_names_stack,
                                           std::vector<std::string> & id_list_elements,
-                                          yarp::os::Bottle & list_bots)
+                                          const yarp::os::Bottle & list_bots)
 {
-    yarp::os::Bottle * requested_list_bot = list_bots.find(requested_list).asList();
+    const yarp::os::Bottle * requested_list_bot = list_bots.find(requested_list).asList();
     //std::cout << "[INFO] Requested list bot: " << requested_list_bot->toString() << std::endl;
     if( requested_list_bot == NULL )
     {
@@ -314,9 +314,9 @@ bool loadIdListFromConfig(std::string requested_list,
                           wbi::IDList & requestedIdList,
                           std::string list_group)
 {
-    yarp::os::Bottle & list_bot = wbi_yarp_properties.findGroup(list_group);
-    yarp::os::Value & requested_list_val = list_bot.find(requested_list.c_str());
-    yarp::os::Bottle * requested_list_bot = requested_list_val.asList();
+    const yarp::os::Bottle & list_bot = wbi_yarp_properties.findGroup(list_group);
+    const yarp::os::Value & requested_list_val = list_bot.find(requested_list.c_str());
+    const yarp::os::Bottle * requested_list_bot = requested_list_val.asList();
 
     if( requested_list_val.isNull() || (requested_list_bot == NULL) )
     {
