@@ -174,5 +174,10 @@ std::string IDList::toString() const
     }
     return s.str();
 }
+    
+void IDList::removeAllIDs()
+{
+    this->storage.clear();
+}
 
 }

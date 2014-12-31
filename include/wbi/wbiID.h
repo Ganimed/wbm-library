@@ -149,6 +149,11 @@ namespace wbi
          * Provide a human readable represent of the list
          */
         std::string toString() const;
+        
+        /**
+         * Clear all IDs
+         */
+        void removeAllIDs();
     };
     
     
