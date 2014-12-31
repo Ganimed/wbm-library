@@ -212,7 +212,6 @@ bool yarpWholeBodyActuators::init()
         iinteraction.resize(0);
         dd.resize(0);
         controlBoardAxisList.resize(0);
-        jointIdList.removeAllIDs();
 
         return false;
     }
@@ -364,6 +363,8 @@ int yarpWholeBodyActuators::addActuators(const IDList &jList)
 
 bool yarpWholeBodyActuators::setControlModeSingleJoint(ControlMode controlMode, double *ref, int joint)
 {
+    if (!initDone) return false;
+    
     bool ok = false;
     ///< check that joint is not already in the specified control mode
     // commented out for now
@@ -415,6 +416,8 @@ bool yarpWholeBodyActuators::setControlModeSingleJoint(ControlMode controlMode, 
 
 bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref, int joint)
 {
+    if (!initDone) return false;
+    
     if(joint>=(int)jointIdList.size())
     {
         return false;
@@ -447,6 +450,8 @@ bool yarpWholeBodyActuators::setControlMode(ControlMode controlMode, double *ref
 
 bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
 {
+    if (!initDone) return false;
+    
     //std::cout << "~~~~~~~~~~~~ setControlReference called " << std::endl;
     if(joint> (int)jointIdList.size())
         return false;
@@ -679,6 +684,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
 
 bool yarpWholeBodyActuators::setControlParam(ControlParam paramId, const void *value, int joint)
 {
+    if (!initDone) return false;
     switch(paramId)
     {
         case CTRL_PARAM_REF_VEL: { return setReferenceSpeed((double*)value, joint);}
@@ -693,6 +699,7 @@ bool yarpWholeBodyActuators::setControlParam(ControlParam paramId, const void *v
 
 bool yarpWholeBodyActuators::setReferenceSpeed(double *rspd, int joint)
 {
+    if (!initDone) return false;
     if(joint>=(int)jointIdList.size())
     {
         return false;
@@ -732,6 +739,7 @@ ControlMode yarpWholeBodyActuators::yarpToWbiCtrlMode(int yarpCtrlMode)
 
 bool yarpWholeBodyActuators::setPIDGains(const double *pValue, const double *dValue, const double *iValue, int joint)
 {
+    if (!initDone) return false;
     //The FOR_ALL atomicity is debated in github.. currently do the same as the rest of the library
     bool result = true;
     if (joint < 0) {
@@ -786,6 +794,7 @@ bool yarpWholeBodyActuators::setPIDGains(const double *pValue, const double *dVa
 
 bool yarpWholeBodyActuators::setControlOffset(const double *value, int joint)
 {
+    if (!initDone) return false;
     //The FOR_ALL atomicity is debated in github.. currently do the same as the rest of the library
     if (!value) return false;
 
