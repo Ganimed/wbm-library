@@ -100,103 +100,104 @@ bool yarpWholeBodyActuators::openControlBoardDrivers(int bp)
 
 bool yarpWholeBodyActuators::init()
 {
-    if( this->initDone ) return true;
+    if (this->initDone) return true;
 
     //Function return value
     bool ok = false;
 
     //Loading configuration
-    if( wbi_yarp_properties.check("robot") )
-    {
+    if (wbi_yarp_properties.check("robot")) {
         robot = wbi_yarp_properties.find("robot").asString().c_str();
-    }
-    else if (wbi_yarp_properties.check("robotName") )
-    {
+    } else if (wbi_yarp_properties.check("robotName")) {
         std::cerr << "[WARN] yarpWholeBodyActuators: robot option not found, using robotName" << std::endl;
         robot = wbi_yarp_properties.find("robotName").asString().c_str();
-    }
-    else
-    {
+    } else {
         std::cerr << "[ERR] yarpWholeBodyActuators: robot option not found" << std::endl;
         return false;
     }
 
-
     ok = loadJointsControlBoardFromConfig(wbi_yarp_properties,
-                                               jointIdList,
-                                               controlBoardNames,
-                                               controlBoardAxisList);
+                                          jointIdList,
+                                          controlBoardNames,
+                                          controlBoardAxisList);
 
-    if(!ok) return false;
+    if (ok) {
+        //Update internal structure reference the controlled joints for each controlboard
+        currentCtrlModes.resize(jointIdList.size(), wbi::CTRL_MODE_POS);
 
-    //Update internal structure reference the controlled joints for each controlboard
-    currentCtrlModes.resize(jointIdList.size(),wbi::CTRL_MODE_POS);
+        totalAxesInControlBoard.resize(controlBoardNames.size());
+        for (int i = 0; i < (int)totalAxesInControlBoard.size(); i++) {
+            totalAxesInControlBoard[i] = 0;
+        }
 
-    totalAxesInControlBoard.resize(controlBoardNames.size());
-    for(int i=0; i < (int)totalAxesInControlBoard.size(); i++ )
-    {
-        totalAxesInControlBoard[i] = 0;
-    }
+        totalControlledAxesInControlBoard.resize(controlBoardNames.size());
+        for (int i = 0; i < (int)totalControlledAxesInControlBoard.size(); i++) {
+            totalControlledAxesInControlBoard[i] = 0;
+        }
 
+        for (int wbi_jnt = 0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++) {
+            //std::cout << "-------------wbi_jnt " << wbi_jnt << " " << controlBoardAxisList[wbi_jnt].first  << " " << controlBoardAxisList[wbi_jnt].second << std::endl;
+            totalControlledAxesInControlBoard[controlBoardAxisList[wbi_jnt].first]++;
+        }
 
-    totalControlledAxesInControlBoard.resize(controlBoardNames.size());
-    for(int i=0; i < (int)totalControlledAxesInControlBoard.size(); i++ )
-    {
-        totalControlledAxesInControlBoard[i] = 0;
-    }
+        updateControlledJointsForEachControlBoard();
 
-    for(int wbi_jnt=0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++ )
-    {
-        //std::cout << "-------------wbi_jnt " << wbi_jnt << " " << controlBoardAxisList[wbi_jnt].first  << " " << controlBoardAxisList[wbi_jnt].second << std::endl;
-        totalControlledAxesInControlBoard[ controlBoardAxisList[wbi_jnt].first ]++;
-    }
+        //Resize everything that depends on the number of controlboards
+        itrq.resize(controlBoardNames.size());
+        iimp.resize(controlBoardNames.size());
+        icmd.resize(controlBoardNames.size());
+        ivel.resize(controlBoardNames.size());
+        ipos.resize(controlBoardNames.size());
+        iopl.resize(controlBoardNames.size());
+        ipositionDirect.resize(controlBoardNames.size());
+        iinteraction.resize(controlBoardNames.size());
+        dd.resize(controlBoardNames.size());
 
-    updateControlledJointsForEachControlBoard();
+        //Open necessary yarp controlboard drivers
+        //iterate all used body parts
+        for (int bp = 0; bp < (int)controlBoardNames.size(); bp++) {
+            ok = openControlBoardDrivers(bp);
+            if (!ok) {
+                //If there is an error, close all the opened driver and return
+                int lastDriverOpenedCorrectly = bp - 1;
+                for (int driverToClose = lastDriverOpenedCorrectly; driverToClose >= 0; driverToClose--) {
+                    if (dd[driverToClose] != 0) {
+                        dd[driverToClose]->close();
+                        delete dd[driverToClose];
+                        dd[driverToClose] = 0;
+                    }
+                }
+                break;
+            }
+        }
 
-    //Resize everything that depends on the number of controlboards
-    itrq.resize(controlBoardNames.size());
-    iimp.resize(controlBoardNames.size());
-    icmd.resize(controlBoardNames.size());
-    ivel.resize(controlBoardNames.size());
-    ipos.resize(controlBoardNames.size());
-    iopl.resize(controlBoardNames.size());
-    ipositionDirect.resize(controlBoardNames.size());
-    iinteraction.resize(controlBoardNames.size());
-    dd.resize(controlBoardNames.size());
-
-
-    //Open necessary yarp controlboard drivers
-    //iterate all used body parts
-    for(int bp=0; bp < (int)controlBoardNames.size(); bp++ )
-    {
-        ok = openControlBoardDrivers(bp);
-        if(!ok)
-        {
-            //If there is an error, close all the opened driver and return
-            int lastDriverOpenedCorrectly = bp-1;
-            for(int driverToClose = lastDriverOpenedCorrectly; driverToClose >=0; driverToClose--)
-            {
-                if( dd[driverToClose] != 0 )
-                {
-                    dd[driverToClose]->close();
-                    delete dd[driverToClose];
-                    dd[driverToClose] = 0;
+        if (ok) {
+            //All drivers opened without errors, save the dimension of all used controlboards
+            for (int ctrlBrd = 0; ctrlBrd < (int)controlBoardNames.size(); ctrlBrd++) {
+                ok = ipos[ctrlBrd]->getAxes(&(totalAxesInControlBoard[ctrlBrd]));
+                if (!ok) {
+                    break;
                 }
             }
-            return false;
         }
     }
+    
+    if (!ok) {
+        //roll back the changes: all vectors must be sized 0
+        itrq.resize(0);
+        iimp.resize(0);
+        icmd.resize(0);
+        ivel.resize(0);
+        ipos.resize(0);
+        iopl.resize(0);
+        ipositionDirect.resize(0);
+        iinteraction.resize(0);
+        dd.resize(0);
+        controlBoardAxisList.resize(0);
+        jointIdList.removeAllIDs();
 
-    //All drivers opened without errors, save the dimension of all used controlboards
-    for(int ctrlBrd = 0; ctrlBrd < (int)controlBoardNames.size(); ctrlBrd++ )
-    {
-        ok = ipos[ctrlBrd]->getAxes(&(totalAxesInControlBoard[ctrlBrd]));
-        if( !ok )
-        {
-            return false;
-        }
+        return false;
     }
-
 
     initDone = true;
     return ok;
@@ -345,7 +346,7 @@ int yarpWholeBodyActuators::addActuators(const IDList &jList)
 
 bool yarpWholeBodyActuators::setControlModeSingleJoint(ControlMode controlMode, double *ref, int joint)
 {
-    bool ok;
+    bool ok = false;
     ///< check that joint is not already in the specified control mode
     // commented out for now
     if(currentCtrlModes[joint]!=controlMode)
@@ -662,7 +663,7 @@ bool yarpWholeBodyActuators::setControlParam(ControlParam paramId, const void *v
 {
     switch(paramId)
     {
-        case CTRL_PARAM_REF_VEL: return setReferenceSpeed((double*)value, joint);
+        case CTRL_PARAM_REF_VEL: { return setReferenceSpeed((double*)value, joint);}
         case CTRL_PARAM_KP: return false;
         case CTRL_PARAM_KD: return false;
         case CTRL_PARAM_KI: return false;
@@ -685,12 +686,13 @@ bool yarpWholeBodyActuators::setReferenceSpeed(double *rspd, int joint)
         int controlBoardJointAxis = controlBoardAxisList[joint].second;
         return ipos[bodyPart]->setRefSpeed(controlBoardJointAxis, CTRL_RAD2DEG*(*rspd));
     }
-
+    
     bool ok = true;
     for(int jnt=0; jnt < (int)jointIdList.size(); jnt++ )
     {
         int bodyPart = controlBoardAxisList[jnt].first;
         int controlBoardJointAxis = controlBoardAxisList[jnt].second;
+        
         ok = ok && ipos[bodyPart]->setRefSpeed(controlBoardJointAxis, CTRL_RAD2DEG*rspd[jnt]);
     }
 

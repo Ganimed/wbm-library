@@ -177,8 +177,7 @@ bool loadJointsControlBoardFromConfig(yarp::os::Property & wbi_yarp_properties,
 
     //First check that all the joint in the jointIdList an appropriate controlboard mapping is defined
     controlBoardNames.clear();
-    if( !appendNewControlBoardsToVector(joints_config,jointIdList,controlBoardNames) )
-    {
+    if (!appendNewControlBoardsToVector(joints_config,jointIdList,controlBoardNames)) {
         return false;
     }
 
@@ -193,8 +192,7 @@ bool loadJointsControlBoardFromConfig(yarp::os::Property & wbi_yarp_properties,
 
     //All elements in the jointIdList have a mapping to an axis of a controlboard
     //we have to save this mapping
-    for(int wbi_jnt=0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++ )
-    {
+    for (int wbi_jnt = 0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++) {
         wbi::ID wbi_jnt_name;
         jointIdList.indexToID(wbi_jnt,wbi_jnt_name);
 
@@ -205,7 +203,7 @@ bool loadJointsControlBoardFromConfig(yarp::os::Property & wbi_yarp_properties,
         int controlboard_wbi_id   = controlBoardIds[controlboard_name];
 
         //totalControlledJointsInControlBoard[controlboard_wbi_id]++;
-        controlBoardAxisList[wbi_jnt] = std::pair<int,int>(controlboard_wbi_id,controlboard_jnt_axis);
+        controlBoardAxisList[wbi_jnt] =std::pair<int,int>(controlboard_wbi_id,controlboard_jnt_axis);
     }
 
     return true;
