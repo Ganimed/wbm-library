@@ -100,42 +100,52 @@ bool yarpWholeBodyActuators::openControlBoardDrivers(int bp)
 
 bool yarpWholeBodyActuators::init()
 {
-    if (this->initDone) return true;
+    if( this->initDone ) return true;
 
     //Function return value
     bool ok = false;
 
     //Loading configuration
-    if (wbi_yarp_properties.check("robot")) {
+    if( wbi_yarp_properties.check("robot") )
+    {
         robot = wbi_yarp_properties.find("robot").asString().c_str();
-    } else if (wbi_yarp_properties.check("robotName")) {
+    }
+    else if (wbi_yarp_properties.check("robotName") )
+    {
         std::cerr << "[WARN] yarpWholeBodyActuators: robot option not found, using robotName" << std::endl;
         robot = wbi_yarp_properties.find("robotName").asString().c_str();
-    } else {
+    }
+    else
+    {
         std::cerr << "[ERR] yarpWholeBodyActuators: robot option not found" << std::endl;
         return false;
     }
+
 
     ok = loadJointsControlBoardFromConfig(wbi_yarp_properties,
                                           jointIdList,
                                           controlBoardNames,
                                           controlBoardAxisList);
 
-    if (ok) {
+    if (ok)
+    {
         //Update internal structure reference the controlled joints for each controlboard
         currentCtrlModes.resize(jointIdList.size(), wbi::CTRL_MODE_POS);
 
         totalAxesInControlBoard.resize(controlBoardNames.size());
-        for (int i = 0; i < (int)totalAxesInControlBoard.size(); i++) {
+        for (int i = 0; i < (int)totalAxesInControlBoard.size(); i++)
+        {
             totalAxesInControlBoard[i] = 0;
         }
 
         totalControlledAxesInControlBoard.resize(controlBoardNames.size());
-        for (int i = 0; i < (int)totalControlledAxesInControlBoard.size(); i++) {
+        for (int i = 0; i < (int)totalControlledAxesInControlBoard.size(); i++)
+        {
             totalControlledAxesInControlBoard[i] = 0;
         }
 
-        for (int wbi_jnt = 0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++) {
+        for (int wbi_jnt = 0; wbi_jnt < (int)jointIdList.size(); wbi_jnt++)
+        {
             //std::cout << "-------------wbi_jnt " << wbi_jnt << " " << controlBoardAxisList[wbi_jnt].first  << " " << controlBoardAxisList[wbi_jnt].second << std::endl;
             totalControlledAxesInControlBoard[controlBoardAxisList[wbi_jnt].first]++;
         }
@@ -155,13 +165,17 @@ bool yarpWholeBodyActuators::init()
 
         //Open necessary yarp controlboard drivers
         //iterate all used body parts
-        for (int bp = 0; bp < (int)controlBoardNames.size(); bp++) {
+        for (int bp = 0; bp < (int)controlBoardNames.size(); bp++)
+        {
             ok = openControlBoardDrivers(bp);
-            if (!ok) {
+            if (!ok)
+            {
                 //If there is an error, close all the opened driver and return
                 int lastDriverOpenedCorrectly = bp - 1;
-                for (int driverToClose = lastDriverOpenedCorrectly; driverToClose >= 0; driverToClose--) {
-                    if (dd[driverToClose] != 0) {
+                for (int driverToClose = lastDriverOpenedCorrectly; driverToClose >= 0; driverToClose--)
+                {
+                    if (dd[driverToClose] != 0)
+                    {
                         dd[driverToClose]->close();
                         delete dd[driverToClose];
                         dd[driverToClose] = 0;
@@ -171,18 +185,22 @@ bool yarpWholeBodyActuators::init()
             }
         }
 
-        if (ok) {
+        if (ok)
+        {
             //All drivers opened without errors, save the dimension of all used controlboards
-            for (int ctrlBrd = 0; ctrlBrd < (int)controlBoardNames.size(); ctrlBrd++) {
+            for (int ctrlBrd = 0; ctrlBrd < (int)controlBoardNames.size(); ctrlBrd++)
+            {
                 ok = ipos[ctrlBrd]->getAxes(&(totalAxesInControlBoard[ctrlBrd]));
-                if (!ok) {
+                if (!ok)
+                {
                     break;
                 }
             }
         }
     }
     
-    if (!ok) {
+    if (!ok)
+    {
         //roll back the changes: all vectors must be sized 0
         itrq.resize(0);
         iimp.resize(0);
