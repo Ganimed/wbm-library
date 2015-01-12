@@ -660,7 +660,8 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period, yarpWholeBodySensors
   dTauMFilt(0),
   tauJFilt(0),
   tauMFilt(0),
-  motor_quantites_estimation_enabled(false)//,
+  motor_quantites_estimation_enabled(false),
+  lastPositionReadTimestamp(-1)
   //ee_wrenches_enabled(false)
 {
     resizeAll(sensors->getSensorNumber(SENSOR_ENCODER));
@@ -760,11 +761,17 @@ void yarpWholeBodyEstimator::run()
         if(sensors->readSensors(SENSOR_ENCODER, q.data(), qStamps.data(), false))
         {
             estimates.lastQ = q;
-            AWPolyElement el;
-            el.data = q;
-            el.time = qStamps[0];
-            estimates.lastDq = dqFilt->estimate(el);
-            estimates.lastD2q = d2qFilt->estimate(el);
+            if (lastPositionReadTimestamp < qStamps[0]) {
+                lastPositionReadTimestamp = qStamps[0];
+                AWPolyElement el;
+                el.data = q;
+                el.time = lastPositionReadTimestamp;
+                estimates.lastDq = dqFilt->estimate(el);
+                estimates.lastD2q = d2qFilt->estimate(el);
+                
+            } else {
+                std::cerr << "[WARN]Reading duplicate timestamp\n";
+            }
 
             //if motor quantites are enabled, estimate also motor motor_quantities
             if( this->motor_quantites_estimation_enabled )

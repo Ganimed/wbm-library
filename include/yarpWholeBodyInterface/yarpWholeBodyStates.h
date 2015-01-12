@@ -72,6 +72,7 @@ namespace yarpWbi
         yarp::sig::Vector           tauJ, tauJStamps;
         yarp::sig::Vector           pwm, pwmStamps;
 
+        double lastPositionReadTimestamp; /*<! timestamp of the last position read */
         /* Resize all vectors using current number of DoFs. */
         void resizeAll(int n);
         void lockAndResizeAll(int n);

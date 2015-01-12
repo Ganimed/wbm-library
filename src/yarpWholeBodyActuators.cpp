@@ -77,7 +77,7 @@ bool yarpWholeBodyActuators::openControlBoardDrivers(int bp)
     itrq[bp]=0; iimp[bp]=0; icmd[bp]=0; ivel[bp]=0; ipos[bp]=0; iopl[bp]=0;  dd[bp]=0; ipositionDirect[bp]=0; iinteraction[bp]=0;
     if(!openPolyDriver(name, robot, dd[bp], controlBoardNames[bp].c_str()))
     {
-        std::cerr << "[ERR] yarpWholeBodyActuators::openDrivers error: enable to open controlboard " << controlBoardNames[bp]
+        std::cerr << "[ERR] yarpWholeBodyActuators::openDrivers error: unable to open controlboard " << controlBoardNames[bp]
                   << "of robot " << robot  << std::endl;
         return false;
     }
@@ -90,7 +90,7 @@ bool yarpWholeBodyActuators::openControlBoardDrivers(int bp)
 
     if(!ok)
     {
-        std::cerr << "[ERR] yarpWholeBodyActuators::openDrivers error: enable to open all necessary interfaces of " <<
+        std::cerr << "[ERR] yarpWholeBodyActuators::openDrivers error: unable to open all necessary interfaces of " <<
                      controlBoardNames[bp]  << "of robot " << robot  << std::endl;
         return false;
     }
@@ -684,7 +684,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
 
 bool yarpWholeBodyActuators::setControlParam(ControlParam paramId, const void *value, int joint)
 {
-    if (!initDone) return false;
+    if (!initDone || !value) return false;
     switch(paramId)
     {
         case CTRL_PARAM_REF_VEL: { return setReferenceSpeed((double*)value, joint);}
@@ -699,7 +699,7 @@ bool yarpWholeBodyActuators::setControlParam(ControlParam paramId, const void *v
 
 bool yarpWholeBodyActuators::setReferenceSpeed(double *rspd, int joint)
 {
-    if (!initDone) return false;
+    if (!initDone || !rspd) return false;
     if(joint>=(int)jointIdList.size())
     {
         return false;
