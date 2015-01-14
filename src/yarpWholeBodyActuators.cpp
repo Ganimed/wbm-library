@@ -399,15 +399,14 @@ bool yarpWholeBodyActuators::setControlModeSingleJoint(ControlMode controlMode, 
         if(ok)
         {
             currentCtrlModes[joint] = controlMode;
+            this->updateControlledJointsForEachControlBoard();
+
+            if(ref != 0)
+            {
+                setControlReference(ref,joint);
+	    }
         } else {
-            fprintf(stderr, "Cannot set control mode %d\n", controlMode);
-        }
-
-        this->updateControlledJointsForEachControlBoard();
-
-        if(ref != 0)
-        {
-            setControlReference(ref,joint);
+            fprintf(stderr, "yarpWholeBodyActuators: Cannot set control mode %d on joint %d \n", controlMode, joint);
         }
     }
 
