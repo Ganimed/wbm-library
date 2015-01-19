@@ -15,7 +15,7 @@
  * Public License for more details
  */
 
-#include "wbiIcub/yarpWholeBodyInterface.h"
+#include "yarpWholeBodyInterface/yarpWholeBodyInterface.h"
 #include <iCub/skinDynLib/common.h>
 #include <yarp/os/Os.h>
 #include <string>
@@ -23,7 +23,7 @@
 
 using namespace std;
 using namespace wbi;
-using namespace wbiIcub;
+using namespace yarpWbi;
 using namespace yarp::os;
 using namespace yarp::dev;
 using namespace yarp::sig;
@@ -39,27 +39,45 @@ using namespace iCub::skinDynLib;
 
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-//                                          ICUB WHOLE BODY INTERFACE
+//                                          YARP WHOLE BODY INTERFACE
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-yarpWholeBodyInterface::yarpWholeBodyInterface(const char* _name, 
-                                               const char* _robotName, 
-                                               const char* _urdfFile,
-                                               yarp::os::Property & _yarp_wbi_properties)
+yarpWholeBodyInterface::yarpWholeBodyInterface(const char* _name,
+                                               const yarp::os::Property & _yarp_wbi_properties)
 {
-    actuatorInt = new icubWholeBodyActuators((_name+string("actuator")).c_str(), _robotName,_yarp_wbi_properties);
-    //stateInt = new icubWholeBodyStates((_name+string("state")).c_str(), _robotName, 0.0);
-    modelInt = new icubWholeBodyModel((_name+string("model")).c_str(), _robotName, _urdfFile, _yarp_wbi_properties);
+    actuatorInt = new yarpWholeBodyActuators((_name+string("actuator")).c_str(),_yarp_wbi_properties);
+    stateInt = new yarpWholeBodyStates((_name+string("state")).c_str(), _yarp_wbi_properties);
+    modelInt = new yarpWholeBodyModel((_name+string("model")).c_str(), _yarp_wbi_properties);
+}
+
+bool yarpWholeBodyInterface::setYarpWbiProperties(const yarp::os::Property & yarp_wbi_properties)
+{
+    actuatorInt->setYarpWbiProperties(yarp_wbi_properties);
+    stateInt->setYarpWbiProperties(yarp_wbi_properties);
+    modelInt->setYarpWbiProperties(yarp_wbi_properties);
+    return true;
+}
+
+bool yarpWholeBodyInterface::getYarpWbiProperties(yarp::os::Property & yarp_wbi_properties)
+{
+    yarp::os::Property buffer;
+    actuatorInt->getYarpWbiProperties(buffer);
+    yarp_wbi_properties.fromString(buffer.toString(),false);
+    stateInt->getYarpWbiProperties(buffer);
+    yarp_wbi_properties.fromString(buffer.toString(),false);
+    modelInt->getYarpWbiProperties(buffer);
+    yarp_wbi_properties.fromString(buffer.toString(),false);
+    return true;
 }
 
 bool yarpWholeBodyInterface::init()
 {
     bool ok = actuatorInt->init();
-    if(!ok) printf("Error while initializing actuator interface.\n");
-    //if(ok) ok = stateInt->init();
-    //if(!ok) printf("Error while initializing state interface.\n");
+    if(!ok) printf("[ERR] Error while initializing yarpWholeBodyActuators interface.\n");
+    if(ok) ok = stateInt->init();
+    if(!ok) printf("[ERR] Error while initializing yarpWholeBodyStates interface.\n");
     if(ok) ok = modelInt->init();
-    if(!ok) printf("Error while initializing model interface.\n");
+    if(!ok) printf("[ERR] Error while initializing yarpWholeBodyModel interface.\n");
     return ok;
 }
 
@@ -75,7 +93,17 @@ bool yarpWholeBodyInterface::close()
             ok = false;
         }
     }
-    //if( stateInt ) { ok = stateInt->close(); delete stateInt; stateInt=0; }
+    
+    if (stateInt) {
+      if (stateInt->close()) {
+	delete stateInt; 
+	stateInt = 0; 	
+      }
+      else {
+	ok = false;
+      }
+    }
+      
     if (modelInt) {
         if(modelInt->close()) {
             delete modelInt;
@@ -89,30 +117,35 @@ bool yarpWholeBodyInterface::close()
     return ok;
 }
 
-bool yarpWholeBodyInterface::removeJoint(const LocalId &j)
+bool yarpWholeBodyInterface::removeJoint(const ID &j)
 {
     bool ok = actuatorInt->removeActuator(j);
-    //for(int i=0; ok && i<JOINT_ESTIMATE_TYPES_SIZE; i++)
-    //    ok = stateInt->removeEstimate(jointEstimateTypes[i], j);
+    for(int i=0; ok && i<JOINT_ESTIMATE_TYPES_SIZE; i++)
+        ok = stateInt->removeEstimate(jointEstimateTypes[i], j);
     // removing pos removes also vel and acc estimation
     return ok ? modelInt->removeJoint(j) : false;
 }
 
-bool yarpWholeBodyInterface::addJoint(const LocalId &j)
+bool yarpWholeBodyInterface::addJoint(const ID &j)
 {
     bool ok = actuatorInt->addActuator(j);
-    //for(int i=0; ok && i<JOINT_ESTIMATE_TYPES_SIZE; i++)
-    //    ok = stateInt->addEstimate(jointEstimateTypes[i], j);
+    for(int i=0; ok && i<JOINT_ESTIMATE_TYPES_SIZE; i++)
+        ok = stateInt->addEstimate(jointEstimateTypes[i], j);
     return ok ? modelInt->addJoint(j) : false;
 }
 
-int yarpWholeBodyInterface::addJoints(const LocalIdList &jList)
+int yarpWholeBodyInterface::addJoints(const IDList &jList)
 {
     int res1 = actuatorInt->addActuators(jList);
-    //for(int i=0; i<JOINT_ESTIMATE_TYPES_SIZE; i++)
-    //    stateInt->addEstimates(jointEstimateTypes[i], jList);
+    for(int i=0; i<JOINT_ESTIMATE_TYPES_SIZE; i++)
+        stateInt->addEstimates(jointEstimateTypes[i], jList);
     // adding pos adds also vel and acc estimation
     int res4 = modelInt->addJoints(jList);
     assert(res1==res4);
     return res1;
+}
+
+yarp::os::Mutex& yarpWholeBodyInterface::getInterfaceMutex()
+{
+    return wbiMutex;
 }

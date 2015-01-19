@@ -1,5 +1,4 @@
 find_package(wholeBodyInterface REQUIRED)
-find_package(paramHelp REQUIRED)
 
 set(yarpWholeBodyInterface_VERSION @yarpWholeBodyInterface_VERSION@)
 

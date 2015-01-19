@@ -7,11 +7,11 @@ project(yarpWholeBodyInterface CXX)
 
 set(LIBRARY_NAME yarpwholebodyinterface)
 set(VARS_PREFIX ${PROJECT_NAME})
-set(INCLUDE_DIRS wbiIcub)
+set(INCLUDE_DIRS yarpWholeBodyInterface)
 
 set(${VARS_PREFIX}_MAJOR_VERSION 0)
-set(${VARS_PREFIX}_MINOR_VERSION 0)
-set(${VARS_PREFIX}_PATCH_VERSION 1)
+set(${VARS_PREFIX}_MINOR_VERSION 2)
+set(${VARS_PREFIX}_PATCH_VERSION 0)
 set(${VARS_PREFIX}_VERSION ${${VARS_PREFIX}_MAJOR_VERSION}.${${VARS_PREFIX}_MINOR_VERSION}.${${VARS_PREFIX}_PATCH_VERSION})
 
 find_package(YCM REQUIRED)
@@ -22,55 +22,39 @@ option(CODYCO_USES_URDFDOM "Compile yarpWholeBodyInterface with URDF support" TR
 option(ICUBWBI_USE_EXTERNAL_TORQUE_CONTROL "Compile yarpwholebodyinterface to use JTC external torque control" FALSE)
 option(COMPILE_AS_SHARED_LIBRARY "Compile ${PROJECT_NAME} as a shared library" TRUE)
 
+option(ENABLE_TESTS "Enable unit testing using Gazebo simulator" FALSE)
+
+
 add_definitions(-DIDYNTREE_USES_ICUB)
 
-find_package(YARP REQUIRED)
+
+find_package(YARP 2.3.63.2 REQUIRED)
 find_package(ICUB REQUIRED)
 find_package(iDynTree REQUIRED)
-find_package(wholeBodyInterface REQUIRED)
-find_package(paramHelp REQUIRED)
+find_package(wholeBodyInterface 0.2.0 REQUIRED)
 
-#take in account the new pwm interface
-if(YARP_VERSION VERSION_LESS 2.3.62.3)
-    message(STATUS "found YARP (${YARP_VERSION}) has the old motor interface")
-else()
-    message(STATUS "found YARP (${YARP_VERSION}) has the new interaction mode motor interface interface")
-    add_definitions(-DYARP_INTERACTION_MODE_MOTOR_INTERFACE)
-endif()
-
-
-set(folder_source src/wbiIcubUtil.cpp
-                  src/icubWholeBodyInterface.cpp
-                  src/icubWholeBodyModel.cpp
-                  src/icubWholeBodyStates.cpp
-                  src/icubWholeBodyStatesLocal.cpp
-                  src/icubWholeBodyActuators.cpp
-                  src/icubWholeBodySensors.cpp)
-set(folder_header include/wbiIcub/wholeBodyInterfaceIcub.h
-                  include/wbiIcub/icubWholeBodyModel.h
-                  include/wbiIcub/icubWholeBodyStates.h
-                  include/wbiIcub/icubWholeBodyStatesLocal.h
-                  include/wbiIcub/icubWholeBodyActuators.h
-                  include/wbiIcub/icubWholeBodySensors.h
-                  include/wbiIcub/wbiIcubUtil.h)
+SET(folder_source src/yarpWbiUtil.cpp
+                  src/yarpWholeBodyInterface.cpp
+                  src/yarpWholeBodyModel.cpp
+                  src/yarpWholeBodyStates.cpp
+                  src/yarpWholeBodyStatesLocal.cpp
+                  src/yarpWholeBodyActuators.cpp
+                  src/yarpWholeBodySensors.cpp)
+SET(folder_header include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
+                  include/yarpWholeBodyInterface/yarpWholeBodyModel.h
+                  include/yarpWholeBodyInterface/yarpWholeBodyStates.h
+                  include/yarpWholeBodyInterface/yarpWholeBodyStatesLocal.h
+                  include/yarpWholeBodyInterface/yarpWholeBodyActuators.h
+                  include/yarpWholeBodyInterface/yarpWholeBodySensors.h
+                  include/yarpWholeBodyInterface/yarpWbiUtil.h)
 
 source_group("Source Files" FILES ${folder_source})
 source_group("Header Files" FILES ${folder_header})
 
-option(ICUBWBI_USE_EXTERNAL_TORQUE_CONTROL "Set if iCub WBI implementation uses external torque control. False to use YARP Torque Control." FALSE)
+
+add_definitions(-Wall)
+
 option(YARPWBI_DISABLE_RPATH "Disable RPATH for the library" FALSE)
-
-if(CODYCO_USES_URDFDOM)
-    set(folder_source ${folder_source}
-                      src/yarpWholeBodyInterface.cpp)
-    set(folder_header ${folder_header}
-                      include/wbiIcub/yarpWholeBodyInterface.h)
-    add_definitions(-DCODYCO_USES_URDFDOM)
-endif()
-
-if (ICUBWBI_USE_EXTERNAL_TORQUE_CONTROL)
-    add_definitions(-DWBI_ICUB_COMPILE_PARAM_HELP)
-endif()
 
 if(MSVC)
     message(STATUS "Building ${PROJECT_NAME} as a shared library is not currently supported on Windows")
@@ -83,33 +67,54 @@ else()
     set(LIB_TYPE STATIC)
 endif()
 
-#Configure RPATH
-set(CMAKE_MACOSX_RPATH 1) #enable RPATH on OSX. This also suppress warnings on CMake >= 3.0
-# when building, don't use the install RPATH already
-# (but later on when installing)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
-# set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-#This is relative RPATH for libraries built in the same project
-#I assume that the directory is 
-# - install_dir/something for binaries
-# - install_dir/lib for libraries
-file(RELATIVE_PATH _rel_path "${CMAKE_INSTALL_PREFIX}/bin" "${CMAKE_INSTALL_PREFIX}/lib")
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
- set(CMAKE_INSTALL_RPATH "@loader_path/${_rel_path}")
-else()
- set(CMAKE_INSTALL_RPATH "\$ORIGIN/${_rel_path}")
+#### Settings for rpath
+if(${CMAKE_MINIMUM_REQUIRED_VERSION} VERSION_GREATER "2.8.12")
+    message(AUTHOR_WARNING "CMAKE_MINIMUM_REQUIRED_VERSION is now ${CMAKE_MINIMUM_REQUIRED_VERSION}. This check can be removed.")
 endif()
-# add the automatically determined parts of the RPATH
-# which point to directories outside the build tree to the install RPATH
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE) #very important!
+if(NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
+    if(NOT MSVC)
+        #add the option to disable RPATH
+        set(YARPWBI_DISABLE_RPATH FALSE CACHE BOOL "Disable RPATH installation")
+        mark_as_advanced(YARPWBI_DISABLE_RPATH)
+    endif(NOT MSVC)
 
+    #Configure RPATH
+    set(CMAKE_MACOSX_RPATH 1) #enable RPATH on OSX. This also suppress warnings on CMake >= 3.0
+    # when building, don't use the install RPATH already
+    # (but later on when installing)
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
+    #build directory by default is built with RPATH
+    set(CMAKE_SKIP_BUILD_RPATH  FALSE)
 
-if(YARPWBI_DISABLE_RPATH)
-    set(CMAKE_SKIP_BUILD_RPATH TRUE)
-else(YARPWBI_DISABLE_RPATH)
-    set(CMAKE_SKIP_BUILD_RPATH FALSE)
-endif(YARPWBI_DISABLE_RPATH)
+    #This is relative RPATH for libraries built in the same project
+    #I assume that the directory is 
+    # - install_dir/something for binaries
+    # - install_dir/lib for libraries
+    file(RELATIVE_PATH _rel_path "${CMAKE_INSTALL_PREFIX}/bin" "${CMAKE_INSTALL_PREFIX}/lib")
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        set(CMAKE_INSTALL_RPATH "@loader_path/${_rel_path}")
+    else()
+        set(CMAKE_INSTALL_RPATH "\$ORIGIN/${_rel_path}")
+    endif()
 
+    # the RPATH to be used when installing, but only if it's not a system directory (copied form CMake File. To be tested)
+    list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+    if("${isSystemDir}" STREQUAL "-1")
+       set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+    endif("${isSystemDir}" STREQUAL "-1")
+
+    # add the automatically determined parts of the RPATH
+    # which point to directories outside the build tree to the install RPATH
+    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE) #very important!
+
+    if(YARPWBI_DISABLE_RPATH)
+        #what to do? disable RPATH altogether or just revert to the default CMake configuration?
+        #I revert to default
+        unset(CMAKE_INSTALL_RPATH) #remove install rpath
+        set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
+    endif(YARPWBI_DISABLE_RPATH)
+endif()
+##### end RPATH
 
 add_library(${LIBRARY_NAME}  ${LIB_TYPE} ${folder_source} ${folder_header})
 
@@ -145,3 +150,17 @@ install_basic_package_files(${PROJECT_NAME} VARS_PREFIX ${VARS_PREFIX}
                                             NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 
 include(AddUninstallTarget)
+
+if(ENABLE_TESTS)
+#enable testing
+include(CTest)
+enable_testing()
+add_subdirectory(tests)
+endif()
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${YARP_MODULE_PATH})
+include(YarpInstallationHelpers)
+yarp_configure_external_installation(codyco)
+
+add_subdirectory(app)
+
