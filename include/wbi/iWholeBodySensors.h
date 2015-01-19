@@ -22,10 +22,9 @@
 #include <wbi/wbiConstants.h>
 
 namespace wbi {
-    
-    class LocalId;
-    class LocalIdList;
-    
+    class ID;
+    class IDList;
+
     /*
      * Interface for reading the sensors of the robot.
      */
@@ -34,61 +33,61 @@ namespace wbi {
     public:
         /** Virtual destructor (to allow implementation of proper destructor in children classes). */
         virtual ~iWholeBodySensors();
-        
+
         /** Initialize the object. This method should be called after adding the sensors,
          *  but before reading any sensor. */
         virtual bool init() = 0;
         /** Close all the communication channels with the robot. This method should be
          *  called before destroying the object. */
         virtual bool close() = 0;
-        
+
         /** Add the specified sensor so that it can be read.
          * @param st Type of sensor.
          * @param sid Id of the sensor.
          * @return True if the sensor has been added, false otherwise (e.g. the sensor has been already added).
          */
-        virtual bool addSensor(const SensorType st, const LocalId &sid) = 0;
-        
+        virtual bool addSensor(const SensorType st, const ID &sid) = 0;
+
         /** Add the specified sensors so that they can be read.
          * @param st Type of sensors.
          * @param sids Ids of the sensors.
          * @return True if the sensor has been added, false otherwise (e.g. the sensor has been already added).
          */
-        virtual int addSensors(const SensorType st, const LocalIdList &sids) = 0;
-        
+        virtual int addSensors(const SensorType st, const IDList &sids) = 0;
+
         /** Remove the specified sensor.
          * @param st Type of the sensor to remove.
          * @param sid Id of the sensor to remove.
          * @return True if the sensor has been removed, false otherwise.
          */
-        virtual bool removeSensor(const SensorType st, const LocalId &sid) = 0;
-        
+        virtual bool removeSensor(const SensorType st, const ID &sid) = 0;
+
         /** Remove all the sensors associated to the specified joint. This affects the reading of all the
          *  joint space sensors (e.g. encoders, pwm).
          * @param j Id of the joint.
          * @return True if the operation succeeded, false otherwise.
          */
-        //virtual bool removeSensorsOfJoint(const LocalId &j);
-        
+        //virtual bool removeSensorsOfJoint(const wbiId &j);
+
         /** Get a copy of the sensor list of the specified sensor type.
          * @param st Type of sensors.
          * @return A copy of the sensor list. */
-        virtual const LocalIdList& getSensorList(const SensorType st) = 0;
-        
+        virtual const IDList& getSensorList(const SensorType st) = 0;
+
         /** Get the number of sensors of the specified type.
          * @return The number of sensors of the specified type. */
         //virtual int getSensorNumber(const SensorType st) = 0;
-        
+
         /** Read the specified sensor.
          * @param st Type of sensor to read.
-         * @param sid Id of the sensor to read.
+         * @param sensor The numeric id of the sensor to read.
          * @param data Output data vector.
          * @param stamps Output vector of timestamps.
          * @param blocking If true, the reading is blocking, otherwise it is not.
          * @return True if all the readings succeeded, false otherwise.
          */
-        virtual bool readSensor(const SensorType st, const LocalId &sid, double *data, double *stamps=0, bool blocking=true) = 0;
-        
+        virtual bool readSensor(const SensorType st, const int sensor, double *data, double *stamps=0, bool blocking=true) = 0;
+
         /** Read all the sensors of the specified type.
          * @param st Type of the sensor to read.
          * @param data Output data vector.

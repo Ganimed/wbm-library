@@ -58,13 +58,14 @@
 
 //this header includes all the headers of the wbi library
 
-#include <wbi/wholeBodyInterface.h>
-#include <wbi/iWholeBodyModel.h>
-#include <wbi/iWholeBodySensors.h>
-#include <wbi/iWholeBodyStates.h>
-#include <wbi/iWholeBodyActuators.h>
-#include <wbi/wbiUtil.h>
-#include <wbi/wbiConstants.h>
+#include "wholeBodyInterface.h"
+#include "iWholeBodyModel.h"
+#include "iWholeBodySensors.h"
+#include "iWholeBodyStates.h"
+#include "iWholeBodyActuators.h"
+#include "wbiUtil.h"
+#include "wbiConstants.h"
+#include "wbiID.h"
 
 #endif
 

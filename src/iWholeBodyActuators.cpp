@@ -1,3 +1,3 @@
-#include <wbi/iWholeBodyActuators.h>
+#include "iWholeBodyActuators.h"
 
 wbi::iWholeBodyActuators::~iWholeBodyActuators() {}

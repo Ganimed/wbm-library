@@ -22,9 +22,9 @@
 #include <wbi/wbiConstants.h>
 
 namespace wbi {
-    class LocalId;
-    class LocalIdList;
-    
+    class ID;
+    class IDList;
+
     /**
      * Interface to the actuators of the robot.
      */
@@ -34,26 +34,26 @@ namespace wbi {
         virtual ~iWholeBodyActuators();
         virtual bool init() = 0;
         virtual bool close() = 0;
-        
+
         //virtual int getActuatorNumber() = 0;
-        virtual bool removeActuator(const LocalId &j) = 0;
-        virtual bool addActuator(const LocalId &j) = 0;
-        virtual int addActuators(const LocalIdList &j) = 0;
-        virtual const LocalIdList& getActuatorList() = 0;
-        
+        virtual bool removeActuator(const ID &j) = 0;
+        virtual bool addActuator(const ID &j) = 0;
+        virtual int addActuators(const IDList &j) = 0;
+        virtual const IDList& getActuatorList() = 0;
+
         /** Set the control mode of the specified joint(s).
          * @param controlMode Id of the control mode.
          * @param ref Reference value(s) for the controller.
          * @param joint Joint number, if negative, all joints are considered.
          * @return True if operation succeeded, false otherwise. */
         virtual bool setControlMode(ControlMode controlMode, double *ref=0, int joint=-1) = 0;
-        
+
         /** Set the reference value for the controller of the specified joint(s).
          * @param ref Reference value(s) for the controller.
          * @param joint Joint number, if negative, all joints are considered.
          * @return True if operation succeeded, false otherwise. */
         virtual bool setControlReference(double *ref, int joint=-1) = 0;
-        
+
         /** Set a parameter (e.g. a gain) of one or more joint controllers.
          * @param paramId Id of the parameter.
          * @param value Value(s) of the parameter.
@@ -61,7 +61,7 @@ namespace wbi {
          * @return True if operation succeeded, false otherwise. */
         virtual bool setControlParam(ControlParam paramId, const void *value, int joint=-1) = 0;
     };
-    
+
 }
 
 #endif //IWHOLEBODYACTUATORS_H

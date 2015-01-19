@@ -24,6 +24,9 @@
 #include <wbi/iWholeBodyActuators.h>
 
 namespace wbi {
+    class ID;
+    class IDList;
+    
     /**
      * Interface to state estimations, kinematic/dynamic model and actuators of the robot.
      */
@@ -37,17 +40,17 @@ namespace wbi {
         /** Remove the actuator, model and all the estimates associated to the specified joint.
          * @param j Id of the joint.
          * @return True if the operation succeeded, false otherwise. */
-        virtual bool removeJoint(const LocalId &j) = 0;
+        virtual bool removeJoint(const ID &j) = 0;
         
         /** Add the actuator, model and all the estimates associated to the specified joint.
          * @param j Id of the joint.
          * @return True if the operation succeeded, false otherwise. */
-        virtual bool addJoint(const LocalId &j) = 0;
+        virtual bool addJoint(const ID &j) = 0;
         
         /** Add the actuators, models and all the estimates associated to the specified joints.
          * @param j Id of the joint.
          * @return True if the operation succeeded, false otherwise. */
-        virtual int addJoints(const LocalIdList &j) = 0;
+        virtual int addJoints(const IDList &j) = 0;
     };
 }
 

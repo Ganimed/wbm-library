@@ -1,4 +1,4 @@
-#include <wbi/wbiConstants.h>
+#include "wbiConstants.h"
 
 namespace wbi {
     
