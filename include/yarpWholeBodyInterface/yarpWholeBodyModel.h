@@ -46,6 +46,20 @@ namespace yarpWbi
 {
   /**
      * Interface to the kinematic/dynamic model of yarp robot
+     *
+     * You can configure this object with a yarp::os::Property object, that you can
+     * pass to the constructor or to the setYarpWbiProperties method.
+     * The option that this Property object should contain are:
+     *
+     * * | Parameter name | Type | Units | Default Value | Required | Description | Notes |
+     * |:--------------:|:------:|:-----:|:-------------:|:--------:|:-----------:|:-----:|
+     * | urdf | string | - | - | Yes | File name of the urdf file to load for getting the model of the robot. | The file name will be opened by the ResourceFinder::findFile call, using the search rules of the ResourceFinder, that you can find in http://wiki.icub.org/yarpdoc/yarp_resource_finder_tutorials.html |
+     * | getLimitsFromControlBoard | string | - | - | No | Get limits from the real robot instead of the URDF model. |  |
+     *
+     *  Given that the limits in the URDF file could be outdated with respect to the real robot,
+     * limits can be loaded by the real robot, by passing to the yarpWholeBodyModel the getLimitsFromControlBoard
+     * option. In that case the ControlBoard of the robot will be opened, using the same parameters used by the
+     * yarpWholeBodyActuactors interface.
      */
     class yarpWholeBodyModel: public wbi::iWholeBodyModel
     {
@@ -83,6 +97,7 @@ namespace yarpWbi
         yarp::sig::Vector three_elem_buffer;
 
         // *** Variables needed for opening IControlLimits interfaces
+        bool getLimitsFromControlBoard;
         std::string                                 name;           // name used as root for the local ports
         std::string                                 robot;          // name of the robot
         std::vector<int>                            bodyParts;      // list of the body parts
@@ -110,6 +125,10 @@ namespace yarpWbi
         bool convertDDQ(const double *ddq_input, yarp::sig::Vector & ddq_complete_output);
 
         bool convertGeneralizedTorques(yarp::sig::Vector idyntree_base_force, yarp::sig::Vector idyntree_torques, double * tau);
+
+        bool closeDrivers();
+
+        bool getJointLimitFromControlBoard(double *qMin, double *qMax, int joint);
 
 
     public:

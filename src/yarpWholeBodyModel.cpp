@@ -56,7 +56,8 @@ yarpWholeBodyModel::yarpWholeBodyModel(const char* _name,
       wbi_yarp_properties(_wbi_yarp_conf),
       p_model(0),
       six_elem_buffer(6,0.0),
-      three_elem_buffer(3,0.0)
+      three_elem_buffer(3,0.0),
+      getLimitsFromControlBoard(false)
 {
 }
 
@@ -135,25 +136,26 @@ bool yarpWholeBodyModel::init()
         //memcpy(all_q.data(),initial_q,all_q.size()*sizeof(double));
     }
 
-    //Loading information on controlboards joints
-    loadJointsControlBoardFromConfig(wbi_yarp_properties,
-                                   jointIdList,
-                                   controlBoardNames,
-                                   controlBoardAxisList);
-
-    dd.resize(controlBoardNames.size());
-    ilim.resize(controlBoardNames.size());
-
-    this->initDone = true;
-    for(int bp=0; bp < (int)controlBoardNames.size(); bp++ )
+    //Loading information on the limits
+    // if getLimitsFromControlBoard is set, get the limits from the real robot
+    // otherwise use the limits in the urdf
+    if( wbi_yarp_properties.check("getLimitsFromControlBoard") )
     {
-        initDone = initDone && openDrivers(bp);
+        this->getLimitsFromControlBoard = true;
     }
 
-    if( initDone && (p_model->getNrOfDOFs() > 0) )
+    if( this->getLimitsFromControlBoard )
     {
-        this->initDone = true;
+        loadJointsControlBoardFromConfig(wbi_yarp_properties,
+                                         jointIdList,
+                                         controlBoardNames,
+                                         controlBoardAxisList);
+
+        dd.resize(controlBoardNames.size());
+        ilim.resize(controlBoardNames.size());
     }
+
+
 
     //Build the map between wbi id and iDynTree id
     wbiToiDynTreeJointId.resize(jointIdList.size());
@@ -181,7 +183,7 @@ bool yarpWholeBodyModel::init()
         frameIdList.addID(frame_name);
     }
 
-
+    this->initDone = true;
     return this->initDone;
 }
 
@@ -197,7 +199,7 @@ bool yarpWholeBodyModel::openDrivers(int bp)
     return false;
 }
 
-bool yarpWholeBodyModel::close()
+bool yarpWholeBodyModel::closeDrivers()
 {
     bool ok = true;
     for(int bp=0; bp < (int)controlBoardNames.size(); bp++ )
@@ -208,8 +210,12 @@ bool yarpWholeBodyModel::close()
             dd[bp] = 0;
         }
     }
-    //if(p_model) { delete p_model; p_model=0; }
     return ok;
+}
+
+bool yarpWholeBodyModel::close()
+{
+    return closeDrivers();
 }
 
 bool yarpWholeBodyModel::removeJoint(const wbi::ID &j)
@@ -354,47 +360,71 @@ bool yarpWholeBodyModel::convertGeneralizedTorques(yarp::sig::Vector idyntree_ba
     return true;
 }
 
+bool yarpWholeBodyModel::getJointLimitFromControlBoard(double *qMin, double *qMax, int joint)
+{
+            int controlBoardId = controlBoardAxisList[joint].first;
+            int index = controlBoardAxisList[joint].second;
+            assert(ilim[controlBoardId]!=NULL);
+            bool res = ilim[controlBoardId]->getLimits(index, qMin, qMax);
+            if(res)
+            {
+                *qMin = (*qMin) * CTRL_DEG2RAD;   // convert from deg to rad
+                *qMax = (*qMax) * CTRL_DEG2RAD;   // convert from deg to rad
+            }
+            return res;
+}
+
 bool yarpWholeBodyModel::getJointLimits(double *qMin, double *qMax, int joint)
 {
-    if( !this->initDone ) return false;
-    if( (joint < 0 || joint >= (int)jointIdList.size()) && joint != -1 ) { return false; }
-
-    if(joint>=0)
+    if( (joint < 0 || joint >= (int)jointIdList.size()) && joint != -1 )
     {
-        int controlBoardId = controlBoardAxisList[joint].first;
-        int index = controlBoardAxisList[joint].second;
-        assert(ilim[controlBoardId]!=NULL);
-        bool res = ilim[controlBoardId]->getLimits(index, qMin, qMax);
-        if(res)
-        {
-            *qMin = (*qMin) * CTRL_DEG2RAD;   // convert from deg to rad
-            *qMax = (*qMax) * CTRL_DEG2RAD;   // convert from deg to rad
-        }
-        return res;
+        return false;
     }
 
-    bool res = true;
-    int n = jointIdList.size();
-    for(int i=0; i<n; i++)
-        res = res && getJointLimits(qMin+i, qMax+i, i);
-    return res;
+    if( this->getLimitsFromControlBoard ) {
 
-    // OLD IMPLEMENTATION
-    //all_q_min = p_model->getJointBoundMin();
-    //all_q_max = p_model->getJointBoundMax();
+        bool ret = true;
+        for(int bp=0; bp < (int)controlBoardNames.size(); bp++ )
+        {
+            ret = ret && openDrivers(bp);
+        }
 
-    //if( joint == -1 ) {
-    //    //Get all joint limits
-    //    convertQ(all_q_min,qMin);
-    //    convertQ(all_q_max,qMax);
-    //} else {
-    //    //Get only a joint
-    //    LocalId loc_id = jointIdList.globalToLocalId(joint);
-    //    *qMin = all_q_min[p_model->getDOFIndex(loc_id.bodyPart,loc_id.index)];
-    //    *qMax = all_q_max[p_model->getDOFIndex(loc_id.bodyPart,loc_id.index)];
-    //}
-    //return true;
+        if( ret )
+        {
+            if(joint>=0)
+            {
+                ret = ret &&  getJointLimitFromControlBoard(qMin,qMax,joint);
+            }
+            else
+            {
+                int n = jointIdList.size();
+                for(int i=0; i<n; i++)
+                    ret = ret && getJointLimitFromControlBoard(qMin+i, qMax+i, i);
+            }
+        }
+
+        ret = ret && closeDrivers();
+
+        return ret;
+
+
+    } else {
+      // OLD IMPLEMENTATION
+      all_q_min = p_model->getJointBoundMin();
+      all_q_max = p_model->getJointBoundMax();
+
+      if( joint == -1 ) {
+         //Get all joint limits
+          convertQ(all_q_min,qMin);
+          convertQ(all_q_max,qMax);
+      } else {
+          *qMin = all_q_min[wbiToiDynTreeJointId[joint]];
+          *qMax = all_q_max[wbiToiDynTreeJointId[joint]];
+      }
+      return true;
+    }
 }
+
 
 bool yarpWholeBodyModel::computeH(double *q, const Frame &xBase, int linkId, Frame &H)
 {
