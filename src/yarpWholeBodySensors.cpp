@@ -162,7 +162,7 @@ bool yarpWholeBodySensors::init()
     //as depending on the accelerometer type we have to add some IMU to the system
     std::vector< AccelerometerConfigurationInfo > acc_infos;
     bool ret = this->loadAccelerometerInfoFromConfig(wbi_yarp_properties,sensorIdList[wbi::SENSOR_ACCELEROMETER],acc_infos);
-    if( ! ret )
+    if( ! ret || sensorIdList[wbi::SENSOR_ACCELEROMETER].size() != acc_infos.size()  )
     {
         std::cerr << "[ERR] yarpWholeBodySensors::init() error: failing in loading configuration of IMU and FT sensors." << std::endl;
         return false;
@@ -172,6 +172,7 @@ bool yarpWholeBodySensors::init()
     {
         if( acc_infos[acc_index].type == IMU_STYLE )
         {
+            //std::cout << "[INFO] adding imu " << acc_infos[acc_index].type_option << std::endl;
             sensorIdList[SENSOR_IMU].addID(acc_infos[acc_index].type_option);
         }
     }
@@ -457,14 +458,14 @@ bool yarpWholeBodySensors::loadAccelerometerInfoFromConfig(const Searchable& opt
     std::string accelerometers_info_group_name = "WBI_YARP_ACCELEROMETERS";
     yarp::os::Bottle info_lists = wbi_yarp_properties.findGroup(accelerometers_info_group_name);
     if( info_lists.isNull() || info_lists.size() == 0 ) {
-        if( infos.size() == 0 )
+        if( list.size() == 0 )
         {
             infos.resize(0);
             return true;
         }
         else
         {
-            std::cout << "yarpWbi::loadAccelerometerInfoFromConfig error: group "
+            std::cout << "[ERR] yarpWbi::loadAccelerometerInfoFromConfig error: group "
                       << accelerometers_info_group_name << " not found in yarpWholeBodyInterface configuration file."  << std::endl;
             return false;
         }
@@ -477,6 +478,7 @@ bool yarpWholeBodySensors::loadAccelerometerInfoFromConfig(const Searchable& opt
         wbi::ID acc_ID;
         list.indexToID(acc_index,acc_ID);
         yarp::os::Bottle * port = info_lists.find(acc_ID.toString()).asList();
+        //std::cout << port->toString() << std::endl;
         if( port == NULL
             || port->size() != 2
             || !(port->get(0).isString())
@@ -485,8 +487,8 @@ bool yarpWholeBodySensors::loadAccelerometerInfoFromConfig(const Searchable& opt
             std::cout << "yarpWbi::loadAccelerometerInfoFromConfig error: " << info_lists.toString() << " has a malformed element" << std::endl;
             return false;
         }
-        std::string accelerometer_type = port->get(1).asList()->get(0).asString();
-        std::string accelerometer_type_option = port->get(1).asList()->get(1).asString();
+        std::string accelerometer_type = port->get(0).asString();
+        std::string accelerometer_type_option = port->get(1).asString();
         if( accelerometer_type == "imu" )
         {
             infos[acc_index].type = IMU_STYLE;
@@ -510,10 +512,20 @@ bool yarpWholeBodySensors::openAccelerometer(const int acc_index, const Accelero
         case IMU_STYLE:
             int reference_imu_sensor_index;
             ret = sensorIdList[SENSOR_IMU].idToIndex(info.type_option,reference_imu_sensor_index);
+            if( !ret )
+            {
+                std::cerr << "yarpWholeBodySensors::openAccelerometer :  impossible to find IMU "
+                          << info.type_option << std::endl;
+                return false;
+            }
             accelerometersReferenceIndeces[acc_index].type = info.type;
             accelerometersReferenceIndeces[acc_index].type_reference_index = reference_imu_sensor_index;
+            break;
         default:
+            std::cerr << "yarpWholeBodySensors::openAccelerometer : unknown accelerometer type (only known type is IMU_STYLE: " << IMU_STYLE << " )"
+                          << info.type << std::endl;
             ret = false;
+            break;
     }
     return ret;
 }
@@ -911,6 +923,11 @@ bool yarpWholeBodySensors::convertIMU(double * wbi_imu_readings, const double * 
 bool yarpWholeBodySensors::readAccelerometer(const int accelerometer_index, double *acc, double *stamps, bool wait)
 {
     bool ret = true;
+    if( accelerometer_index >= (int)sensorIdList[wbi::SENSOR_ACCELEROMETER].size() || accelerometer_index < 0 )
+    {
+        return false;
+    }
+
     if( accelerometersReferenceIndeces[accelerometer_index].type == IMU_STYLE )
     {
         int accelerometer_imu_index = accelerometersReferenceIndeces[accelerometer_index].type_reference_index;
@@ -957,12 +974,13 @@ bool yarpWholeBodySensors::readIMU(const int imu_sensor_numeric_id, double *iner
 
 bool yarpWholeBodySensors::readFTsensor(const int ft_sensor_numeric_id, double *ftSens, double *stamps, bool wait)
 {
-    #ifndef NDEBUG
-    if( ft_sensor_numeric_id < 0 && ft_sensor_numeric_id >= (int)sensorIdList[SENSOR_FORCE_TORQUE].size() ) {
-        std::cerr << "yarpWholeBodySensors::readFTsensor(..) error: no port found for ft sensor " << ft_sensor_numeric_id  << std::endl;
+    if( ft_sensor_numeric_id < 0
+        || ft_sensor_numeric_id >= (int)sensorIdList[SENSOR_FORCE_TORQUE].size() )
+    {
+        std::cerr << "yarpWholeBodySensors::readFTsensor(..) error: no port found for ft sensor "
+                  << ft_sensor_numeric_id  << std::endl;
         return false;
     }
-    #endif
 
     Vector *v = portsFTsens[ft_sensor_numeric_id]->read(wait);
     if(v!=NULL) {

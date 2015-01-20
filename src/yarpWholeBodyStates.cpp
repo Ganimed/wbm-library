@@ -46,8 +46,8 @@ using namespace yarp::math;
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 yarpWholeBodyStates::yarpWholeBodyStates(const char* _name, const yarp::os::Property & opt):
-initDone(false), 
-name(_name), 
+initDone(false),
+name(_name),
 wbi_yarp_properties(opt),
 sensors(0),
 estimator(0)
@@ -783,7 +783,11 @@ void yarpWholeBodyEstimator::run()
                 toEigen(estimates.lastD2qM)
                     = this->joint_to_motor_kinematic_coupling*toEigen(estimates.lastD2q);
             }
+
+
         }
+
+        ///<
 
         ///< Read joint torque sensors
         if(sensors->readSensors(SENSOR_TORQUE, tauJ.data(), tauJStamps.data(), false))
