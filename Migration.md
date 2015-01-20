@@ -1,10 +1,10 @@
 ## yarpWholeBodyInterface 0.1 to 0.2
 
-The yarpWholeBodyInterface version 0.2 depends on wholeBodyInterface 0.2, that
-itself introduced a lot of changes in the wholeBodyInterface. yarpWholeBodyInterface
+The yarpWholeBodyInterface version 0.2 depends upon wholeBodyInterface 0.2, which
+introduced many changes in the wholeBodyInterface. yarpWholeBodyInterface
 specific changes are discussed in this file.
-In 0.2 we aim to provide a generic interface to yarp-powered robot, removing any
-iCub specific software, most of the changes are related to that.
+In 0.2 we aim at providing a generic interface to yarp-powered robot, removing any
+iCub specific software: most of the changes are related to this purpose.
 
 ### Namespace change
 The namespace for all the project changed from `wbiIcub` to `yarpWbi`
