@@ -390,7 +390,7 @@ bool yarpWholeBodyActuators::setControlModeSingleJoint(ControlMode controlMode, 
                 ok = icmd[bodyPart]->setControlMode(controlBoardJointAxis,VOCAB_CM_TORQUE);
                 if( ref )
                 {
-                    itrq[bodyPart]->setRefTorque(controlBoardAxis, *ref);
+                    itrq[bodyPart]->setRefTorque(controlBoardJointAxis, *ref);
                 }
                 break;
             case CTRL_MODE_MOTOR_PWM:
