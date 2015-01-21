@@ -470,16 +470,21 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
         {
             case CTRL_MODE_POS:
                 ret_value = ipos[bodyPart]->positionMove(controlBoardAxis, CTRL_RAD2DEG*(*ref));
+                break;
             case CTRL_MODE_DIRECT_POSITION:
                 ret_value = ipositionDirect[bodyPart]->setPosition(controlBoardAxis, CTRL_RAD2DEG*(*ref));
+                break;
             case CTRL_MODE_VEL:
                 ret_value = ivel[bodyPart]->velocityMove(controlBoardAxis, CTRL_RAD2DEG*(*ref));
+                break;
             case CTRL_MODE_TORQUE:
             {
                 ret_value = itrq[bodyPart]->setRefTorque(controlBoardAxis, *ref);
             }
+                break;
             case CTRL_MODE_MOTOR_PWM:
                 ret_value = iopl[bodyPart]->setRefOutput(controlBoardAxis, *ref);
+                break;
             default:
                 ret_value = false;
         }
