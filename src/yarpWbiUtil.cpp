@@ -20,13 +20,19 @@
 
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
 
+#include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
+
 static const std::string WBI_YARP_JOINTS_GROUP = "WBI_YARP_JOINTS";
 
 
 namespace yarpWbi
 {
 
-bool openPolyDriver(const std::string &localName, const std::string &robotName, yarp::dev::PolyDriver *&pd, const std::string &bodyPartName)
+bool openPolyDriver(const std::string &localName,
+                    const std::string &robotName,
+                    yarp::dev::PolyDriver *&pd,
+                    const std::string &bodyPartName)
 {
     std::string localPort  = "/" + localName + "/" + bodyPartName;
     std::string remotePort = "/" + robotName + "/" + bodyPartName;
@@ -41,10 +47,25 @@ bool openPolyDriver(const std::string &localName, const std::string &robotName, 
     pd = new yarp::dev::PolyDriver(options);
     if(!pd || !(pd->isValid()))
     {
-        std::fprintf(stderr,"Problems instantiating the device driver %s\n", bodyPartName.c_str());
+        yError("Problems instantiating the device driver %s\n", bodyPartName.c_str());
         return false;
     }
     return true;
+}
+
+bool closePolyDriver(yarp::dev::PolyDriver *&pd)
+{
+    if( !pd || !(pd->isValid()) )
+    {
+        return false;
+    }
+    bool ret = pd->close();
+
+    delete pd;
+
+    pd = 0;
+
+    return ret;
 }
 
 yarp::os::Bottle & getWBIYarpJointsOptions(yarp::os::Property & wbi_yarp_properties)
@@ -63,16 +84,16 @@ bool appendNewControlBoardsToVector(yarp::os::Bottle & joints_config,
 
         if( !joints_config.check(jnt_name.toString().c_str()) )
         {
-            std::cout << "[ERR] wholeBodyInterface error: joint " << jnt_name.toString() <<
-                         "[ERR]  not found in WBI_YARP_JOINTS section of configuration file " << std::endl;
+            yError() << "wholeBodyInterface error: joint " << jnt_name.toString() <<
+                         "not found in WBI_YARP_JOINTS section of configuration file ";
             return false;
         }
 
         yarp::os::Bottle * ctrlBoard_mapping = joints_config.find(jnt_name.toString().c_str()).asList();
         if( !ctrlBoard_mapping || ctrlBoard_mapping->size() != 2 )
         {
-            std::cout << "wholeBodyInterface error: joint " << jnt_name.toString() <<
-                         " found in WBI_YARP_JOINTS but is not in the canonical form (controlBoardName,axis)" << std::endl;
+            yError() << "wholeBodyInterface error: joint " << jnt_name.toString() <<
+                         " found in WBI_YARP_JOINTS but is not in the canonical form (controlBoardName,axis)";
             return false;
         }
 
@@ -104,7 +125,7 @@ bool getControlBoardAxisList(yarp::os::Bottle & joints_config,
 
         if( joints_config.find(wbi_jnt_name.toString().c_str()).isNull() )
         {
-            std::cerr << "[ERR] yarpWbiUtil error: joint " << wbi_jnt_name.toString() << " not found in WBI_YARP_JOINTS section " << std::endl;
+            yError() << "yarpWbiUtil error: joint " << wbi_jnt_name.toString() << " not found in WBI_YARP_JOINTS section ";
             return false;
         }
 
@@ -112,7 +133,7 @@ bool getControlBoardAxisList(yarp::os::Bottle & joints_config,
 
         if( ctrlBoard_mapping->size() != 2 )
         {
-            std::cerr << "[ERR] yarpWbiUtil error: joint " << wbi_jnt_name.toString() << " found in WBI_YARP_JOINTS section, but with wrong format " << std::endl;
+            yError() << "[ERR] yarpWbiUtil error: joint " << wbi_jnt_name.toString() << " found in WBI_YARP_JOINTS section, but with wrong format ";
             return false;
         }
 
