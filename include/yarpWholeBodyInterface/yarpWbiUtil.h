@@ -39,7 +39,12 @@ namespace yarpWbi
      * @param pd Pointer to the poly driver to instanciate.
      * @param bodyPartName Name of the body part for which to open the poly driver.
      * @return True if the operation succeeded, false otherwise. */
-    bool openPolyDriver(const std::string &localName, const std::string &robotName, yarp::dev::PolyDriver *&pd, const std::string &bodyPartName);
+    bool openPolyDriver(const std::string &localName, 
+                        const std::string &robotName, 
+                          yarp::dev::PolyDriver *&pd, 
+                        const std::string &bodyPartName);
+
+    bool closePolyDriver(yarp::dev::PolyDriver *&pd);
 
 
     /*
