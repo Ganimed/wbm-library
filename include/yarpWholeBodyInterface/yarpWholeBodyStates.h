@@ -28,7 +28,7 @@
 #include <iCub/ctrl/filters.h>
 #include <iCub/skinDynLib/skinContactList.h>
 
-#include <Eigen/Sparse>
+//#include <Eigen/Sparse>
 
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
 #include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
@@ -142,10 +142,10 @@ namespace yarpWbi
         estimates;
 
         /** Matrix such that m_dot = joint_kinematic_to_motor_kinematic_coupling*q_dot */
-        Eigen::SparseMatrix<double> joint_to_motor_kinematic_coupling;
+        Eigen::MatrixXd joint_to_motor_kinematic_coupling;
 
         /** Matrix such that tau_m = joint_kinematic_to_motor_kinematic_coupling*tau_joint */
-        Eigen::SparseMatrix<double> joint_to_motor_torque_coupling;
+        Eigen::MatrixXd joint_to_motor_torque_coupling;
 
         bool motor_quantites_estimation_enabled;
 

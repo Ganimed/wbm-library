@@ -24,7 +24,7 @@
 #include "yarpWholeBodyInterface/yarpWholeBodyStates.h"
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
 
-#include <Eigen/Sparse>
+//#include <Eigen/Sparse>
 #include <Eigen/LU>
 
 using namespace std;
@@ -175,13 +175,13 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
     }
 
     //Transform loaded coupling to the one actually needed
-    Eigen::SparseMatrix<double> I(encoders,encoders);
+    Eigen::MatrixXd I(encoders,encoders);
     I.setIdentity();
     double sparse_eps = 1e-3;
     Eigen::MatrixXd joint_to_motor_kinematic_coupling_dense = motor_to_joint_kinematic_coupling.inverse();
     Eigen::MatrixXd joint_to_motor_torque_coupling_dense = motor_to_joint_kinematic_coupling.transpose();
-    estimator->joint_to_motor_kinematic_coupling = joint_to_motor_kinematic_coupling_dense.sparseView(sparse_eps);
-    estimator->joint_to_motor_torque_coupling = joint_to_motor_torque_coupling_dense.sparseView(sparse_eps);
+    estimator->joint_to_motor_kinematic_coupling = joint_to_motor_kinematic_coupling_dense;//.sparseView(sparse_eps);
+    estimator->joint_to_motor_torque_coupling = joint_to_motor_torque_coupling_dense;//.sparseView(sparse_eps);
 
     estimator->motor_quantites_estimation_enabled = true;
 
