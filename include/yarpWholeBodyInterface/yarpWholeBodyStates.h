@@ -59,6 +59,12 @@ namespace yarpWbi
         iCub::ctrl::FirstOrderLowPassFilter *tauJFilt;  ///< low pass filter for joint torque
         iCub::ctrl::FirstOrderLowPassFilter *tauMFilt;  ///< low pass filter for motor torque
         iCub::ctrl::FirstOrderLowPassFilter *pwmFilt;   ///< low pass filter for motor PWM
+        
+        
+        int baseFrameLinkID; 	// ID of the assigned base frame for base to root rototranslation computation
+        wbi::iWholeBodyModel *wholeBodyModel;
+	
+        
 
         int dqFiltWL, d2qFiltWL;                    // window lengths of adaptive window filters
         double dqFiltTh, d2qFiltTh;                 // threshold of adaptive window filters
@@ -67,7 +73,14 @@ namespace yarpWbi
         double tauJCutFrequency;
         double tauMCutFrequency;
         double pwmCutFrequency;
-
+	
+	int robot_reference_frame_link;			//Reference link assigned as base frame
+	wbi::Frame rootLink_H_ReferenceLink;		//Rototranslation between Reference frame (assigned as world) and Root Link
+	wbi::Frame world_H_rootLink;			//Rototranslation between Root link and World
+	wbi::Frame world_H_reference;			//Rototranslation between Reference frame and world (future work)
+	wbi::Frame referenceLink_H_rootLink;		//Rototranslation between Root link and Reference frame
+	Eigen::Matrix4d H_w2b;				//Temporary matrix used for inversion
+	
         yarp::sig::Vector           q, qStamps;         // last joint position estimation
         yarp::sig::Vector           tauJ, tauJStamps;
         yarp::sig::Vector           pwm, pwmStamps;
@@ -138,6 +151,7 @@ namespace yarpWbi
             yarp::sig::Vector lastDtauM;                // last motor torque derivative
             yarp::sig::Vector lastPwm;                  // last motor PWM
             yarp::sig::Vector lastPwmBuffer;            // buffer for proper decoupling PWM readings
+            yarp::sig::Vector lastBasePos;		// last Position of Base
         }
         estimates;
 
@@ -151,7 +165,7 @@ namespace yarpWbi
 
         /** Constructor.
          */
-        yarpWholeBodyEstimator(int _period, yarpWbi::yarpWholeBodySensors *_sensors);
+        yarpWholeBodyEstimator(int _period, yarpWbi::yarpWholeBodySensors *_sensors, wbi::iWholeBodyModel *wholeBodyModelRef=NULL);
 
         bool lockAndSetEstimationParameter(const wbi::EstimateType et,
                                            const wbi::EstimationParameter ep,
@@ -165,8 +179,12 @@ namespace yarpWbi
         bool lockAndCopyVector(const yarp::sig::Vector &src, double *dest);
         /** Take the mutex and copy the i-th element of src into dest. */
         bool lockAndCopyVectorElement(int i, const yarp::sig::Vector &src, double *dest);
-
+	/** To be implemented **/
         bool setWorldBasePosition(const wbi::Frame & xB);
+	/** Sets a desired link as the world reference frame **/
+	bool setWorldBaseLinkName(std::string);
+	/** Computes the World to Root rototranslation for a give joint configuration **/
+	bool computeWorldRootRotoTranslation(double *q);
 
     };
 
@@ -208,11 +226,11 @@ namespace yarpWbi
         // For now we support motor quantites estimation by assuming a stiff actuation
         // and knowledge of the coupling matrix
         bool loadCouplingsFromConfigurationFile();
-
+	wbi::iWholeBodyModel *wholeBodyModel;
 
     public:
         // *** CONSTRUCTORS ***
-        yarpWholeBodyStates(const char* _name, const yarp::os::Property & _wbi_yarp_conf);
+        yarpWholeBodyStates(const char* _name, const yarp::os::Property & _wbi_yarp_conf, wbi::iWholeBodyModel *wholeBodyModelRef=NULL);
         virtual ~yarpWholeBodyStates();
 
         virtual bool init();

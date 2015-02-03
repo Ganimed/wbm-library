@@ -19,10 +19,13 @@
 #include <yarp/os/Time.h>
 #include <string>
 #include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
 #include <yarp/math/api.h>
 
 #include "yarpWholeBodyInterface/yarpWholeBodyStates.h"
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
+
+#include <wbi/iWholeBodyModel.h>
 
 //#include <Eigen/Sparse>
 #include <Eigen/LU>
@@ -45,14 +48,15 @@ using namespace yarp::math;
 //                                          ICUB WHOLE BODY STATES
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-yarpWholeBodyStates::yarpWholeBodyStates(const char* _name, const yarp::os::Property & opt):
-initDone(false),
-name(_name),
+yarpWholeBodyStates::yarpWholeBodyStates(const char* _name, const yarp::os::Property & opt,wbi::iWholeBodyModel *wholeBodyModelRef):
+initDone(false), 
+name(_name), 
 wbi_yarp_properties(opt),
 sensors(0),
 estimator(0)
 {
     estimateIdList.resize(wbi::ESTIMATE_TYPE_SIZE);
+    wholeBodyModel = wholeBodyModelRef;
 }
 
 bool yarpWholeBodyStates::setYarpWbiProperties(const yarp::os::Property & yarp_wbi_properties)
@@ -211,8 +215,20 @@ bool yarpWholeBodyStates::init()
     }
 
     sensors = new yarpWholeBodySensors(name.c_str(), wbi_yarp_properties);              // sensor interface
-    estimator = new yarpWholeBodyEstimator(ESTIMATOR_PERIOD, sensors);  // estimation thread
+    estimator = new yarpWholeBodyEstimator(ESTIMATOR_PERIOD, sensors,wholeBodyModel);  // estimation thread
 
+    //wb
+    if(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("WORLD_REFERENCE_FRAME"))
+    {
+     //yInf
+      yInfo()<<"\n\n\n\nFound world reference frame mention in yarpConfig. Setting as "<<wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str()<<"\n\n\n";
+      estimator->setWorldBaseLinkName(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str());      
+    }
+    else
+    {
+      yInfo()<<"\n\n\n\nDid not find WORLD_REFERENCE_FRAME option in config file\n\n\n";
+    }
+    
     //Add required sensors given the estimate list
     // TODO FIXME ugly, we should probably have a way to iterate on estimate type
     // indipendent from enum values
@@ -475,6 +491,9 @@ bool yarpWholeBodyStates::getEstimate(const EstimateType et, const int numeric_i
         return lockAndReadSensor(SENSOR_FORCE_TORQUE, numeric_id, data, time, blocking);
     case ESTIMATE_EXTERNAL_FORCE_TORQUE:
         return false; //lockAndGetExternalWrench(sid,data);
+   case ESTIMATE_BASE_POS:
+	return estimator->lockAndCopyVectorElement(numeric_id,estimator->estimates.lastBasePos,data);
+     //  return estimator->lockAndCopyVectorElement(numeric_id,estimator->lastBasePos ,data);
     default: break;
     }
     return false;
@@ -502,6 +521,7 @@ bool yarpWholeBodyStates::getEstimates(const EstimateType et, double *data, doub
     case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return estimator->lockAndCopyVector(estimator->estimates.lastDtauM, data);
     case ESTIMATE_MOTOR_PWM:                return lockAndReadSensors(SENSOR_PWM, data, time, blocking);
     //case ESTIMATE_IMU:                    return lockAndReadSensors(SENSOR_IMU, data, time, blocking);
+    case ESTIMATE_BASE_POS:		    return estimator->lockAndCopyVector(estimator->estimates.lastBasePos,data);
     case ESTIMATE_FORCE_TORQUE_SENSOR:      return lockAndReadSensors(SENSOR_FORCE_TORQUE, data, time, blocking);
     default: break;
     }
@@ -651,7 +671,7 @@ int yarpWholeBodyStates::lockAndGetSensorNumber(const SensorType st)
 //                                          ICUB WHOLE BODY ESTIMATOR
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period, yarpWholeBodySensors *_sensors)
+yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period, yarpWholeBodySensors *_sensors, wbi::iWholeBodyModel *wholeBodyModelRef)
 : RateThread(_period),
   sensors(_sensors),
   dqFilt(0),
@@ -660,9 +680,11 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period, yarpWholeBodySensors
   dTauMFilt(0),
   tauJFilt(0),
   tauMFilt(0),
-  motor_quantites_estimation_enabled(false)
+  motor_quantites_estimation_enabled(false)//,
   //ee_wrenches_enabled(false)
 {
+  
+    wholeBodyModel = wholeBodyModelRef;
     resizeAll(sensors->getSensorNumber(SENSOR_ENCODER));
 
     ///< Window lengths of adaptive window filters
@@ -681,6 +703,11 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period, yarpWholeBodySensors
     tauJCutFrequency    =   3.0;
     tauMCutFrequency    =   3.0;
     pwmCutFrequency     =   3.0;
+    
+    //default setting for refence frame as l_sole for icub to maintain backward compatibility
+    robot_reference_frame_link = 9;
+   
+      
 }
 
 bool yarpWholeBodyEstimator::threadInit()
@@ -703,7 +730,14 @@ bool yarpWholeBodyEstimator::threadInit()
 
     //H_world_base.resize(4,4);
     //H_world_base.eye();
-
+   
+ //   robot_reference_frame_link = 9; // Default value corresponds to l_sole to maintain backward compatibility.
+ /*
+    if(wholeBodyModel!=NULL)
+    {
+      wholeBodyModel->getFrameList().idToIndex("l_sole",robot_reference_frame_link);
+    }
+ */   
     /*
     right_gripper_local_id = wbi::ID(RIGHT_ARM,8);
     left_gripper_local_id = wbi::ID(LEFT_ARM,8);
@@ -760,13 +794,11 @@ void yarpWholeBodyEstimator::run()
         if(sensors->readSensors(SENSOR_ENCODER, q.data(), qStamps.data(), false))
         {
             estimates.lastQ = q;
-            
             AWPolyElement el;
             el.data = q;
-            el.time = yarp::os::Time::now();
+            el.time = qStamps[0];
             estimates.lastDq = dqFilt->estimate(el);
             estimates.lastD2q = d2qFilt->estimate(el);
-
 
             //if motor quantites are enabled, estimate also motor motor_quantities
             if( this->motor_quantites_estimation_enabled )
@@ -778,11 +810,7 @@ void yarpWholeBodyEstimator::run()
                 toEigen(estimates.lastD2qM)
                     = this->joint_to_motor_kinematic_coupling*toEigen(estimates.lastD2q);
             }
-
-
         }
-
-        ///<
 
         ///< Read joint torque sensors
         if(sensors->readSensors(SENSOR_TORQUE, tauJ.data(), tauJStamps.data(), false))
@@ -823,16 +851,8 @@ void yarpWholeBodyEstimator::run()
             estimates.lastPwm = estimates.lastPwmBuffer;
         }
 
-
-        ///< Read end effector wrenches
-        /*
-        if( ee_wrenches_enabled )
-        {
-            readEEWrenches(right_gripper_local_id,RAExtWrench);
-            readEEWrenches(left_gripper_local_id,LAExtWrench);
-            readEEWrenches(right_sole_local_id,RLExtWrench);
-            readEEWrenches(left_sole_local_id,LLExtWrench);
-        }*/
+        // Compute world to base 
+        computeWorldRootRotoTranslation(q.data());
     }
     mutex.post();
 
@@ -949,6 +969,7 @@ void yarpWholeBodyEstimator::resizeAll(int n)
     estimates.lastDtauM.resize(n);
     estimates.lastPwm.resize(n);
     estimates.lastPwmBuffer.resize(n);
+    estimates.lastBasePos.resize(12);
 }
 
 bool yarpWholeBodyEstimator::lockAndCopyVector(const Vector &src, double *dest)
@@ -1111,3 +1132,45 @@ bool yarpWholeBodyEstimator::setPwmCutFrequency(double fc)
 {
     return pwmFilt->setCutFrequency(fc);
 }
+
+bool yarpWholeBodyEstimator::computeWorldRootRotoTranslation(double *q_temp)
+{
+  if(wholeBodyModel!=NULL)
+  {
+      wholeBodyModel->computeH(q_temp,wbi::Frame::identity(),robot_reference_frame_link, rootLink_H_ReferenceLink);
+      rootLink_H_ReferenceLink.setToInverse().get4x4Matrix (H_w2b.data());
+      referenceLink_H_rootLink.set4x4Matrix (H_w2b.data());
+      world_H_rootLink = world_H_reference*referenceLink_H_rootLink ;
+      
+      int ctr;
+      
+      for (ctr=0;ctr<3;ctr++)
+      {
+	estimates.lastBasePos(ctr) = world_H_rootLink.p[ctr];	
+      }
+      for (ctr=0;ctr<9;ctr++)
+      {
+	estimates.lastBasePos(3+ctr) = world_H_rootLink.R.data[ctr];
+      }
+      return(true);
+  }
+  else
+    
+    return(false);
+}
+
+bool yarpWholeBodyEstimator::setWorldBaseLinkName(std::string linkName)
+{
+  if(wholeBodyModel!=NULL)
+  {
+    yInfo()<<"Reference link set as world was "<<robot_reference_frame_link;
+    wholeBodyModel->getFrameList().idToIndex(linkName.c_str(),robot_reference_frame_link);
+    yInfo()<<", now it is set to "<<robot_reference_frame_link<<"\n\n\n";
+    return(true);
+  }
+  else
+    return(false);
+
+}
+
+
