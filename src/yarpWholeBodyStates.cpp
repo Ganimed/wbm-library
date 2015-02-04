@@ -796,7 +796,7 @@ void yarpWholeBodyEstimator::run()
             estimates.lastQ = q;
             AWPolyElement el;
             el.data = q;
-            el.time = qStamps[0];
+            el.time = yarp::os::Time::now();
             estimates.lastDq = dqFilt->estimate(el);
             estimates.lastD2q = d2qFilt->estimate(el);
 
