@@ -38,9 +38,9 @@ namespace yarpWbi
      * @param pd Pointer to the poly driver to instanciate.
      * @param bodyPartName Name of the body part for which to open the poly driver.
      * @return True if the operation succeeded, false otherwise. */
-    bool openPolyDriver(const std::string &localName, 
-                        const std::string &robotName, 
-                          yarp::dev::PolyDriver *&pd, 
+    bool openPolyDriver(const std::string &localName,
+                        const std::string &robotName,
+                          yarp::dev::PolyDriver *&pd,
                         const std::string &bodyPartName);
 
     bool closePolyDriver(yarp::dev::PolyDriver *&pd);
@@ -59,9 +59,6 @@ namespace yarpWbi
 
     bool loadTreeSerializationFromConfig(yarp::os::Property & wbi_yarp_properties,
                                          KDL::CoDyCo::TreeSerialization& serialization);
-
-    bool loadTreePartitionFromConfig(yarp::os::Property & wbi_yarp_properties,
-                                     KDL::CoDyCo::TreePartition& serialization);
 
 
     bool loadJointsControlBoardFromConfig(yarp::os::Property & wbi_yarp_properties,
