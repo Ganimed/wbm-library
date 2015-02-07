@@ -27,7 +27,6 @@
 #include <cstdio>
 
 #include <kdl_codyco/treeserialization.hpp>
-#include <kdl_codyco/treepartition.hpp>
 
 /* CODE UNDER DEVELOPMENT */
 
