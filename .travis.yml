@@ -25,7 +25,7 @@ before_script:
   - export CMAKE_PREFIX_PATH=/home/travis/build/robotology/codyco-superbuild/build/install
   - cd ../..
   # go back to yarp-wholebodyinterface
-  - cd yarp-wholebodeyinterface
+  - cd yarp-wholebodyinterface
 
 script:
   - mkdir build
