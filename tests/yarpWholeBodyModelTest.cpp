@@ -29,6 +29,8 @@
 #include <cstdlib>
 
 #include <iostream>
+#include <set>
+
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace yarp::math;
@@ -47,6 +49,8 @@ bool checkInverseDynamicsAndMassMatrixConsistency(iWholeBodyModel * model_interf
                                                   const wbi::IDList & possible_joints,
                                                  double tol, bool verbose)
 {
+    std::set<int> added_joints;
+
     int nr_of_possible_joints = possible_joints.size();
 
     //Select the random number of considered joints
@@ -61,8 +65,10 @@ bool checkInverseDynamicsAndMassMatrixConsistency(iWholeBodyModel * model_interf
             if( nr_of_activated_joints < nr_of_considered_joints && yarp::math::Rand::scalar() < threshold ) {
                 ID id;
                 possible_joints.indexToID(j,id);
-                if( model_interface->addJoint(id) ) {
+                if( added_joints.find(j) == added_joints.end()  ) {
+                    model_interface->addJoint(id);
                     nr_of_activated_joints++;
+                    added_joints.insert(j);
                 }
             }
         }
@@ -90,6 +96,7 @@ bool checkInverseDynamicsAndMassMatrixConsistency(iWholeBodyModel * model_interf
     xB.p[1] = Rand::scalar();
     xB.p[2] = Rand::scalar();
 
+
     yarp::sig::Vector dxB = 2*M_PI*yarp::math::Rand::vector(6);
     yarp::sig::Vector ddxB = 2*M_PI*yarp::math::Rand::vector(6);
     yarp::sig::Vector g = yarp::math::Rand::vector(3);
@@ -97,8 +104,11 @@ bool checkInverseDynamicsAndMassMatrixConsistency(iWholeBodyModel * model_interf
     yarp::sig::Vector dtheta = 2*M_PI*yarp::math::Rand::vector(nr_of_considered_joints);
     yarp::sig::Vector ddtheta = 2*M_PI*yarp::math::Rand::vector(nr_of_considered_joints);
 
+
     yarp::sig::Vector dq =  cat(dxB,dtheta);
     yarp::sig::Vector ddq = cat(ddxB,ddtheta);
+
+
 
     //Create the outputs
     yarp::sig::Vector generalized_torques(6+nr_of_considered_joints);
@@ -120,6 +130,7 @@ bool checkInverseDynamicsAndMassMatrixConsistency(iWholeBodyModel * model_interf
     }
 
 
+    /*
     std::cout << "Mass Matrix:             " << std::endl << mass_matrix.toString() << std::endl;
     std::cout << "ddq:                     " << std::endl << ddq.toString() << std::endl;
     std::cout << "M*ddq                    " << std::endl << (mass_matrix*ddq).toString() << std::endl;
@@ -127,9 +138,10 @@ bool checkInverseDynamicsAndMassMatrixConsistency(iWholeBodyModel * model_interf
     std::cout << "bias:                    " << std::endl << generalized_bias_torques.toString() << std::endl;
 
     std::cout << "invDyn:                  " << std::endl << generalized_torques.toString() << std::endl;
+    */
 
     generalized_torques_computed_with_mass_matrix = mass_matrix*ddq + generalized_bias_torques;
-    std::cout << "invDyn with mass matrix: " << std::endl << generalized_torques_computed_with_mass_matrix.toString() << std::endl;
+    //std::cout << "invDyn with mass matrix: " << std::endl << generalized_torques_computed_with_mass_matrix.toString() << std::endl;
 
 
     for(int i = 0; i < (int)generalized_torques.size(); i++ ) {
@@ -158,17 +170,18 @@ bool checkInverseDynamicsAndMassMatrixConsistency(iWholeBodyModel * model_interf
 
     com_twist = com_jacobian*dq;
 
+    for(int i=0; i <= 2; i++) {
+        linear_momentum(i) = robotMass*com_twist(i);
+    }
+
     /*
     std::cout << "Com twist:               " << std::endl << com_twist.toString() << std::endl;
     std::cout << "centroidal_momentu       " << std::endl << centroidal_momentum.toString() << std::endl;
     std::cout << "robotmass                " << std::endl << robotMass << std::endl;
+    std::cout << "linear_momentu           " << std::endl << linear_momentum.toString() << std::endl;
     */
 
-    for(int i=0; i < 2; i++) {
-        linear_momentum(i) = robotMass*com_twist(i);
-    }
-
-    for(int i=0; i < 2; i++) {
+    for(int i=0; i <= 2; i++) {
         if( fabs(linear_momentum[i]-centroidal_momentum[i]) > tol ) {
             if( verbose ) { std::cout << "checkInverseDynamicsAndMassMatrixConsistency: component " << i << " of the linear momentum is different, failing" << std::endl; }
             return false;
