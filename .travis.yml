@@ -32,7 +32,7 @@ script:
   - cd build
   - cmake -DCODYCO_TRAVIS_CI:BOOL=ON -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} -DENABLE_TESTS:BOOL=ON -DNON_INTERACTIVE_BUILD:BOOL=TRUE ..
   - cmake --build . --config ${TRAVIS_BUILD_TYPE}
-  - ctest -VV
+  - ctest
 
 notifications:
   email:
