@@ -81,6 +81,9 @@ bool checkInverseDynamicsAndMassMatrixConsistency(iWholeBodyModel * model_interf
        std::cerr << "Model interface init failed, test failed\n" << std::endl;
     }
 
+    for( int local_check= 0; local_check < 10; local_check++ )
+    {
+
     assert(nr_of_activated_joints == nr_of_considered_joints);
     assert(nr_of_considered_joints == (int)model_interface->getJointList().size());
 
@@ -91,6 +94,7 @@ bool checkInverseDynamicsAndMassMatrixConsistency(iWholeBodyModel * model_interf
     wbi::Frame xB(wbi::Rotation::RPY(Rand::scalar(),Rand::scalar(),Rand::scalar()));
 
     //wbi::Frame xB;//(wbi::Rotation::rotX(M_PI));
+
 
     xB.p[0] = Rand::scalar();
     xB.p[1] = Rand::scalar();
@@ -105,6 +109,10 @@ bool checkInverseDynamicsAndMassMatrixConsistency(iWholeBodyModel * model_interf
     yarp::sig::Vector ddtheta = 2*M_PI*yarp::math::Rand::vector(nr_of_considered_joints);
 
 
+    //xB = wbi::Frame::identity();
+    //dxB.zero();
+
+
     yarp::sig::Vector dq =  cat(dxB,dtheta);
     yarp::sig::Vector ddq = cat(ddxB,ddtheta);
 
@@ -115,6 +123,8 @@ bool checkInverseDynamicsAndMassMatrixConsistency(iWholeBodyModel * model_interf
     yarp::sig::Vector generalized_torques_computed_with_mass_matrix(6+nr_of_considered_joints);
     yarp::sig::Vector generalized_bias_torques(6+nr_of_considered_joints);
     yarp::sig::Matrix mass_matrix(6+nr_of_considered_joints,6+nr_of_considered_joints);
+
+    mass_matrix.zero();
 
     if( !model_interface->inverseDynamics(theta.data(),xB,dtheta.data(),dxB.data(),ddtheta.data(),ddxB.data(),g.data(),generalized_torques.data()) ) {
         if( verbose ) { std::cout << "checkInverseDynamicsAndMassMatrixConsistency: inverseDynamics failed" << std::endl; }
@@ -130,7 +140,7 @@ bool checkInverseDynamicsAndMassMatrixConsistency(iWholeBodyModel * model_interf
     }
 
 
-    /*
+
     std::cout << "Mass Matrix:             " << std::endl << mass_matrix.toString() << std::endl;
     std::cout << "ddq:                     " << std::endl << ddq.toString() << std::endl;
     std::cout << "M*ddq                    " << std::endl << (mass_matrix*ddq).toString() << std::endl;
@@ -138,7 +148,7 @@ bool checkInverseDynamicsAndMassMatrixConsistency(iWholeBodyModel * model_interf
     std::cout << "bias:                    " << std::endl << generalized_bias_torques.toString() << std::endl;
 
     std::cout << "invDyn:                  " << std::endl << generalized_torques.toString() << std::endl;
-    */
+
 
     generalized_torques_computed_with_mass_matrix = mass_matrix*ddq + generalized_bias_torques;
     //std::cout << "invDyn with mass matrix: " << std::endl << generalized_torques_computed_with_mass_matrix.toString() << std::endl;
@@ -189,6 +199,8 @@ bool checkInverseDynamicsAndMassMatrixConsistency(iWholeBodyModel * model_interf
 
     }
 
+    }
+
     return true;
 }
 
@@ -197,7 +209,7 @@ int main(int argc, char * argv[])
     Property options;
     options.fromCommand(argc,argv);
 
-    int n_checks = 1000;
+    int n_checks = 10;
     if( options.check("n_checks") ) {
         n_checks = options.find("n_checks").asInt();
     }
