@@ -7,6 +7,10 @@ compiler:
 env:
   - TRAVIS_BUILD_TYPE=Debug, TRAVIS_CMAKE_GENERATOR="Unix Makefiles",
   - TRAVIS_BUILD_TYPE=Release, TRAVIS_CMAKE_GENERATOR="Unix Makefiles",
+  
+matrix:
+  allow_failures:
+    - compiler: clang
 
 before_script:
   - cd ..  
