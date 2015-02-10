@@ -110,7 +110,9 @@ bool yarpWholeBodyModel::init()
     std::string urdf_file_path = rf.findFile(urdf_file.c_str());
 
 
+    // Use the default kinematic base link
     std::string kinematic_base_link_name = "";
+
     std::vector<std::string> joint_names;
     joint_names.resize(0,"");
     dof = jointIdList.size();
@@ -127,7 +129,7 @@ bool yarpWholeBodyModel::init()
 
     a_base = omega_base = domega_base = v_base;
 
-    v_six_elems_base.resize(3,0.0);
+    v_six_elems_base.resize(6,0.0);
     a_six_elems_base.resize(6,0.0);
 
     //For now set the not actuate position to zero

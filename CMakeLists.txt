@@ -21,7 +21,7 @@ ycm_default_dirs(${VARS_PREFIX})
 option(CODYCO_USES_URDFDOM "Compile yarpWholeBodyInterface with URDF support" TRUE)
 option(COMPILE_AS_SHARED_LIBRARY "Compile ${PROJECT_NAME} as a shared library" TRUE)
 
-option(ENABLE_TESTS "Enable unit testing using Gazebo simulator" FALSE)
+option(ENABLE_TESTS "Enable unit testing" FALSE)
 
 
 add_definitions(-DIDYNTREE_USES_ICUB)

@@ -1,4 +1,4 @@
-yarpWholeBodyInterface
+yarpWholeBodyInterface [![Build Status](https://travis-ci.org/robotology-playground/yarp-wholebodyinterface.svg?branch=master)](https://travis-ci.org/robotology-playground/yarp-wholebodyinterface)
 ======================
 
 Implementation of the [wholeBodyInterface](https://github.com/robotology-playground/wholeBodyInterface) for YARP based robots.
