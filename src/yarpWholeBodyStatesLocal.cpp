@@ -620,20 +620,22 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     {
         yarp::os::Bottle * map_bot = bot.get(i).asList();
         if( map_bot->size() != 2 || map_bot->get(1).asList() == NULL ||
-            map_bot->get(1).asList()->size() != 2 )
+            map_bot->get(1).asList()->size() != 3 )
         {
             std::cerr << "[ERR] yarpWholeBodyStatesLocal error: IDYNTREE_SKINDYNLIB_LINKS group is malformed (" << map_bot->toString() << ")" << std::endl;
             return false;
         }
-        std::string link_name = map_bot->get(0).asString();
-        int body_part = map_bot->get(1).asList()->get(0).asInt();
-        int local_link_index = map_bot->get(1).asList()->get(1).asInt();
+        std::string iDynTree_link_name = map_bot->get(0).asString();
+        std::string iDynTree_skinFrame_name = map_bot->get(1).asList()->get(0).asString();
+        int skinDynLib_body_part = map_bot->get(1).asList()->get(1).asInt();
+        int skinDynLib_link_index = map_bot->get(1).asList()->get(2).asInt();
         model_mutex.wait();
-        bool ret_sdl = robot_estimation_model->addSkinDynLibAlias(link_name,body_part,local_link_index);
+        bool ret_sdl = robot_estimation_model->addSkinDynLibAlias(iDynTree_link_name,iDynTree_skinFrame_name,skinDynLib_body_part,skinDynLib_link_index);
         model_mutex.post();
         if( !ret_sdl )
         {
-            std::cerr << "[ERR] yarpWholeBodyStatesLocal error: IDYNTREE_SKINDYNLIB_LINKS link " << link_name << " not found in urdf model" << std::endl;
+            std::cerr << "[ERR] yarpWholeBodyStatesLocal error: IDYNTREE_SKINDYNLIB_LINKS link " << iDynTree_link_name
+                      << " and frame " << iDynTree_skinFrame_name << " and not found in urdf model" << std::endl;
             return false;
         }
     }
@@ -974,20 +976,21 @@ void yarpWholeBodyDynamicsEstimator::readSkinContacts()
     for(dynContactList::iterator it=dynContacts.begin();
         it != dynContacts.end(); it++ )
     {
-        int body_part = it->getBodyPart();
-        int local_link_index = it->getLinkNumber();
+        int skinDynLib_body_part = it->getBodyPart();
+        int skinDynLib_link_index = it->getLinkNumber();
         model_mutex.wait();
-        int link_index = robot_estimation_model->getLinkFromSkinDynLibID(body_part,local_link_index);
+        int iDynTree_link_index = -1;
+        int iDynTree_frame_index=  -1;
+        bool skinDynLibID_found = robot_estimation_model->skinDynLib2iDynTree(skinDynLib_body_part,skinDynLib_link_index,iDynTree_link_index,iDynTree_frame_index);
         model_mutex.post();
-        // \todo TODO FIXME properly address when you find an unexpcted contact id without crashing 
-        if( link_index < 0 )
+        // \todo TODO FIXME properly address when you find an unexpcted contact id without crashing
+        if( !skinDynLibID_found )
         {
-            fprintf(stdout,"yarpWholeBodyStatesLocal: unexpected contact from bodyPart %d link with local id %d",body_part,local_link_index);
-            yError("yarpWholeBodyStatesLocal: unexpected contact from bodyPart %d link with local id %d",body_part,local_link_index);
+            yError("yarpWholeBodyStatesLocal: unexpected contact from bodyPart %d link with local id %d",skinDynLib_body_part,skinDynLib_link_index);
         }
-        else 
+        else
         {
-            contacts_for_given_subtree[link2subtree[link_index]]++;
+            contacts_for_given_subtree[link2subtree[iDynTree_link_index]]++;
         }
     }
 
@@ -1010,22 +1013,23 @@ void yarpWholeBodyDynamicsEstimator::readSkinContacts()
 
 dynContact yarpWholeBodyDynamicsEstimator::getDefaultContact(const int subtree)
 {
-    int default_contact_link = torque_estimation_subtrees[subtree].default_contact_link;
+    int iDynTree_default_contact_link = torque_estimation_subtrees[subtree].default_contact_link;
 
     //std::cout << "default_contact_link" << default_contact_link << std::endl;
     model_mutex.wait();
     //std::cout << "Model: " << robot_estimation_model->getKDLUndirectedTree().getSerialization().toString() << std::endl;
     model_mutex.post();
-    int body_part = -1;
-    int local_link_index = -1;
+    int skinDynLib_body_part = -1;
+    int skinDynLib_link_index = -1;
+    int iDynTree_default_contact_link_skinFrame;
     model_mutex.wait();
-    YARP_ASSERT(robot_estimation_model->getSkinDynLibAlias(default_contact_link,body_part,local_link_index));
+    YARP_ASSERT(robot_estimation_model->getSkinDynLibAlias(iDynTree_default_contact_link,iDynTree_default_contact_link_skinFrame,skinDynLib_body_part,skinDynLib_link_index));
     model_mutex.post();
-    YARP_ASSERT(body_part != -1);
-    YARP_ASSERT(local_link_index != -1);
+    YARP_ASSERT(skinDynLib_body_part != -1);
+    YARP_ASSERT(skinDynLib_link_index != -1);
     dynContact return_value = dynContact();
-    return_value.setBodyPart((iCub::skinDynLib::BodyPart)body_part);
-    return_value.setLinkNumber(local_link_index);
+    return_value.setBodyPart((iCub::skinDynLib::BodyPart)skinDynLib_body_part);
+    return_value.setLinkNumber(skinDynLib_link_index);
     //std::cout << return_value.toString() << std::endl;
     return return_value;
 }
