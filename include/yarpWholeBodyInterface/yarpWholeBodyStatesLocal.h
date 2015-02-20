@@ -285,7 +285,14 @@ namespace yarpWbi
 
 
     /**
-     * Class to access the estimates, by doing a local estimation
+     * Class to access the estimates, by doing a local estimation.
+     * This class is similar to yarpWholeBodyStates, the only difference is that
+     * it does not rely on external torques measurement but it is estimating joint
+     * torques by fusing the measure of distributed 6-axis Force Torque sensors and
+     * the dynamical model of the robot.
+     *
+     * It should be used only in the wholeBodyDynamicsTree module.
+     *
      */
     class yarpWholeBodyStatesLocal : public wbi::iWholeBodyStates
     {
