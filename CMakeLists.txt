@@ -21,7 +21,7 @@ ycm_default_dirs(${VARS_PREFIX})
 option(CODYCO_USES_URDFDOM "Compile yarpWholeBodyInterface with URDF support" TRUE)
 option(COMPILE_AS_SHARED_LIBRARY "Compile ${PROJECT_NAME} as a shared library" TRUE)
 
-option(ENABLE_TESTS "Enable unit testing" FALSE)
+option(YARPWHOLEBODYINTERFACE_ENABLE_TESTS "Enable unit testing" FALSE)
 
 
 add_definitions(-DIDYNTREE_USES_ICUB)
@@ -108,9 +108,9 @@ install_basic_package_files(${PROJECT_NAME} VARS_PREFIX ${VARS_PREFIX}
 
 include(AddUninstallTarget)
 
-if(ENABLE_TESTS)
+if(YARPWHOLEBODYINTERFACE_ENABLE_TESTS)
 #enable testing
-include(CTest)
+#include(CTest)
 enable_testing()
 add_subdirectory(tests)
 endif()
