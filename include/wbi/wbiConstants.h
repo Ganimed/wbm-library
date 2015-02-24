@@ -52,7 +52,9 @@ namespace wbi
     enum SensorType
     {
         // JOINT SPACE SENSORS
-        SENSOR_ENCODER,         // joint encoder
+        SENSOR_ENCODER_POS,     // joint encoder position
+        SENSOR_ENCODER_SPEED,   // joint encoder speed
+        SENSOR_ENCODER_ACCELERATION, // joint encoder acceleration
         SENSOR_PWM,             // motor PWM (proportional to motor voltage)
         SENSOR_CURRENT,         // motor current
         SENSOR_TORQUE,          // joint torque
@@ -85,7 +87,7 @@ namespace wbi
     extern const SensorTypeDescription sensorTypeDescriptions[SENSOR_TYPE_SIZE];
 //    =
 //    {
-//    SensorTypeDescription(SENSOR_ENCODER,       "encoder",          1, true,  "Joint position"),
+//    SensorTypeDescription(SENSOR_ENCODER_POS,   "encoder",          1, true,  "Joint position"),
 //    SensorTypeDescription(SENSOR_PWM,           "PWM",              1, true,  "Motor PWM"),
 //    SensorTypeDescription(SENSOR_CURRENT,       "current",          1, true,  "Motor current"),
 //    SensorTypeDescription(SENSOR_TORQUE,        "torque",           1, true,  "Joint torque"),
