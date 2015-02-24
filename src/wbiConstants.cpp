@@ -5,6 +5,8 @@ namespace wbi {
     const SensorTypeDescription sensorTypeDescriptions[SENSOR_TYPE_SIZE] =
     {
         SensorTypeDescription(SENSOR_ENCODER_POS,   "position encoder", 1, true,  "Joint position"),
+        SensorTypeDescription(SENSOR_ENCODER_SPEED, "speed encoder",    1, true,  "Joint velocity"),
+        SensorTypeDescription(SENSOR_ENCODER_ACCELERATION, "acceleration encoder", 1, true,  "Joint acceleration"),
         SensorTypeDescription(SENSOR_PWM,           "PWM",              1, true,  "Motor PWM"),
         SensorTypeDescription(SENSOR_CURRENT,       "current",          1, true,  "Motor current"),
         SensorTypeDescription(SENSOR_TORQUE,        "torque",           1, true,  "Joint torque"),

@@ -64,7 +64,7 @@ namespace wbi
         SENSOR_FORCE_TORQUE,    // 6-axis force/torque
         SENSOR_ACCELEROMETER    // 3d linear acceleration
     };
-    const int SENSOR_TYPE_SIZE = 7; //number of elements in SensorType enum
+    const int SENSOR_TYPE_SIZE = 9; //number of elements in SensorType enum
 
     //TODO FIXME when we support C++11, add here a static_assert SENSOR_ACCELEROMETER + 1 = SENSOR_TYPE_SIZE
 
@@ -85,16 +85,6 @@ namespace wbi
 
     /** Descriptions of the available sensor types. */
     extern const SensorTypeDescription sensorTypeDescriptions[SENSOR_TYPE_SIZE];
-//    =
-//    {
-//    SensorTypeDescription(SENSOR_ENCODER_POS,   "encoder",          1, true,  "Joint position"),
-//    SensorTypeDescription(SENSOR_PWM,           "PWM",              1, true,  "Motor PWM"),
-//    SensorTypeDescription(SENSOR_CURRENT,       "current",          1, true,  "Motor current"),
-//    SensorTypeDescription(SENSOR_TORQUE,        "torque",           1, true,  "Joint torque"),
-//    SensorTypeDescription(SENSOR_IMU,           "IMU",              13, false, "Inertial Measurement Unit"),
-//    SensorTypeDescription(SENSOR_FORCE_TORQUE,  "force-torque",     6, false, "6-axis force torque"),
-//    SensorTypeDescription(SENSOR_ACCELEROMETER, "accelerometer",    3, false, "3d linear acceleration"),
-//    };
 
     /** List of available estimates. */
     enum EstimateType
