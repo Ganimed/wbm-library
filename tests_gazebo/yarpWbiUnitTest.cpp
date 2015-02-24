@@ -84,7 +84,7 @@ TEST_F(yarpWbInterfaceUnitTest, basicWbInterfaceLoadingTest)
 
   ASSERT_TRUE(doublePendulumWbi.addJoint(wbi::wbiId("upper_joint")));
   ASSERT_TRUE(doublePendulumWbi.addJoint(wbi::wbiId("lower_joint")));
-  //ASSERT_FALSE(doublePendulumWbi.addSensor(wbi::SENSOR_ENCODER,wbi::wbiId("third_joint")));
+  //ASSERT_FALSE(doublePendulumWbi.addSensor(wbi::SENSOR_ENCODER_POS,wbi::wbiId("third_joint")));
 
   //ASSERT_TRUE(doublePendulumWbi.addJoints(main_joints_lists));
 

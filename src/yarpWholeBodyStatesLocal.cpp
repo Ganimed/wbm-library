@@ -105,16 +105,16 @@ bool yarpWholeBodyStatesLocal::addEstimate(const EstimateType et, const ID &sid)
 {
     switch(et)
     {
-    case ESTIMATE_JOINT_POS:                return lockAndAddSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_JOINT_VEL:                return lockAndAddSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_JOINT_ACC:                return lockAndAddSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_JOINT_TORQUE:             return lockAndAddSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return lockAndAddSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_MOTOR_POS:                return lockAndAddSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_MOTOR_VEL:                return lockAndAddSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_MOTOR_ACC:                return lockAndAddSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_MOTOR_TORQUE:             return lockAndAddSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return lockAndAddSensor(SENSOR_ENCODER, sid);
+    case ESTIMATE_JOINT_POS:                return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_JOINT_VEL:                return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_JOINT_ACC:                return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_JOINT_TORQUE:             return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_MOTOR_POS:                return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_MOTOR_VEL:                return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_MOTOR_ACC:                return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_MOTOR_TORQUE:             return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
     case ESTIMATE_MOTOR_PWM:                return lockAndAddSensor(SENSOR_PWM, sid);
     case ESTIMATE_IMU:                      return lockAndAddSensor(SENSOR_IMU, sid);
     case ESTIMATE_FORCE_TORQUE_SENSOR:             return lockAndAddSensor(SENSOR_FORCE_TORQUE, sid);
@@ -128,16 +128,16 @@ int yarpWholeBodyStatesLocal::addEstimates(const EstimateType et, const IDList &
     //\todo TODO properly handle dependencies
     switch(et)
     {
-    case ESTIMATE_JOINT_POS:                return lockAndAddSensors(SENSOR_ENCODER, sids);
-    case ESTIMATE_JOINT_VEL:                return lockAndAddSensors(SENSOR_ENCODER, sids);
-    case ESTIMATE_JOINT_ACC:                return lockAndAddSensors(SENSOR_ENCODER, sids);
-    case ESTIMATE_JOINT_TORQUE:             return lockAndAddSensors(SENSOR_ENCODER, sids);
-    case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return lockAndAddSensors(SENSOR_ENCODER, sids);
-    case ESTIMATE_MOTOR_POS:                return lockAndAddSensors(SENSOR_ENCODER, sids);
-    case ESTIMATE_MOTOR_VEL:                return lockAndAddSensors(SENSOR_ENCODER, sids);
-    case ESTIMATE_MOTOR_ACC:                return lockAndAddSensors(SENSOR_ENCODER, sids);
-    case ESTIMATE_MOTOR_TORQUE:             return lockAndAddSensors(SENSOR_ENCODER, sids);
-    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return lockAndAddSensors(SENSOR_ENCODER, sids);
+    case ESTIMATE_JOINT_POS:                return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
+    case ESTIMATE_JOINT_VEL:                return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
+    case ESTIMATE_JOINT_ACC:                return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
+    case ESTIMATE_JOINT_TORQUE:             return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
+    case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
+    case ESTIMATE_MOTOR_POS:                return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
+    case ESTIMATE_MOTOR_VEL:                return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
+    case ESTIMATE_MOTOR_ACC:                return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
+    case ESTIMATE_MOTOR_TORQUE:             return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
+    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
     case ESTIMATE_MOTOR_PWM:                return lockAndAddSensors(SENSOR_PWM, sids);
     case ESTIMATE_IMU:                      return lockAndAddSensors(SENSOR_IMU, sids);
     case ESTIMATE_FORCE_TORQUE_SENSOR:      return lockAndAddSensors(SENSOR_FORCE_TORQUE, sids);
@@ -150,16 +150,16 @@ bool yarpWholeBodyStatesLocal::removeEstimate(const EstimateType et, const ID &s
 {
     switch(et)
     {
-    case ESTIMATE_JOINT_POS:                return lockAndRemoveSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_JOINT_VEL:                return lockAndRemoveSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_JOINT_ACC:                return lockAndRemoveSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_JOINT_TORQUE:             return lockAndRemoveSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return lockAndRemoveSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_MOTOR_POS:                return lockAndRemoveSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_MOTOR_VEL:                return lockAndRemoveSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_MOTOR_ACC:                return lockAndRemoveSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_MOTOR_TORQUE:             return lockAndRemoveSensor(SENSOR_ENCODER, sid);
-    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return lockAndRemoveSensor(SENSOR_ENCODER, sid);
+    case ESTIMATE_JOINT_POS:                return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_JOINT_VEL:                return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_JOINT_ACC:                return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_JOINT_TORQUE:             return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_MOTOR_POS:                return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_MOTOR_VEL:                return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_MOTOR_ACC:                return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_MOTOR_TORQUE:             return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
+    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
     case ESTIMATE_MOTOR_PWM:                return lockAndRemoveSensor(SENSOR_PWM, sid);
     case ESTIMATE_IMU:                      return lockAndRemoveSensor(SENSOR_IMU, sid);
     case ESTIMATE_FORCE_TORQUE_SENSOR:      return lockAndRemoveSensor(SENSOR_FORCE_TORQUE, sid);
@@ -172,16 +172,16 @@ const IDList& yarpWholeBodyStatesLocal::getEstimateList(const EstimateType et)
 {
     switch(et)
     {
-    case ESTIMATE_JOINT_POS:                return sensors->getSensorList(SENSOR_ENCODER);
-    case ESTIMATE_JOINT_VEL:                return sensors->getSensorList(SENSOR_ENCODER);
-    case ESTIMATE_JOINT_ACC:                return sensors->getSensorList(SENSOR_ENCODER);
-    case ESTIMATE_JOINT_TORQUE:             return sensors->getSensorList(SENSOR_ENCODER);
-    case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return sensors->getSensorList(SENSOR_ENCODER);
-    case ESTIMATE_MOTOR_POS:                return sensors->getSensorList(SENSOR_ENCODER);
-    case ESTIMATE_MOTOR_VEL:                return sensors->getSensorList(SENSOR_ENCODER);
-    case ESTIMATE_MOTOR_ACC:                return sensors->getSensorList(SENSOR_ENCODER);
-    case ESTIMATE_MOTOR_TORQUE:             return sensors->getSensorList(SENSOR_ENCODER);
-    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return sensors->getSensorList(SENSOR_ENCODER);
+    case ESTIMATE_JOINT_POS:                return sensors->getSensorList(SENSOR_ENCODER_POS);
+    case ESTIMATE_JOINT_VEL:                return sensors->getSensorList(SENSOR_ENCODER_POS);
+    case ESTIMATE_JOINT_ACC:                return sensors->getSensorList(SENSOR_ENCODER_POS);
+    case ESTIMATE_JOINT_TORQUE:             return sensors->getSensorList(SENSOR_ENCODER_POS);
+    case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return sensors->getSensorList(SENSOR_ENCODER_POS);
+    case ESTIMATE_MOTOR_POS:                return sensors->getSensorList(SENSOR_ENCODER_POS);
+    case ESTIMATE_MOTOR_VEL:                return sensors->getSensorList(SENSOR_ENCODER_POS);
+    case ESTIMATE_MOTOR_ACC:                return sensors->getSensorList(SENSOR_ENCODER_POS);
+    case ESTIMATE_MOTOR_TORQUE:             return sensors->getSensorList(SENSOR_ENCODER_POS);
+    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return sensors->getSensorList(SENSOR_ENCODER_POS);
     case ESTIMATE_MOTOR_PWM:                return sensors->getSensorList(SENSOR_PWM);
     case ESTIMATE_IMU:                      return sensors->getSensorList(SENSOR_IMU);
     case ESTIMATE_FORCE_TORQUE_SENSOR:      return sensors->getSensorList(SENSOR_FORCE_TORQUE);
@@ -194,16 +194,16 @@ int yarpWholeBodyStatesLocal::getEstimateNumber(const EstimateType et)
 {
     switch(et)
     {
-    case ESTIMATE_JOINT_POS:                return sensors->getSensorNumber(SENSOR_ENCODER);
-    case ESTIMATE_JOINT_VEL:                return sensors->getSensorNumber(SENSOR_ENCODER);
-    case ESTIMATE_JOINT_ACC:                return sensors->getSensorNumber(SENSOR_ENCODER);
-    case ESTIMATE_JOINT_TORQUE:             return sensors->getSensorNumber(SENSOR_ENCODER);
-    case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return sensors->getSensorNumber(SENSOR_ENCODER);
-    case ESTIMATE_MOTOR_POS:                return sensors->getSensorNumber(SENSOR_ENCODER);
-    case ESTIMATE_MOTOR_VEL:                return sensors->getSensorNumber(SENSOR_ENCODER);
-    case ESTIMATE_MOTOR_ACC:                return sensors->getSensorNumber(SENSOR_ENCODER);
-    case ESTIMATE_MOTOR_TORQUE:             return sensors->getSensorNumber(SENSOR_ENCODER);
-    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return sensors->getSensorNumber(SENSOR_ENCODER);
+    case ESTIMATE_JOINT_POS:                return sensors->getSensorNumber(SENSOR_ENCODER_POS);
+    case ESTIMATE_JOINT_VEL:                return sensors->getSensorNumber(SENSOR_ENCODER_POS);
+    case ESTIMATE_JOINT_ACC:                return sensors->getSensorNumber(SENSOR_ENCODER_POS);
+    case ESTIMATE_JOINT_TORQUE:             return sensors->getSensorNumber(SENSOR_ENCODER_POS);
+    case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return sensors->getSensorNumber(SENSOR_ENCODER_POS);
+    case ESTIMATE_MOTOR_POS:                return sensors->getSensorNumber(SENSOR_ENCODER_POS);
+    case ESTIMATE_MOTOR_VEL:                return sensors->getSensorNumber(SENSOR_ENCODER_POS);
+    case ESTIMATE_MOTOR_ACC:                return sensors->getSensorNumber(SENSOR_ENCODER_POS);
+    case ESTIMATE_MOTOR_TORQUE:             return sensors->getSensorNumber(SENSOR_ENCODER_POS);
+    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return sensors->getSensorNumber(SENSOR_ENCODER_POS);
     case ESTIMATE_MOTOR_PWM:                return sensors->getSensorNumber(SENSOR_PWM);
     case ESTIMATE_IMU:                      return sensors->getSensorNumber(SENSOR_IMU);
     case ESTIMATE_FORCE_TORQUE_SENSOR:      return sensors->getSensorNumber(SENSOR_FORCE_TORQUE);
@@ -310,7 +310,7 @@ bool yarpWholeBodyStatesLocal::getMotorVel(double *data, double time, bool block
 {
     bool res = estimator->lockAndCopyVector(estimator->estimates.lastDq, data);    ///< read joint vel
     if(!res) return false;
-    IDList idList = lockAndGetSensorList(SENSOR_ENCODER);
+    IDList idList = lockAndGetSensorList(SENSOR_ENCODER_POS);
     //int i=0;
     /*
      \todo TODO FIXME
@@ -426,7 +426,7 @@ yarpWholeBodyDynamicsEstimator::yarpWholeBodyDynamicsEstimator(int _period,
    wbi_yarp_conf(_wbi_yarp_conf)
 {
 
-    resizeAll(sensors->getSensorNumber(SENSOR_ENCODER));
+    resizeAll(sensors->getSensorNumber(SENSOR_ENCODER_POS));
     resizeFTs(sensors->getSensorNumber(SENSOR_FORCE_TORQUE));
     resizeIMUs(sensors->getSensorNumber(SENSOR_IMU));
 
@@ -491,7 +491,7 @@ yarpWholeBodyDynamicsEstimator::yarpWholeBodyDynamicsEstimator(int _period,
 
 bool yarpWholeBodyDynamicsEstimator::threadInit()
 {
-    resizeAll(sensors->getSensorNumber(SENSOR_ENCODER));
+    resizeAll(sensors->getSensorNumber(SENSOR_ENCODER_POS));
     resizeFTs(sensors->getSensorNumber(SENSOR_FORCE_TORQUE));
     resizeIMUs(sensors->getSensorNumber(SENSOR_IMU));
 
@@ -501,7 +501,7 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     dTauJFilt = new AWLinEstimator(dTauJFiltWL, dTauJFiltTh);
     dTauMFilt = new AWLinEstimator(dTauMFiltWL, dTauMFiltTh);
     ///< read sensors
-    bool ok = sensors->readSensors(SENSOR_ENCODER, estimates.lastQ.data(), qStamps.data(), true);
+    bool ok = sensors->readSensors(SENSOR_ENCODER_POS, estimates.lastQ.data(), qStamps.data(), true);
     ok = ok && sensors->readSensors(SENSOR_PWM, estimates.lastPwm.data(), 0, true);
 
     ///< create low pass filters
@@ -579,7 +579,7 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     std::string urdf_file_path = rf.findFileByName(urdf_file.c_str());
 
     std::vector<std::string> dof_serialization;
-    IDList torque_estimation_list = sensors->getSensorList(SENSOR_ENCODER);
+    IDList torque_estimation_list = sensors->getSensorList(SENSOR_ENCODER_POS);
     for(int dof=0; dof < (int)torque_estimation_list.size(); dof++)
     {
         ID wbi_id;
@@ -757,7 +757,7 @@ bool yarpWholeBodyDynamicsEstimator::threadInit()
     right_sole_frame_idyntree_id = robot_estimation_model->getLinkIndex(right_sole_frame_id.toString());
     //YARP_ASSERT(right_sole_frame_idyntree_id >= 0);
 
-    IDList available_encoders = sensors->getSensorList(wbi::SENSOR_ENCODER);
+    IDList available_encoders = sensors->getSensorList(wbi::SENSOR_ENCODER_POS);
     for(int i = 0; i < (int)available_encoders.size(); i++ )
     {
         ID enc;
@@ -777,14 +777,14 @@ void yarpWholeBodyDynamicsEstimator::run()
 {
     run_mutex.wait();
     //Temporary workaround: yarpWholeBodyStatesLocal needs all the DOF present in the dynamical model
-    if( sensors->getSensorNumber(wbi::SENSOR_ENCODER) != robot_estimation_model->getNrOfDOFs() )
+    if( sensors->getSensorNumber(wbi::SENSOR_ENCODER_POS) != robot_estimation_model->getNrOfDOFs() )
     {
-        IDList list = sensors->getSensorList(wbi::SENSOR_ENCODER);
+        IDList list = sensors->getSensorList(wbi::SENSOR_ENCODER_POS);
 
         std::cerr << "Available encoders: " << list.toString() << std::endl;
 
            std::cerr << "yarpWholeBodyDynamicsEstimator::run() error: " <<
-                  sensors->getSensorNumber(wbi::SENSOR_ENCODER) << " joint sensors are available, while  " <<
+                  sensors->getSensorNumber(wbi::SENSOR_ENCODER_POS) << " joint sensors are available, while  " <<
                   robot_estimation_model->getNrOfDOFs() << " joints are present in the model " << std::endl;
         assert(false);
         return;
@@ -793,12 +793,12 @@ void yarpWholeBodyDynamicsEstimator::run()
     ///< \todo improve robustness: what if a sensor dies or stop working? interface should warn the user
     mutex.wait();
     {
-        resizeAll(sensors->getSensorNumber(SENSOR_ENCODER));
+        resizeAll(sensors->getSensorNumber(SENSOR_ENCODER_POS));
         resizeFTs(sensors->getSensorNumber(SENSOR_FORCE_TORQUE));
         resizeIMUs(sensors->getSensorNumber(SENSOR_IMU));
 
         ///< Read encoders
-        if(sensors->readSensors(SENSOR_ENCODER, q.data(), qStamps.data(), false))
+        if(sensors->readSensors(SENSOR_ENCODER_POS, q.data(), qStamps.data(), false))
         {
             estimates.lastQ = q;
             AWPolyElement el;

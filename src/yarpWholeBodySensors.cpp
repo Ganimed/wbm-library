@@ -69,7 +69,7 @@ bool yarpWholeBodySensors::init()
 
     //Get encoders
     #ifndef NDEBUG
-    std::cout << "[INFO] yarpWholeBodySensors: initializing with " << sensorIdList[wbi::SENSOR_ENCODER].size() << " encoders " <<
+    std::cout << "[INFO] yarpWholeBodySensors: initializing with " << sensorIdList[wbi::SENSOR_ENCODER_POS].size() << " encoders " <<
                                                                sensorIdList[wbi::SENSOR_PWM].size() << " pwm sensors " <<
                                                                sensorIdList[wbi::SENSOR_FORCE_TORQUE].size() << " F/T sensors " <<
                                                                sensorIdList[wbi::SENSOR_IMU].size() << " IMUs " << std::endl;
@@ -94,7 +94,7 @@ bool yarpWholeBodySensors::init()
 
     yarp::os::Bottle & joints_config = getWBIYarpJointsOptions(wbi_yarp_properties);
     controlBoardNames.clear();
-    initDone = appendNewControlBoardsToVector(joints_config,sensorIdList[wbi::SENSOR_ENCODER],controlBoardNames);
+    initDone = appendNewControlBoardsToVector(joints_config,sensorIdList[wbi::SENSOR_ENCODER_POS],controlBoardNames);
     initDone = initDone && appendNewControlBoardsToVector(joints_config,sensorIdList[wbi::SENSOR_PWM],controlBoardNames);
     initDone = initDone && appendNewControlBoardsToVector(joints_config,sensorIdList[wbi::SENSOR_TORQUE],controlBoardNames);
     if( !initDone )
@@ -115,7 +115,7 @@ bool yarpWholeBodySensors::init()
     pwmLastRead.resize(nrOfControlBoards);
     torqueSensorsLastRead.resize(nrOfControlBoards);
 
-    getControlBoardAxisList(joints_config,sensorIdList[wbi::SENSOR_ENCODER],controlBoardNames,encoderControlBoardAxisList);
+    getControlBoardAxisList(joints_config,sensorIdList[wbi::SENSOR_ENCODER_POS],controlBoardNames,encoderControlBoardAxisList);
     getControlBoardAxisList(joints_config,sensorIdList[wbi::SENSOR_PWM],controlBoardNames,pwmControlBoardAxisList);
     getControlBoardAxisList(joints_config,sensorIdList[wbi::SENSOR_TORQUE],controlBoardNames,torqueControlBoardAxisList);
 
@@ -371,7 +371,7 @@ bool yarpWholeBodySensors::readSensor(const SensorType st, const int sid, double
 {
     switch(st)
     {
-    case SENSOR_ENCODER:        return readEncoder(sid, data, stamps, blocking);
+    case SENSOR_ENCODER_POS:        return readEncoder(sid, data, stamps, blocking);
     case SENSOR_PWM:            return readPwm(sid, data, stamps, blocking);
     case SENSOR_IMU:            return readIMU(sid, data, stamps, blocking);
     case SENSOR_FORCE_TORQUE:   return readFTsensor(sid, data, stamps, blocking);
@@ -386,7 +386,7 @@ bool yarpWholeBodySensors::readSensors(const SensorType st, double *data, double
 {
     switch(st)
     {
-    case SENSOR_ENCODER:        return readEncoders(data, stamps, blocking);
+    case SENSOR_ENCODER_POS:        return readEncoders(data, stamps, blocking);
     case SENSOR_PWM:            return readPwms(data, stamps, blocking);
     case SENSOR_IMU:            return readIMUs(data, stamps, blocking);
     case SENSOR_FORCE_TORQUE:   return readFTsensors(data, stamps, blocking);
@@ -662,7 +662,7 @@ bool yarpWholeBodySensors::readEncoders(double *q, double *stamps, bool wait)
     }
 
      //Copy readed data in the output vector
-    for(int encNumericId = 0; encNumericId < (int)sensorIdList[SENSOR_ENCODER].size(); encNumericId++)
+    for(int encNumericId = 0; encNumericId < (int)sensorIdList[SENSOR_ENCODER_POS].size(); encNumericId++)
     {
         int encControlBoard = encoderControlBoardAxisList[encNumericId].first;
         int encAxis = encoderControlBoardAxisList[encNumericId].second;
