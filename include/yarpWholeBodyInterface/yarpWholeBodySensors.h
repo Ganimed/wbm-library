@@ -151,6 +151,8 @@ namespace yarpWbi
 
 
         virtual bool readEncoder(const int id, double *q, double *stamps=0, bool wait=true);
+        virtual bool readEncoderSpeed(const int id, double *dq, double *stamps=0, bool wait=true);
+        virtual bool readEncoderAcceleration(const int id, double *d2q, double *stamps=0, bool wait=true);
         virtual bool readPwm(const int id, double *pwm, double *stamps=0, bool wait=true);
         virtual bool readIMU(const int id, double *inertial, double *stamps=0, bool wait=true);
         virtual bool readFTsensor(const int id, double *ftSens, double *stamps=0, bool wait=true);
@@ -158,6 +160,8 @@ namespace yarpWbi
         virtual bool readAccelerometer(const int id, double *acc, double *stamps=0, bool wait=true);
 
         virtual bool readEncoders(double *q, double *stamps=0, bool wait=true);
+        virtual bool readEncoderSpeeds(double *dq, double *stamps=0, bool wait=true);
+        virtual bool readEncoderAccelerations(double *d2q, double *stamps=0, bool wait=true);
         virtual bool readPwms(double *pwm, double *stamps=0, bool wait=true);
         virtual bool readIMUs(double *inertial, double *stamps=0, bool wait=true);
         virtual bool readFTsensors(double *ftSens, double *stamps=0, bool wait=true);

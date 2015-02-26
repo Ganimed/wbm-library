@@ -794,11 +794,33 @@ void yarpWholeBodyEstimator::run()
         if(sensors->readSensors(SENSOR_ENCODER_POS, q.data(), qStamps.data(), false))
         {
             estimates.lastQ = q;
+            
+            // in case we estimate the speeds and accelerations instead of reading them
             AWPolyElement el;
             el.data = q;
             el.time = yarp::os::Time::now();
-            estimates.lastDq = dqFilt->estimate(el);
-            estimates.lastD2q = d2qFilt->estimate(el);
+            
+            /* If the encoders speeds/accelerations estimation by the firmware are enabled
+            read these values from the controlboard. */
+            if(this->readingSpeedAccFromControlboardEnabled
+               && speedAccReadFromControlBoard = sensors->readSensors(SENSOR_ENCODER_SPEED, dq.data(), qStamps.data(), false))
+            {
+                estimates.lastDq = dq;
+            }
+            else
+            {
+                estimates.lastDq = dqFilt->estimate(el);
+            }
+            
+            if(this->readingSpeedAccFromControlboardEnabled
+               && speedAccReadFromControlBoard = sensors->readSensors(SENSOR_ENCODER_ACCELERATION, d2q.data(), qStamps.data(), false))
+            {
+                estimates.lastD2q = d2q;
+            }
+            else
+            {
+                estimates.lastD2q = d2qFilt->estimate(el);
+            {
 
             //if motor quantites are enabled, estimate also motor motor_quantities
             if( this->motor_quantites_estimation_enabled )

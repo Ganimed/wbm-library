@@ -371,7 +371,9 @@ bool yarpWholeBodySensors::readSensor(const SensorType st, const int sid, double
 {
     switch(st)
     {
-    case SENSOR_ENCODER_POS:        return readEncoder(sid, data, stamps, blocking);
+    case SENSOR_ENCODER_POS:           return readEncoder(sid, data, stamps, blocking);
+    case SENSOR_ENCODER_SPEED:         return readEncoderSpeed(sid, data, stamps, blocking);
+    case SENSOR_ENCODER_ACCELERATION:  return readEncoderAcceleration(sid, data, stamps, blocking);
     case SENSOR_PWM:            return readPwm(sid, data, stamps, blocking);
     case SENSOR_IMU:            return readIMU(sid, data, stamps, blocking);
     case SENSOR_FORCE_TORQUE:   return readFTsensor(sid, data, stamps, blocking);
@@ -386,7 +388,9 @@ bool yarpWholeBodySensors::readSensors(const SensorType st, double *data, double
 {
     switch(st)
     {
-    case SENSOR_ENCODER_POS:        return readEncoders(data, stamps, blocking);
+    case SENSOR_ENCODER_POS:           return readEncoders(data, stamps, blocking);
+    case SENSOR_ENCODER_SPEED:         return readEncoderSpeeds(data, stamps, blocking);
+    case SENSOR_ENCODER_ACCELERATION:  return readEncoderAccelerations(data, stamps, blocking);
     case SENSOR_PWM:            return readPwms(data, stamps, blocking);
     case SENSOR_IMU:            return readIMUs(data, stamps, blocking);
     case SENSOR_FORCE_TORQUE:   return readFTsensors(data, stamps, blocking);

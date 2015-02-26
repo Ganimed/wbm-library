@@ -81,7 +81,7 @@ namespace yarpWbi
 	wbi::Frame referenceLink_H_rootLink;		//Rototranslation between Root link and Reference frame
 	Eigen::Matrix4d H_w2b;				//Temporary matrix used for inversion
 	
-        yarp::sig::Vector           q, qStamps;         // last joint position estimation
+        yarp::sig::Vector           q, dq, d2q, qStamps;         // last joint position estimation
         yarp::sig::Vector           tauJ, tauJStamps;
         yarp::sig::Vector           pwm, pwmStamps;
 
@@ -161,6 +161,8 @@ namespace yarpWbi
         /** Matrix such that tau_m = joint_kinematic_to_motor_kinematic_coupling*tau_joint */
         Eigen::MatrixXd joint_to_motor_torque_coupling;
 
+        bool readingSpeedAccFromControlboardEnabled;
+        
         bool motor_quantites_estimation_enabled;
 
         /** Constructor.
