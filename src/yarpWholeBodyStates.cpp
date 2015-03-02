@@ -241,9 +241,13 @@ bool yarpWholeBodyStates::init()
         switch(et)
         {
             case ESTIMATE_JOINT_POS:
-            case ESTIMATE_JOINT_VEL:
-            case ESTIMATE_JOINT_ACC:
                 sensors->addSensors(SENSOR_ENCODER_POS, estimateIdList[et]);
+                break;
+            case ESTIMATE_JOINT_VEL:
+                sensors->addSensors(SENSOR_ENCODER_SPEED, estimateIdList[et]);
+                break;
+            case ESTIMATE_JOINT_ACC:
+                sensors->addSensors(SENSOR_ENCODER_ACCELERATION, estimateIdList[et]);
                 break;
 
             case ESTIMATE_JOINT_TORQUE:
@@ -411,8 +415,8 @@ const IDList& yarpWholeBodyStates::getEstimateList(const EstimateType et)
     switch(et)
     {
     case ESTIMATE_JOINT_POS:                return sensors->getSensorList(SENSOR_ENCODER_POS);
-    case ESTIMATE_JOINT_VEL:                return sensors->getSensorList(SENSOR_ENCODER_POS);
-    case ESTIMATE_JOINT_ACC:                return sensors->getSensorList(SENSOR_ENCODER_POS);
+    case ESTIMATE_JOINT_VEL:                return sensors->getSensorList(SENSOR_ENCODER_SPEED);
+    case ESTIMATE_JOINT_ACC:                return sensors->getSensorList(SENSOR_ENCODER_ACCELERATION);
     case ESTIMATE_JOINT_TORQUE:             return sensors->getSensorList(SENSOR_TORQUE);
     case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return sensors->getSensorList(SENSOR_TORQUE);
     case ESTIMATE_MOTOR_POS:                return estimateIdList[ESTIMATE_MOTOR_POS];
@@ -803,7 +807,7 @@ void yarpWholeBodyEstimator::run()
             /* If the encoders speeds/accelerations estimation by the firmware are enabled
             read these values from the controlboard. */
             if(this->readingSpeedAccFromControlboardEnabled
-               && speedAccReadFromControlBoard = sensors->readSensors(SENSOR_ENCODER_SPEED, dq.data(), qStamps.data(), false))
+               && sensors->readSensors(SENSOR_ENCODER_SPEED, dq.data(), qStamps.data(), false))
             {
                 estimates.lastDq = dq;
             }
@@ -813,14 +817,14 @@ void yarpWholeBodyEstimator::run()
             }
             
             if(this->readingSpeedAccFromControlboardEnabled
-               && speedAccReadFromControlBoard = sensors->readSensors(SENSOR_ENCODER_ACCELERATION, d2q.data(), qStamps.data(), false))
+               && sensors->readSensors(SENSOR_ENCODER_ACCELERATION, d2q.data(), qStamps.data(), false))
             {
                 estimates.lastD2q = d2q;
             }
             else
             {
                 estimates.lastD2q = d2qFilt->estimate(el);
-            {
+            }
 
             //if motor quantites are enabled, estimate also motor motor_quantities
             if( this->motor_quantites_estimation_enabled )

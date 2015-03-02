@@ -371,9 +371,9 @@ bool yarpWholeBodySensors::readSensor(const SensorType st, const int sid, double
 {
     switch(st)
     {
-    case SENSOR_ENCODER_POS:           return readEncoder(sid, data, stamps, blocking);
-    case SENSOR_ENCODER_SPEED:         return readEncoderSpeed(sid, data, stamps, blocking);
-    case SENSOR_ENCODER_ACCELERATION:  return readEncoderAcceleration(sid, data, stamps, blocking);
+    case SENSOR_ENCODER_POS:           return readEncoder(ENCODER_POS, sid, data, stamps, blocking);
+    case SENSOR_ENCODER_SPEED:         return readEncoder(ENCODER_SPEED, sid, data, stamps, blocking);
+    case SENSOR_ENCODER_ACCELERATION:  return readEncoder(ENCODER_ACCELERATION, sid, data, stamps, blocking);
     case SENSOR_PWM:            return readPwm(sid, data, stamps, blocking);
     case SENSOR_IMU:            return readIMU(sid, data, stamps, blocking);
     case SENSOR_FORCE_TORQUE:   return readFTsensor(sid, data, stamps, blocking);
@@ -388,9 +388,9 @@ bool yarpWholeBodySensors::readSensors(const SensorType st, double *data, double
 {
     switch(st)
     {
-    case SENSOR_ENCODER_POS:           return readEncoders(data, stamps, blocking);
-    case SENSOR_ENCODER_SPEED:         return readEncoderSpeeds(data, stamps, blocking);
-    case SENSOR_ENCODER_ACCELERATION:  return readEncoderAccelerations(data, stamps, blocking);
+    case SENSOR_ENCODER_POS:           return readEncoders(ENCODER_POS, data, stamps, blocking);
+    case SENSOR_ENCODER_SPEED:         return readEncoders(ENCODER_SPEED, data, stamps, blocking);
+    case SENSOR_ENCODER_ACCELERATION:  return readEncoders(ENCODER_ACCELERATION, data, stamps, blocking);
     case SENSOR_PWM:            return readPwms(data, stamps, blocking);
     case SENSOR_IMU:            return readIMUs(data, stamps, blocking);
     case SENSOR_FORCE_TORQUE:   return readFTsensors(data, stamps, blocking);
@@ -623,10 +623,20 @@ bool yarpWholeBodySensors::openTorqueSensor(const int bp)
 
 /**************************** READ ************************/
 
-bool yarpWholeBodySensors::readEncoders(double *q, double *stamps, bool wait)
+bool yarpWholeBodySensors::getEncodersPosSpeedAccTimed(const EncoderType st, yarp::dev::IEncodersTimed* ienc, double *encs, double *time)
+{
+    switch (st) {
+        case ENCODER_POS:          return ienc->getEncodersTimed(encs, time);
+        case ENCODER_SPEED:        return ienc->getEncodersTimed(encs, time);
+        case ENCODER_ACCELERATION: return ienc->getEncodersTimed(encs, time);
+        default:                   return false;
+    }
+}
+
+bool yarpWholeBodySensors::readEncoders(const EncoderType st, double *data, double *stamps, bool wait)
 {
     //std::cout << "|||||||||| Read encoders " << std::endl;
-    double qTemp[MAX_NJ], tTemp[MAX_NJ];
+    double dataTemp[MAX_NJ], tTemp[MAX_NJ];
     bool res = true, update=false;
 
      //Read data from all controlboards
@@ -635,12 +645,12 @@ bool yarpWholeBodySensors::readEncoders(double *q, double *stamps, bool wait)
     {
         // read data
         // std::cout << "|||||||||| getEncodersTimed " << std::endl;
-        qTemp[0] = -10.0;
-        qTemp[1] = -10.0;
+        dataTemp[0] = -10.0;
+        dataTemp[1] = -10.0;
         double waiting_time = 0;
-        while( !(update=ienc[*ctrlBoard]->getEncodersTimed(qTemp, tTemp)) && wait)
+        while( !(update=getEncodersPosSpeedAccTimed(st, ienc[*ctrlBoard], dataTemp, tTemp)) && wait)
         {
-            //std::cout << "waitign " << qTemp[0] << " " << qTemp[1] << std::endl;
+            //std::cout << "waitign " << dataTemp[0] << " " << dataTemp[1] << std::endl;
             Time::delay(WAIT_TIME);
             waiting_time += WAIT_TIME;
 
@@ -656,8 +666,8 @@ bool yarpWholeBodySensors::readEncoders(double *q, double *stamps, bool wait)
         {
             for(int axis=0; axis < (int)qLastRead[*ctrlBoard].size(); axis++ )
             {
-                //std::cout << "read qTemp : " << qTemp[axis] << std::endl;
-                qLastRead[*ctrlBoard][axis] = CTRL_DEG2RAD*qTemp[axis];
+                //std::cout << "read dataTemp : " << dataTemp[axis] << std::endl;
+                qLastRead[*ctrlBoard][axis] = CTRL_DEG2RAD*dataTemp[axis];
                 qStampLastRead[*ctrlBoard][axis] = tTemp[axis];
             }
         }
@@ -670,7 +680,7 @@ bool yarpWholeBodySensors::readEncoders(double *q, double *stamps, bool wait)
     {
         int encControlBoard = encoderControlBoardAxisList[encNumericId].first;
         int encAxis = encoderControlBoardAxisList[encNumericId].second;
-        q[encNumericId] = qLastRead[encControlBoard][encAxis];
+        data[encNumericId] = qLastRead[encControlBoard][encAxis];
         if(stamps!=0)
                 stamps[encNumericId] = qStampLastRead[encControlBoard][encAxis];
     }
@@ -835,17 +845,17 @@ bool yarpWholeBodySensors::readTorqueSensors(double *jointSens, double *stamps, 
     return res || wait;
 }
 
-bool yarpWholeBodySensors::readEncoder(const int encoder_numeric_id, double *q, double *stamps, bool wait)
+bool yarpWholeBodySensors::readEncoder(const EncoderType st, const int encoder_numeric_id, double *data, double *stamps, bool wait)
 {
     bool update=false;
     int encoderCtrlBoard = encoderControlBoardAxisList[encoder_numeric_id].first;
     int encoderCtrlBoardAxis = encoderControlBoardAxisList[encoder_numeric_id].second;
 
-    double qTemp[MAX_NJ], tTemp[MAX_NJ];
+    double dataTemp[MAX_NJ], tTemp[MAX_NJ];
 
     // read encoders
     double waiting_time = 0;
-    while( !(update=ienc[encoderCtrlBoard]->getEncodersTimed(qTemp,tTemp)) && wait)
+    while( !(update=getEncodersPosSpeedAccTimed(st, ienc[encoderCtrlBoard], dataTemp, tTemp)) && wait)
     {
         Time::delay(WAIT_TIME);
 
@@ -862,14 +872,14 @@ bool yarpWholeBodySensors::readEncoder(const int encoder_numeric_id, double *q, 
     {
           for(int axis=0; axis < (int)qLastRead[encoderCtrlBoard].size(); axis++ )
           {
-                //std::cout << "read qTemp : " << qTemp[axis] << std::endl;
-                qLastRead[encoderCtrlBoard][axis] = CTRL_DEG2RAD*qTemp[axis];
+                //std::cout << "read dataTemp : " << dataTemp[axis] << std::endl;
+                qLastRead[encoderCtrlBoard][axis] = CTRL_DEG2RAD*dataTemp[axis];
                 qStampLastRead[encoderCtrlBoard][axis] = tTemp[axis];
           }
     }
 
     // copy most recent data into output variables
-    q[0] = qLastRead[encoderCtrlBoard][encoderCtrlBoardAxis];
+    data[0] = qLastRead[encoderCtrlBoard][encoderCtrlBoardAxis];
     if(stamps!=0)
         stamps[0] = qStampLastRead[encoderCtrlBoard][encoderCtrlBoardAxis];
 
