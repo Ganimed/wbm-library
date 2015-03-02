@@ -803,7 +803,7 @@ void yarpWholeBodyDynamicsEstimator::run()
             estimates.lastQ = q;
             AWPolyElement el;
             el.data = q;
-            el.time = qStamps[0];
+            el.time = yarp::os::Time::now();
             estimates.lastDq = dqFilt->estimate(el);
             estimates.lastD2q = d2qFilt->estimate(el);
 
@@ -853,7 +853,7 @@ void yarpWholeBodyDynamicsEstimator::run()
         //std::cout << "Angular velocity used for acceleration estimation " <<  estimates.lastIMUs[0].subVector(7,9).toString() << std::endl;
         AWPolyElement el;
         el.data = omega_used_IMU = estimates.lastIMUs[0].subVector(7,9);
-        el.time = IMUStamps[0];
+        el.time = yarp::os::Time::now();
 
         domega_used_IMU = imuAngularAccelerationFilt->estimate(el);
 
