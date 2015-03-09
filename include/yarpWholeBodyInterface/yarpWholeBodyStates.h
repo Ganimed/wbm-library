@@ -59,12 +59,12 @@ namespace yarpWbi
         iCub::ctrl::FirstOrderLowPassFilter *tauJFilt;  ///< low pass filter for joint torque
         iCub::ctrl::FirstOrderLowPassFilter *tauMFilt;  ///< low pass filter for motor torque
         iCub::ctrl::FirstOrderLowPassFilter *pwmFilt;   ///< low pass filter for motor PWM
-        
-        
+
+
         int baseFrameLinkID; 	// ID of the assigned base frame for base to root rototranslation computation
         wbi::iWholeBodyModel *wholeBodyModel;
-	
-        
+
+
 
         int dqFiltWL, d2qFiltWL;                    // window lengths of adaptive window filters
         double dqFiltTh, d2qFiltTh;                 // threshold of adaptive window filters
@@ -73,15 +73,15 @@ namespace yarpWbi
         double tauJCutFrequency;
         double tauMCutFrequency;
         double pwmCutFrequency;
-	
+
 	int robot_reference_frame_link;			//Reference link assigned as base frame
 	wbi::Frame rootLink_H_ReferenceLink;		//Rototranslation between Reference frame (assigned as world) and Root Link
 	wbi::Frame world_H_rootLink;			//Rototranslation between Root link and World
 	wbi::Frame world_H_reference;			//Rototranslation between Reference frame and world (future work)
 	wbi::Frame referenceLink_H_rootLink;		//Rototranslation between Root link and Reference frame
 	Eigen::Matrix4d H_w2b;				//Temporary matrix used for inversion
-	
-        yarp::sig::Vector           q, qStamps;         // last joint position estimation
+
+        yarp::sig::Vector           q, dq, d2q, qStamps;         // last joint position estimation
         yarp::sig::Vector           tauJ, tauJStamps;
         yarp::sig::Vector           pwm, pwmStamps;
 
@@ -161,6 +161,8 @@ namespace yarpWbi
         /** Matrix such that tau_m = joint_kinematic_to_motor_kinematic_coupling*tau_joint */
         Eigen::MatrixXd joint_to_motor_torque_coupling;
 
+        bool readSpeedAccFromControlBoard;
+
         bool motor_quantites_estimation_enabled;
 
         /** Constructor.
@@ -190,7 +192,17 @@ namespace yarpWbi
 
 
     /**
-     * Class to access the estimates of the states of iCub.
+     * Class to access the estimates of the state of an YARP robot.
+     * You can configure this object with a yarp::os::Property object, that you can
+     * pass to the constructor or to the setYarpWbiProperties method.
+     * The option that this Property object should contain are:
+     *
+     * | Parameter name | Type | Units | Default Value | Required | Description | Notes |
+     * |:--------------:|:------:|:-----:|:-------------:|:--------:|:-----------:|:-----:|
+     * | readSpeedAccFromControlBoard | string | - | - | No | If present, read speeds and accelerations from the low level controlboards instead of using an high level numerical derivative.  |  |
+     *
+     * Furthermore for accessing joint sensors, the property should contain all the information used
+     * for configuring a a yarpWholeBodyActuators object.
      */
     class yarpWholeBodyStates : public wbi::iWholeBodyStates
     {
