@@ -49,8 +49,8 @@ using namespace yarp::math;
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 yarpWholeBodyStates::yarpWholeBodyStates(const char* _name, const yarp::os::Property & opt,wbi::iWholeBodyModel *wholeBodyModelRef):
-initDone(false), 
-name(_name), 
+initDone(false),
+name(_name),
 wbi_yarp_properties(opt),
 sensors(0),
 estimator(0)
@@ -222,13 +222,24 @@ bool yarpWholeBodyStates::init()
     {
      //yInf
       yInfo()<<"\n\n\n\nFound world reference frame mention in yarpConfig. Setting as "<<wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str()<<"\n\n\n";
-      estimator->setWorldBaseLinkName(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str());      
+      estimator->setWorldBaseLinkName(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str());
     }
     else
     {
       yInfo()<<"\n\n\n\nDid not find WORLD_REFERENCE_FRAME option in config file\n\n\n";
     }
-    
+
+    if( wbi_yarp_properties.check("readSpeedAccFromControlBoard") )
+    {
+        yInfo() << "yarpWholeBodyStates : readSpeedAccFromControlBoard option found, reading velocities and accelerations from controlboard";
+        estimator->readSpeedAccFromControlBoard = true;
+    }
+    else
+    {
+        yInfo() << "yarpWholeBodyStates : readSpeedAccFromControlBoard option not found, reading velocities and accelerations from high level numerical derivatives";
+        estimator->readSpeedAccFromControlBoard = false;
+    }
+
     //Add required sensors given the estimate list
     // TODO FIXME ugly, we should probably have a way to iterate on estimate type
     // indipendent from enum values
@@ -275,6 +286,7 @@ bool yarpWholeBodyStates::init()
 
     // Load joint coupling information
     this->loadCouplingsFromConfigurationFile();
+
 
     // Initialized sensor interface
     bool ok = sensors->init();              // initialize sensor interface
@@ -687,7 +699,7 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period, yarpWholeBodySensors
   motor_quantites_estimation_enabled(false)//,
   //ee_wrenches_enabled(false)
 {
-  
+
     wholeBodyModel = wholeBodyModelRef;
     resizeAll(sensors->getSensorNumber(SENSOR_ENCODER_POS));
 
@@ -707,11 +719,11 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period, yarpWholeBodySensors
     tauJCutFrequency    =   3.0;
     tauMCutFrequency    =   3.0;
     pwmCutFrequency     =   3.0;
-    
+
     //default setting for refence frame as l_sole for icub to maintain backward compatibility
     robot_reference_frame_link = 9;
-   
-      
+
+
 }
 
 bool yarpWholeBodyEstimator::threadInit()
@@ -734,14 +746,14 @@ bool yarpWholeBodyEstimator::threadInit()
 
     //H_world_base.resize(4,4);
     //H_world_base.eye();
-   
+
  //   robot_reference_frame_link = 9; // Default value corresponds to l_sole to maintain backward compatibility.
  /*
     if(wholeBodyModel!=NULL)
     {
       wholeBodyModel->getFrameList().idToIndex("l_sole",robot_reference_frame_link);
     }
- */   
+ */
     /*
     right_gripper_local_id = wbi::ID(RIGHT_ARM,8);
     left_gripper_local_id = wbi::ID(LEFT_ARM,8);
@@ -798,31 +810,25 @@ void yarpWholeBodyEstimator::run()
         if(sensors->readSensors(SENSOR_ENCODER_POS, q.data(), qStamps.data(), false))
         {
             estimates.lastQ = q;
-            
+
             // in case we estimate the speeds and accelerations instead of reading them
             AWPolyElement el;
             el.data = q;
             el.time = yarp::os::Time::now();
-            
+
             /* If the encoders speeds/accelerations estimation by the firmware are enabled
             read these values from the controlboard. */
-            if(this->readingSpeedAccFromControlboardEnabled
-               && sensors->readSensors(SENSOR_ENCODER_SPEED, dq.data(), qStamps.data(), false))
+            if(this->readSpeedAccFromControlBoard )
             {
+                sensors->readSensors(SENSOR_ENCODER_SPEED, dq.data(), 0, false);
+                sensors->readSensors(SENSOR_ENCODER_ACCELERATION, d2q.data(), 0, false);
+
                 estimates.lastDq = dq;
-            }
-            else
-            {
-                estimates.lastDq = dqFilt->estimate(el);
-            }
-            
-            if(this->readingSpeedAccFromControlboardEnabled
-               && sensors->readSensors(SENSOR_ENCODER_ACCELERATION, d2q.data(), qStamps.data(), false))
-            {
                 estimates.lastD2q = d2q;
             }
             else
             {
+                estimates.lastDq = dqFilt->estimate(el);
                 estimates.lastD2q = d2qFilt->estimate(el);
             }
 
@@ -877,7 +883,7 @@ void yarpWholeBodyEstimator::run()
             estimates.lastPwm = estimates.lastPwmBuffer;
         }
 
-        // Compute world to base 
+        // Compute world to base
         computeWorldRootRotoTranslation(q.data());
     }
     mutex.post();
@@ -1167,12 +1173,12 @@ bool yarpWholeBodyEstimator::computeWorldRootRotoTranslation(double *q_temp)
       rootLink_H_ReferenceLink.setToInverse().get4x4Matrix (H_w2b.data());
       referenceLink_H_rootLink.set4x4Matrix (H_w2b.data());
       world_H_rootLink = world_H_reference*referenceLink_H_rootLink ;
-      
+
       int ctr;
-      
+
       for (ctr=0;ctr<3;ctr++)
       {
-	estimates.lastBasePos(ctr) = world_H_rootLink.p[ctr];	
+	estimates.lastBasePos(ctr) = world_H_rootLink.p[ctr];
       }
       for (ctr=0;ctr<9;ctr++)
       {
@@ -1181,7 +1187,7 @@ bool yarpWholeBodyEstimator::computeWorldRootRotoTranslation(double *q_temp)
       return(true);
   }
   else
-    
+
     return(false);
 }
 
