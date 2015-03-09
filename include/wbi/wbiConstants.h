@@ -66,7 +66,7 @@ namespace wbi
     };
     const int SENSOR_TYPE_SIZE = 9; //number of elements in SensorType enum
     // Legacy value (deprecated)
-    const int SENSOR_ENCODER = SENSOR_ENCODER_POS;
+    extern const SensorType SENSOR_ENCODER;
 
     //TODO FIXME when we support C++11, add here a static_assert SENSOR_ACCELEROMETER + 1 = SENSOR_TYPE_SIZE
 

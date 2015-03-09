@@ -1,7 +1,9 @@
 #include "wbiConstants.h"
 
 namespace wbi {
-    
+
+    const SensorType SENSOR_ENCODER = SENSOR_ENCODER_POS;
+
     const SensorTypeDescription sensorTypeDescriptions[SENSOR_TYPE_SIZE] =
     {
         SensorTypeDescription(SENSOR_ENCODER_POS,   "position encoder", 1, true,  "Joint position"),
@@ -14,8 +16,8 @@ namespace wbi {
         SensorTypeDescription(SENSOR_FORCE_TORQUE,  "force-torque",     6, false, "6-axis force torque"),
         SensorTypeDescription(SENSOR_ACCELEROMETER, "accelerometer",    3, false, "3d linear acceleration"),
     };
-    
-    
+
+
     SensorTypeDescription::SensorTypeDescription(SensorType _id, std::string _name, int _dataSize, bool _isJoint, std::string _descr)
     : id(_id)
     , name(_name)
@@ -23,10 +25,10 @@ namespace wbi {
     , dataSize(_dataSize)
     , isJointSensor(_isJoint)
     {}
-    
+
     bool SensorTypeDescription::operator ==(const SensorTypeDescription &st)
     {
         return st.id == this->id;
     }
-    
+
 }
