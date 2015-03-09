@@ -76,6 +76,7 @@ namespace yarpWbi
         yarpWholeBodyActuators  *actuatorInt;
         yarpWholeBodyModel      *modelInt;
         yarpWholeBodyStates     *stateInt;
+        yarpWholeBodyModel      *modelForStateInt;
 
         wbi::IDList empty_id_list;
 
@@ -99,7 +100,7 @@ namespace yarpWbi
         virtual bool getYarpWbiProperties(yarp::os::Property & yarp_wbi_properties);
 
 
-        inline virtual ~yarpWholeBodyInterface(){ close(); }
+        virtual ~yarpWholeBodyInterface();
         virtual bool init();
         virtual bool close();
         virtual bool removeJoint(const wbi::ID &j);
