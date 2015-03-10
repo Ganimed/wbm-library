@@ -32,11 +32,6 @@ using namespace iCub::skinDynLib;
 #define MAX_NJ 20
 #define WAIT_TIME 0.001
 
-// iterate over all body parts
-#define FOR_ALL_BODY_PARTS(itBp)            FOR_ALL_BODY_PARTS_OF(itBp, jointIdList)
-// iterate over all joints of all body parts
-#define FOR_ALL(itBp, itJ)                  FOR_ALL_OF(itBp, itJ, jointIdList)
-
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 //                                          YARP WHOLE BODY INTERFACE
