@@ -587,7 +587,7 @@ bool yarpWholeBodyModel::forwardKinematics(double *q, const Frame &xB, int linkI
     x[1] = H_result(1,3);
     x[2] = H_result(2,3);
 
-    axisangle = iCub::ctrl::dcm2axis(H_result.submatrix(0,2,0,2));
+    axisangle = dcm2axis(H_result.submatrix(0,2,0,2));
 
     x[3] = axisangle(0);
     x[4] = axisangle(1);
