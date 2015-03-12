@@ -799,6 +799,23 @@
     <child link="WEIGHT-1KG-1"/>
     <dynamics damping="0.1"/>
   </joint>
+  <!-- DH frame for correctly expressing skin contacts -->
+  <link name="l_foot_dh_frame"/>
+  <joint name="l_foot_dh_frame_fixed_joint" type="fixed">
+    <origin xyz="9.72e-05 0 0.014399" rpy="0.0 1.5708 0.0"/>
+    <parent link="l_foot"/>
+    <child link="l_foot_dh_frame"/>
+    <dynamics damping="0.1"/>
+  </joint>  
+  <link name="r_foot_dh_frame"/>
+  <joint name="r_foot_dh_frame_fixed_joint" type="fixed">
+    <origin xyz="0 0 0.0144000000055" rpy="0.0 1.5708 0.0"/>
+    <parent link="r_foot"/>
+    <child link="r_foot_dh_frame"/>
+    <dynamics damping="0.1"/>
+  </joint>
+
+  <!-- Gazebo tags --> 
   <gazebo reference="l_leg_ft_sensor">
     <sensor name="l_leg_ft_sensor" type="force_torque">
       <always_on>1</always_on>
