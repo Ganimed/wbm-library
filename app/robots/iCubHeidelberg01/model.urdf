@@ -631,6 +631,8 @@
     <child link="imu_frame"/>
     <dynamics damping="0.1"/>
   </joint>
+  <!-- Optional weights -->
+  <!-- 
   <link name="WEIGHT-1KG-4">
     <inertial>
       <origin xyz="-1e-06 1.46e-05 -1e-06" rpy="0 0 0"/>
@@ -799,6 +801,7 @@
     <child link="WEIGHT-1KG-1"/>
     <dynamics damping="0.1"/>
   </joint>
+  -->
   <!-- DH frame for correctly expressing skin contacts -->
   <link name="l_foot_dh_frame"/>
   <joint name="l_foot_dh_frame_fixed_joint" type="fixed">
