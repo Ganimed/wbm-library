@@ -52,7 +52,7 @@
   </link>
   <joint name="r_hip_pitch" type="revolute">
     <origin xyz="0.0064515 0.0111 -0.119913" rpy="1.57079632679 0 -1.57079632679"/>
-    <axis xyz="1.0 0.0 0.0"/>
+    <axis xyz="-1.0 0.0 0.0"/>
     <parent link="root_link"/>
     <child link="r_hip_1"/>
     <limit effort="50000" lower="-0.523598775598" upper="1.4835298642" velocity="50000"/>
@@ -82,7 +82,7 @@
   </link>
   <joint name="r_hip_roll" type="revolute">
     <origin xyz="-0.059 0 -0.0263622" rpy="0 0 0"/>
-    <axis xyz="0.0 0.0 1.0"/>
+    <axis xyz="0.0 0.0 -1.0"/>
     <parent link="r_hip_1"/>
     <child link="r_hip_2"/>
     <limit effort="50000" lower="0.0" upper="1.57079632679" velocity="50000"/>
@@ -454,7 +454,7 @@
   </link>
   <joint name="l_ankle_pitch" type="revolute">
     <origin xyz="-0.021343 -0.200983719847 0.00294927094483" rpy="2.4080004131e-05 0 0"/>
-    <axis xyz="1.0 0.0 0.0"/>
+    <axis xyz="-1.0 0.0 0.0"/>
     <parent link="l_lower_leg"/>
     <child link="l_ankle_1"/>
     <limit effort="50000" lower="-0.349065850399" upper="0.523598775598" velocity="50000"/>
