@@ -41,6 +41,16 @@ namespace yarpWbi
 {
     enum AccelerometerType { IMU_STYLE };
 
+    /** List of available encoder types. */
+    enum EncoderType
+    {
+        /* Position Encoder and its speed/acceleration estimation
+         by the control board firmware */
+        ENCODER_POS,
+        ENCODER_SPEED,
+        ENCODER_ACCELERATION
+    };
+    
     /**
      * Struct for holding information about loaded accelerometers
      */
@@ -150,19 +160,21 @@ namespace yarpWbi
         bool convertIMU(double * wbi_inertial_readings, const double * yarp_inertial_readings);
 
 
-        virtual bool readEncoder(const int id, double *q, double *stamps=0, bool wait=true);
+        virtual bool readEncoder(const EncoderType st, const int id, double *data, double *stamps=0, bool wait=true);
         virtual bool readPwm(const int id, double *pwm, double *stamps=0, bool wait=true);
         virtual bool readIMU(const int id, double *inertial, double *stamps=0, bool wait=true);
         virtual bool readFTsensor(const int id, double *ftSens, double *stamps=0, bool wait=true);
         virtual bool readTorqueSensor(const int id, double *jointTorque, double *stamps=0, bool wait=true);
         virtual bool readAccelerometer(const int id, double *acc, double *stamps=0, bool wait=true);
 
-        virtual bool readEncoders(double *q, double *stamps=0, bool wait=true);
+        virtual bool readEncoders(const EncoderType st, double *data, double *stamps=0, bool wait=true);
         virtual bool readPwms(double *pwm, double *stamps=0, bool wait=true);
         virtual bool readIMUs(double *inertial, double *stamps=0, bool wait=true);
         virtual bool readFTsensors(double *ftSens, double *stamps=0, bool wait=true);
         virtual bool readTorqueSensors(double *jointTorques, double *stamps=0, bool wait=true);
         virtual bool readAccelerometers(double *accs, double *stamps=0, bool wait=true);
+        
+        bool getEncodersPosSpeedAccTimed(const EncoderType st, yarp::dev::IEncodersTimed* ienc, double *encs, double *time);
 
     public:
         /**

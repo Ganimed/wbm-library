@@ -32,11 +32,6 @@ using namespace iCub::skinDynLib;
 #define MAX_NJ 20
 #define WAIT_TIME 0.001
 
-// iterate over all body parts
-#define FOR_ALL_BODY_PARTS(itBp)            FOR_ALL_BODY_PARTS_OF(itBp, jointIdList)
-// iterate over all joints of all body parts
-#define FOR_ALL(itBp, itJ)                  FOR_ALL_OF(itBp, itJ, jointIdList)
-
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 //                                          YARP WHOLE BODY INTERFACE
@@ -47,14 +42,22 @@ yarpWholeBodyInterface::yarpWholeBodyInterface(const char* _name,
 {
     actuatorInt = new yarpWholeBodyActuators((_name+string("actuator")).c_str(),_yarp_wbi_properties);
     modelInt = new yarpWholeBodyModel((_name+string("model")).c_str(), _yarp_wbi_properties);
-    stateInt = new yarpWholeBodyStates((_name+string("state")).c_str(), _yarp_wbi_properties,modelInt);
+    modelForStateInt = new yarpWholeBodyModel((_name+string("model")).c_str(), _yarp_wbi_properties);
+    stateInt = new yarpWholeBodyStates((_name+string("state")).c_str(), _yarp_wbi_properties,modelForStateInt);
 }
+
+yarpWholeBodyInterface::~yarpWholeBodyInterface()
+{
+    close();
+}
+
 
 bool yarpWholeBodyInterface::setYarpWbiProperties(const yarp::os::Property & yarp_wbi_properties)
 {
     actuatorInt->setYarpWbiProperties(yarp_wbi_properties);
     stateInt->setYarpWbiProperties(yarp_wbi_properties);
     modelInt->setYarpWbiProperties(yarp_wbi_properties);
+    modelForStateInt->setYarpWbiProperties(yarp_wbi_properties);
     return true;
 }
 
@@ -76,6 +79,8 @@ bool yarpWholeBodyInterface::init()
     if(!ok) printf("[ERR] Error while initializing yarpWholeBodyActuators interface.\n");
     if(ok) ok = modelInt->init();
     if(!ok) printf("[ERR] Error while initializing yarpWholeBodyModel interface.\n");
+    if(ok) ok = modelForStateInt->init();
+    if(!ok) printf("[ERR] Error while initializing yarpWholeBodyModel interface.\n");
     if(ok) ok = stateInt->init();
     if(!ok) printf("[ERR] Error while initializing yarpWholeBodyStates interface.\n");
     return ok;
@@ -93,17 +98,28 @@ bool yarpWholeBodyInterface::close()
             ok = false;
         }
     }
-    
+
     if (stateInt) {
       if (stateInt->close()) {
-	delete stateInt; 
-	stateInt = 0; 	
+	delete stateInt;
+	stateInt = 0;
       }
       else {
 	ok = false;
       }
     }
-      
+
+    if (modelForStateInt) {
+        if(modelForStateInt->close()) {
+            delete modelForStateInt;
+            modelForStateInt = 0;
+        }
+        else {
+            ok = false;
+        }
+    }
+
+
     if (modelInt) {
         if(modelInt->close()) {
             delete modelInt;
@@ -123,6 +139,8 @@ bool yarpWholeBodyInterface::removeJoint(const ID &j)
     for(int i=0; ok && i<JOINT_ESTIMATE_TYPES_SIZE; i++)
         ok = stateInt->removeEstimate(jointEstimateTypes[i], j);
     // removing pos removes also vel and acc estimation
+    ok = ok && modelForStateInt->removeJoint(j);
+
     return ok ? modelInt->removeJoint(j) : false;
 }
 
@@ -131,6 +149,7 @@ bool yarpWholeBodyInterface::addJoint(const ID &j)
     bool ok = actuatorInt->addActuator(j);
     for(int i=0; ok && i<JOINT_ESTIMATE_TYPES_SIZE; i++)
         ok = stateInt->addEstimate(jointEstimateTypes[i], j);
+    ok = ok && modelForStateInt->addJoint(j);
     return ok ? modelInt->addJoint(j) : false;
 }
 
@@ -140,6 +159,7 @@ int yarpWholeBodyInterface::addJoints(const IDList &jList)
     for(int i=0; i<JOINT_ESTIMATE_TYPES_SIZE; i++)
         stateInt->addEstimates(jointEstimateTypes[i], jList);
     // adding pos adds also vel and acc estimation
+    int res2 = modelForStateInt->addJoints(jList);
     int res4 = modelInt->addJoints(jList);
     assert(res1==res4);
     return res1;

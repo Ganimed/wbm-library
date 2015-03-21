@@ -72,21 +72,21 @@ TEST_F(yarpWbiActuatorsUnitTest, basicWbiLoadingTest)
   ASSERT_TRUE(doublePendulumActuactors.addActuator(wbi::wbiId("lower_joint")));
   //ASSERT_FALSE(doublePendulumActuactors.addActuator(wbi::wbiId("third_joint")));
 
-  ASSERT_TRUE(doublePendulumSensors.addSensor(wbi::SENSOR_ENCODER,wbi::wbiId("upper_joint")));
-  ASSERT_TRUE(doublePendulumSensors.addSensor(wbi::SENSOR_ENCODER,wbi::wbiId("lower_joint")));
-  //ASSERT_FALSE(doublePendulumSensors.addSensor(wbi::SENSOR_ENCODER,wbi::wbiId("third_joint")));
+  ASSERT_TRUE(doublePendulumSensors.addSensor(wbi::SENSOR_ENCODER_POS,wbi::wbiId("upper_joint")));
+  ASSERT_TRUE(doublePendulumSensors.addSensor(wbi::SENSOR_ENCODER_POS,wbi::wbiId("lower_joint")));
+  //ASSERT_FALSE(doublePendulumSensors.addSensor(wbi::SENSOR_ENCODER_POS,wbi::wbiId("third_joint")));
 
   //std::cout << "doublePendulumActuactors.init()" << std::endl;
   ASSERT_TRUE(doublePendulumActuactors.init());
   //std::cout << "doublePendulumSensors.init()" << std::endl;
   ASSERT_TRUE(doublePendulumSensors.init());
 
-  yarp::sig::Vector real_q(doublePendulumSensors.getSensorNumber(wbi::SENSOR_ENCODER),-10);
+  yarp::sig::Vector real_q(doublePendulumSensors.getSensorNumber(wbi::SENSOR_ENCODER_POS),-10);
   yarp::sig::Vector desired_q(doublePendulumActuactors.getActuatorList().size());
   yarp::sig::Vector ref_dq(doublePendulumActuactors.getActuatorList().size(),40.0*M_PI/180.0);
 
 
-  ASSERT_TRUE(doublePendulumSensors.readSensors(wbi::SENSOR_ENCODER,real_q.data(),0,true));
+  ASSERT_TRUE(doublePendulumSensors.readSensors(wbi::SENSOR_ENCODER_POS,real_q.data(),0,true));
 
   std::cout << "Read position " << real_q[0] << " " << real_q[1] << std::endl;
 
@@ -100,7 +100,7 @@ TEST_F(yarpWbiActuatorsUnitTest, basicWbiLoadingTest)
   //Wait to reach the desired position
   yarp::os::Time::delay(5.0);
 
-  ASSERT_TRUE(doublePendulumSensors.readSensors(wbi::SENSOR_ENCODER,real_q.data(),0,true));
+  ASSERT_TRUE(doublePendulumSensors.readSensors(wbi::SENSOR_ENCODER_POS,real_q.data(),0,true));
 
   double tol = 0.1;
 
@@ -116,7 +116,7 @@ TEST_F(yarpWbiActuatorsUnitTest, basicWbiLoadingTest)
   //Wait to reach the desired position
   yarp::os::Time::delay(5.0);
 
-  ASSERT_TRUE(doublePendulumSensors.readSensors(wbi::SENSOR_ENCODER,real_q.data()));
+  ASSERT_TRUE(doublePendulumSensors.readSensors(wbi::SENSOR_ENCODER_POS,real_q.data()));
 
   EXPECT_NEAR(desired_q[0],real_q[0],tol);
   EXPECT_NEAR(desired_q[1],real_q[1],tol);

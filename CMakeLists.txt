@@ -11,7 +11,7 @@ set(INCLUDE_DIRS yarpWholeBodyInterface)
 
 set(${VARS_PREFIX}_MAJOR_VERSION 0)
 set(${VARS_PREFIX}_MINOR_VERSION 2)
-set(${VARS_PREFIX}_PATCH_VERSION 0)
+set(${VARS_PREFIX}_PATCH_VERSION 1)
 set(${VARS_PREFIX}_VERSION ${${VARS_PREFIX}_MAJOR_VERSION}.${${VARS_PREFIX}_MINOR_VERSION}.${${VARS_PREFIX}_PATCH_VERSION})
 
 find_package(YCM REQUIRED)
@@ -36,13 +36,11 @@ SET(folder_source src/yarpWbiUtil.cpp
                   src/yarpWholeBodyInterface.cpp
                   src/yarpWholeBodyModel.cpp
                   src/yarpWholeBodyStates.cpp
-                  src/yarpWholeBodyStatesLocal.cpp
                   src/yarpWholeBodyActuators.cpp
                   src/yarpWholeBodySensors.cpp)
 SET(folder_header include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
                   include/yarpWholeBodyInterface/yarpWholeBodyModel.h
                   include/yarpWholeBodyInterface/yarpWholeBodyStates.h
-                  include/yarpWholeBodyInterface/yarpWholeBodyStatesLocal.h
                   include/yarpWholeBodyInterface/yarpWholeBodyActuators.h
                   include/yarpWholeBodyInterface/yarpWholeBodySensors.h
                   include/yarpWholeBodyInterface/yarpWbiUtil.h)

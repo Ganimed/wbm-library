@@ -1044,7 +1044,7 @@
         <dynamics damping="0.1" friction="0" />
         <limit effort="11" velocity="100" lower="-0.418879" upper="0.418879" />
     </joint>
-    <joint name="r_elbow" type="revolute">
+    <joint name="r_elbow" type="fixed">
         <origin xyz="0 0 0.08428" rpy="3.14159 -0 3.14159" />
         <axis xyz="0 1 6.12323e-17" />
         <parent link="r_upper_arm" />
@@ -1064,7 +1064,7 @@
         <parent link="r_foot" />
         <child link="r_foot_dh_frame" />
     </joint>
-    <joint name="r_wrist_prosup" type="revolute">
+    <joint name="r_wrist_prosup" type="fixed">
         <origin xyz="0.015 0 0" rpy="1.5708 -0 -1.5708" />
         <axis xyz="0 1 6.12323e-17" />
         <parent link="r_elbow_1" />
@@ -1084,7 +1084,7 @@
         <parent link="r_hand" />
         <child link="r_gripper" />
     </joint>
-    <joint name="r_wrist_yaw" type="revolute">
+    <joint name="r_wrist_yaw" type="fixed">
         <origin xyz="0 0 0" rpy="0 -0 3.14159" />
         <axis xyz="0 0 1" />
         <parent link="r_wrist_1" />
@@ -1128,7 +1128,7 @@
         <dynamics damping="0.1" friction="0" />
         <limit effort="30" velocity="100" lower="-2.18166" upper="0.401426" />
     </joint>
-    <joint name="r_shoulder_pitch" type="revolute">
+    <joint name="r_shoulder_pitch" type="fixed">
         <origin xyz="0.00525 0.1433 0.11026" rpy="-1.309 -0 1.5708" />
         <axis xyz="0 1 5.55112e-17" />
         <parent link="chest" />
@@ -1136,7 +1136,7 @@
         <dynamics damping="0.1" friction="0" />
         <limit effort="84" velocity="100" lower="-1.65806" upper="0.0872665" />
     </joint>
-    <joint name="r_shoulder_roll" type="revolute">
+    <joint name="r_shoulder_roll" type="fixed">
         <origin xyz="0 0 0" rpy="-1.5708 -0 -1.5708" />
         <axis xyz="0 -1 6.12323e-17" />
         <parent link="r_shoulder_1" />
@@ -1144,7 +1144,7 @@
         <dynamics damping="0.1" friction="0" />
         <limit effort="84" velocity="100" lower="0" upper="2.80649" />
     </joint>
-    <joint name="r_shoulder_yaw" type="revolute">
+    <joint name="r_shoulder_yaw" type="fixed">
         <origin xyz="-4.33681e-19 0 0" rpy="3.14159 -0 1.309" />
         <axis xyz="0 6.12323e-17 -1" />
         <parent link="r_shoulder_2" />
@@ -1178,7 +1178,7 @@
         <dynamics damping="0.1" friction="0" />
         <limit effort="40" velocity="100" lower="-1.37881" upper="1.37881" />
     </joint>
-    <joint name="r_wrist_pitch" type="revolute">
+    <joint name="r_wrist_pitch" type="fixed">
         <origin xyz="0 -0.1373 -8.4072e-18" rpy="1.5708 -0 1.5708" />
         <axis xyz="0 1 6.12323e-17" />
         <parent link="r_forearm" />
