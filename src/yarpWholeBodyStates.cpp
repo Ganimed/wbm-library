@@ -20,7 +20,6 @@
 #include <string>
 #include <boost/concept_check.hpp>
 //#include <eigen3/Eigen/src/Core/arch/SSE/Complex.h>
-#include<Eigen/Core>
 #include <yarp/os/Log.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/math/api.h>
@@ -702,8 +701,11 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period, yarpWholeBodySensors
   dTauMFilt(0),
   tauJFilt(0),
   tauMFilt(0),
-  motor_quantites_estimation_enabled(false)
- //,
+  motor_quantites_estimation_enabled(false),
+  dvbVect(6),
+  dqjVect(NULL,NULL),
+  floatingBase_jacobian(6,6),
+  rotationalVelocityWrapper(NULL,NULL)
   //ee_wrenches_enabled(false)
 {
 
@@ -729,7 +731,6 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period, yarpWholeBodySensors
 
     //default setting for refence frame as l_sole for icub to maintain backward compatibility
     robot_reference_frame_link = 9;
-
 
 }
 
@@ -774,15 +775,20 @@ bool yarpWholeBodyEstimator::threadInit()
     Eigen::VectorXd dvbVect(6);
     Eigen::Map<Eigen::VectorXd> yarpWrapper(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
   */  
+  
+     int dof = estimates.lastQ.length();
+//     dqjVect_.resize(6,dof+6);
+//     std::cout<<" dqjVect : "<<dqjVect_.rows()<<" , "<<dqjVect_.cols()<<"\n"; 
 
-    int dof = estimates.lastQ.length();
-    dqjVect_.resize(6,dof+6);
-    std::cout<<" dqjVect : "<<dqjVect_.rows()<<" , "<<dqjVect_.cols()<<"\n"; 
-/*    
+
+    
     complete_jacobian.resize(6,dof+6);
     joint_jacobian.resize(6,dof);
-    floatingBase_jacobian(6,6);
+//     floatingBase_jacobian(6,6);
     tempMatForComputation.resize(6,dof);
+    new (&rotationalVelocityWrapper) Eigen::Map<Eigen::VectorXd>(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
+    new (&dqjVect) Eigen::Map<Eigen::VectorXd>(estimates.lastDq.data(),dof);
+/*
     dvbVect.resize(6);
     new(&rotationalVelocityWrapper) Eigen::Map<Eigen::VectorXd>(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
     //Eigen::Map<Eigen::VectorXd> yarpWrapper;//(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
@@ -919,6 +925,7 @@ void yarpWholeBodyEstimator::run()
         // Compute world to base 
         computeBasePosition(estimates.lastQ.data());
 	computeBaseVelocity(estimates.lastQ.data(),estimates.lastDq.data());
+// 	new (&dqjVect) Eigen::Map<Eigen::VectorXd>(estimates.lastDq.data(),dof);
 
     }
     mutex.post();
@@ -1247,13 +1254,15 @@ bool yarpWholeBodyEstimator::computeBaseVelocity(double* qj,double* dqj)
   if(wholeBodyModel!=NULL)
   {
     int dof = estimates.lastQ.size();
-   // new (&dqjVect) Eigen::Map<Eigen::VectorXd>(dqj,dof);
+//     new (&dqjVect) Eigen::Map<Eigen::VectorXd>(dqj,dof);
     
-    Eigen::Map<Eigen::VectorXd> dqjVect(dqj,dof);
-    Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> complete_jacobian(6,dof+6), joint_jacobian(6,dof),floatingBase_jacobian(6,6);
-    Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> tempMatForComputation(6,dof);//, minusTemp(6,dof);
-    Eigen::VectorXd dvbVect(6);
-    Eigen::Map<Eigen::VectorXd> rotationalVelocityWrapper(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
+//     Eigen::Map<Eigen::VectorXd> dqjVect(dqj,dof);    
+//     Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> complete_jacobian(6,dof+6); 
+//     Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> joint_jacobian(6,dof);
+//     Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> tempMatForComputation(6,dof);    
+//     Eigen::VectorXd dvbVect(6);
+    
+//     new (&rotationalVelocityWrapper) Eigen::Map<Eigen::VectorXd>(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
     
     dvbVect.setZero();
     complete_jacobian.setZero();

@@ -29,6 +29,8 @@
 #include <iCub/skinDynLib/skinContactList.h>
 
 //#include <Eigen/Sparse>
+#include<Eigen/Core>
+
 
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
 #include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
@@ -90,7 +92,14 @@ namespace yarpWbi
 	Eigen::Map<Eigen::VectorXd> rotationalVelocityWrapper;//(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
 	//new (&v) Map<RowVectorXi>(data+4,5);
 	*/
-	Eigen::Map<Eigen::VectorXd> dqjVect_;
+	Eigen::Map<Eigen::VectorXd> dqjVect;
+	Eigen::Map<Eigen::VectorXd> rotationalVelocityWrapper;
+ 	Eigen::VectorXd dvbVect;
+	Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> floatingBase_jacobian;
+	
+	Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> complete_jacobian; 
+	Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> joint_jacobian;
+	Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> tempMatForComputation;
 	
 //         yarp::sig::Vector           q, qStamps;         // last joint position estimation
 
