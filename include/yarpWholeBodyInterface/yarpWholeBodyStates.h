@@ -90,7 +90,7 @@ namespace yarpWbi
 	Eigen::Map<Eigen::VectorXd> rotationalVelocityWrapper;//(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
 	//new (&v) Map<RowVectorXi>(data+4,5);
 	*/
-	Eigen::Map<Eigen::VectorXd> dqjVect_;
+// 	Eigen::Map<Eigen::VectorXd> dqjVect_;
 	
 //         yarp::sig::Vector           q, qStamps;         // last joint position estimation
 

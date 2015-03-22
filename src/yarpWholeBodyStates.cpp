@@ -729,7 +729,8 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period, yarpWholeBodySensors
 
     //default setting for refence frame as l_sole for icub to maintain backward compatibility
     robot_reference_frame_link = 9;
-
+    
+//     motor_quantites_estimation_enabled = false;
 
 }
 
@@ -775,9 +776,9 @@ bool yarpWholeBodyEstimator::threadInit()
     Eigen::Map<Eigen::VectorXd> yarpWrapper(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
   */  
 
-    int dof = estimates.lastQ.length();
+    /*int dof = estimates.lastQ.length();
     dqjVect_.resize(6,dof+6);
-    std::cout<<" dqjVect : "<<dqjVect_.rows()<<" , "<<dqjVect_.cols()<<"\n"; 
+    std::cout<<" dqjVect : "<<dqjVect_.rows()<<" , "<<dqjVect_.cols()<<"\n";*/ 
 /*    
     complete_jacobian.resize(6,dof+6);
     joint_jacobian.resize(6,dof);
