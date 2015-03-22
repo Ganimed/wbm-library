@@ -27,7 +27,7 @@ option(YARPWHOLEBODYINTERFACE_ENABLE_TESTS "Enable unit testing" FALSE)
 add_definitions(-DIDYNTREE_USES_ICUB)
 
 
-find_package(YARP 2.3.63.2 REQUIRED)
+find_package(YARP 2.3.63.7 REQUIRED)
 find_package(ICUB REQUIRED)
 find_package(iDynTree REQUIRED)
 find_package(wholeBodyInterface 0.2.0 REQUIRED)
