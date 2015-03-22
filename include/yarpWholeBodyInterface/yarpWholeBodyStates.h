@@ -84,13 +84,7 @@ namespace yarpWbi
 	Eigen::Matrix4d H_w2b;				//Temporary matrix used for inversion
 	
 	/*
-	 * optimised computation of world-to-base velocity..todo fix and then uncomment
-	Eigen::Map<Eigen::VectorXd> dqjVect;
-	Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> complete_jacobian, joint_jacobian,floatingBase_jacobian;
-	Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> tempMatForComputation;//, minusTemp(6,dof);		
-	Eigen::VectorXd dvbVect;
-	Eigen::Map<Eigen::VectorXd> rotationalVelocityWrapper;//(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
-	//new (&v) Map<RowVectorXi>(data+4,5);
+	 * optimised computation of world-to-base velocity
 	*/
 	Eigen::Map<Eigen::VectorXd> dqjVect;
 	Eigen::Map<Eigen::VectorXd> rotationalVelocityWrapper;

@@ -1234,7 +1234,6 @@ bool yarpWholeBodyEstimator::computeBasePosition(double *q_temp)
       world_H_rootLink = world_H_reference*referenceLink_H_rootLink ;
 
       int ctr;
-
       for (ctr=0;ctr<3;ctr++)
       {
 	estimates.lastBasePos(ctr) = world_H_rootLink.p[ctr];
@@ -1260,8 +1259,7 @@ bool yarpWholeBodyEstimator::computeBaseVelocity(double* qj,double* dqj)
 //     Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> complete_jacobian(6,dof+6); 
 //     Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> joint_jacobian(6,dof);
 //     Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> tempMatForComputation(6,dof);    
-//     Eigen::VectorXd dvbVect(6);
-    
+//     Eigen::VectorXd dvbVect(6);    
 //     new (&rotationalVelocityWrapper) Eigen::Map<Eigen::VectorXd>(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
     
     dvbVect.setZero();
@@ -1269,24 +1267,15 @@ bool yarpWholeBodyEstimator::computeBaseVelocity(double* qj,double* dqj)
     joint_jacobian.setZero();
     floatingBase_jacobian.setZero();
     tempMatForComputation.setZero();
-    //std::cout<<" 1. temp size : "<<temp.rows()<<"X"<<temp.cols()<<"\n\n";
-
+    
     wholeBodyModel->computeJacobian(qj,world_H_rootLink,robot_reference_frame_link,complete_jacobian.data());  
     floatingBase_jacobian = complete_jacobian.leftCols(6);
     joint_jacobian = complete_jacobian.rightCols(dof);
     
-    
     tempMatForComputation = (floatingBase_jacobian.inverse()*joint_jacobian);
-    
-    // std::cout<<" 3. temp size : "<<temp.rows()<<"X"<<temp.cols()<<"\n\n";
     tempMatForComputation*=-1.0;
-    //minusTemp = -1.0 * temp;
-    
-    //std::cout<<"4.dvb size : "<<dqjVect.rows()<<"X"<<dqjVect.cols()<<" temp size : "<<temp.rows()<<"X"<<temp.cols()<<"\n\n";
-//     std::cout<<"\ndqj: "<<dqjVect.transpose()<<"\n \n";
     
     dvbVect =tempMatForComputation*dqjVect;
- 
     rotationalVelocityWrapper = dvbVect;
     
     return(true);
