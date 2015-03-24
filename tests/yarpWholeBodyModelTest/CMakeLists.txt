@@ -1,10 +1,10 @@
 
 
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../app/robots/iCubGenova01/yarpWholeBodyInterface.ini
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../app/robots/iCubGenova01/yarpWholeBodyInterface.ini
                                           ${CMAKE_CURRENT_BINARY_DIR}/yarpWholeBodyInterface.ini)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../app/robots/iCubGenova01/model.urdf
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../app/robots/iCubGenova01/model.urdf
                                           ${CMAKE_CURRENT_BINARY_DIR}/model.urdf)
 
 add_executable(yarpWholeBodyModelTest yarpWholeBodyModelTest.cpp)
