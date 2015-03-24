@@ -7,13 +7,13 @@ compiler:
 env:
   - TRAVIS_BUILD_TYPE=Debug, TRAVIS_CMAKE_GENERATOR="Unix Makefiles",
   - TRAVIS_BUILD_TYPE=Release, TRAVIS_CMAKE_GENERATOR="Unix Makefiles",
-  
+
 matrix:
   allow_failures:
     - compiler: clang
 
 before_script:
-  - cd ..  
+  - cd ..
   # use superbuild for getting yarp-wholebodeyinterface dependencies
   - git clone https://github.com/robotology/codyco-superbuild
   - cd codyco-superbuild
@@ -34,7 +34,7 @@ before_script:
 script:
   - mkdir build
   - cd build
-  - cmake -DCODYCO_TRAVIS_CI:BOOL=ON -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} -DENABLE_TESTS:BOOL=ON -DNON_INTERACTIVE_BUILD:BOOL=TRUE ..
+  - cmake -DCODYCO_TRAVIS_CI:BOOL=ON -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} -DYARPWHOLEBODYINTERFACE_ENABLE_TESTS:BOOL=ON -DNON_INTERACTIVE_BUILD:BOOL=TRUE ..
   - cmake --build . --config ${TRAVIS_BUILD_TYPE}
   - ctest
 
