@@ -161,9 +161,13 @@ namespace yarpWbi
         /** Matrix such that tau_m = joint_kinematic_to_motor_kinematic_coupling*tau_joint */
         Eigen::MatrixXd joint_to_motor_torque_coupling;
 
+        /** If true, read speed and accelerations from the controlboard */
         bool readSpeedAccFromControlBoard;
 
         bool motor_quantites_estimation_enabled;
+
+        /** If true, perform base position and velocity estimation */
+        bool estimateBasePosAndVel;
 
         /** Constructor.
          */

@@ -240,6 +240,18 @@ bool yarpWholeBodyStates::init()
         estimator->readSpeedAccFromControlBoard = false;
     }
 
+    if( wbi_yarp_properties.check("estimateBasePosAndVel") )
+    {
+        yInfo() << "yarpWholeBodyStates : estimateBasePosAndVel option found, we are estimating base position and velocity";
+        estimator->estimateBasePosAndVel = true;
+    }
+    else
+    {
+        yInfo() << "yarpWholeBodyStates : estimateBasePosAndVel option not found, we are estimating base position and velocity";
+        estimator->estimateBasePosAndVel = false;
+    }
+
+
     //Add required sensors given the estimate list
     // TODO FIXME ugly, we should probably have a way to iterate on estimate type
     // indipendent from enum values
@@ -883,8 +895,14 @@ void yarpWholeBodyEstimator::run()
             estimates.lastPwm = estimates.lastPwmBuffer;
         }
 
-        // Compute world to base
-        computeWorldRootRotoTranslation(q.data());
+        // Compute world to base position, if the estimate was added
+        if( this->estimateBasePosAndVel )
+        {
+            computeBasePosition(estimates.lastQ.data());
+            computeBaseVelocity(estimates.lastQ.data(),estimates.lastDq.data());
+        }
+
+
     }
     mutex.post();
 
