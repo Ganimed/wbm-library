@@ -29,6 +29,8 @@
 #include <iCub/skinDynLib/skinContactList.h>
 
 //#include <Eigen/Sparse>
+#include<Eigen/Core>
+
 
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
 #include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
@@ -61,7 +63,7 @@ namespace yarpWbi
         iCub::ctrl::FirstOrderLowPassFilter *pwmFilt;   ///< low pass filter for motor PWM
 
 
-        int baseFrameLinkID; 	// ID of the assigned base frame for base to root rototranslation computation
+        int baseFrameLinkID;         // ID of the assigned base frame for base to root rototranslation computation
         wbi::iWholeBodyModel *wholeBodyModel;
 
 
@@ -74,12 +76,26 @@ namespace yarpWbi
         double tauMCutFrequency;
         double pwmCutFrequency;
 
-	int robot_reference_frame_link;			//Reference link assigned as base frame
-	wbi::Frame rootLink_H_ReferenceLink;		//Rototranslation between Reference frame (assigned as world) and Root Link
-	wbi::Frame world_H_rootLink;			//Rototranslation between Root link and World
-	wbi::Frame world_H_reference;			//Rototranslation between Reference frame and world (future work)
-	wbi::Frame referenceLink_H_rootLink;		//Rototranslation between Root link and Reference frame
-	Eigen::Matrix4d H_w2b;				//Temporary matrix used for inversion
+        int robot_reference_frame_link;                        //Reference link assigned as base frame
+        wbi::Frame rootLink_H_ReferenceLink;                //Rototranslation between Reference frame (assigned as world) and Root Link
+        wbi::Frame world_H_rootLink;                        //Rototranslation between Root link and World
+        wbi::Frame world_H_reference;                        //Rototranslation between Reference frame and world (future work)
+        wbi::Frame referenceLink_H_rootLink;                //Rototranslation between Root link and Reference frame
+        Eigen::Matrix4d H_w2b;                                //Temporary matrix used for inversion
+
+        /*
+         * optimised computation of world-to-base velocity
+        */
+        Eigen::Map<Eigen::VectorXd> dqjVect;
+        Eigen::Map<Eigen::VectorXd> rotationalVelocityWrapper;
+        Eigen::VectorXd dvbVect;
+        Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> floatingBase_jacobian;
+
+        Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> complete_jacobian;
+        Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> joint_jacobian;
+        Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> tempMatForComputation;
+
+//         yarp::sig::Vector           q, qStamps;         // last joint position estimation
 
         yarp::sig::Vector           q, dq, d2q, qStamps;         // last joint position estimation
         yarp::sig::Vector           tauJ, tauJStamps;
@@ -151,7 +167,9 @@ namespace yarpWbi
             yarp::sig::Vector lastDtauM;                // last motor torque derivative
             yarp::sig::Vector lastPwm;                  // last motor PWM
             yarp::sig::Vector lastPwmBuffer;            // buffer for proper decoupling PWM readings
-            yarp::sig::Vector lastBasePos;		// last Position of Base
+            yarp::sig::Vector lastBasePos;                // last Base Position
+            yarp::sig::Vector lastBaseVel;                // last Base Velocity
+            yarp::sig::Vector lastBaseAccl;                // last Base Acceleration
         }
         estimates;
 
@@ -181,12 +199,16 @@ namespace yarpWbi
         bool lockAndCopyVector(const yarp::sig::Vector &src, double *dest);
         /** Take the mutex and copy the i-th element of src into dest. */
         bool lockAndCopyVectorElement(int i, const yarp::sig::Vector &src, double *dest);
-	/** To be implemented **/
+        /** To be implemented **/
         bool setWorldBasePosition(const wbi::Frame & xB);
-	/** Sets a desired link as the world reference frame **/
-	bool setWorldBaseLinkName(std::string);
-	/** Computes the World to Root rototranslation for a give joint configuration **/
-	bool computeWorldRootRotoTranslation(double *q);
+        /** Sets a desired link as the world reference frame **/
+        bool setWorldBaseLinkName(std::string);
+        /** Computes the Base position for a given joint configuration **/
+        bool computeBasePosition(double *q);
+        /** Computes the Base velocity for a given set of joint velocities **/
+        bool computeBaseVelocity(double *q, double *dq);
+        /** Computes the Base acceleration for a given joint velocity **/
+        //bool computeBaseAcceleration();
 
     };
 
@@ -238,7 +260,7 @@ namespace yarpWbi
         // For now we support motor quantites estimation by assuming a stiff actuation
         // and knowledge of the coupling matrix
         bool loadCouplingsFromConfigurationFile();
-	wbi::iWholeBodyModel *wholeBodyModel;
+        wbi::iWholeBodyModel *wholeBodyModel;
 
     public:
         // *** CONSTRUCTORS ***
