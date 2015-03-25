@@ -25,7 +25,7 @@ include_directories(${wholeBodyInterface_INCLUDE_DIRS}
                     ./../include/yarpWholeBodyInterface
                     ${iDynTree_INCLUDE_DIRS}
                     ${EIGEN3_INCLUDE_DIR})
-                    
+
 add_executable(${PROJECT_NAME} ${SOURCE})
 
 target_link_libraries(${PROJECT_NAME} ${wholeBodyInterface_LIBRARIES}
@@ -37,4 +37,4 @@ target_link_libraries(${PROJECT_NAME} ${wholeBodyInterface_LIBRARIES}
 	#INSTALL_TARGETS(/bin ${PROJECT_NAME})
 #endif(WIN32)
 
-add_test(NAME "test_$PROJECT_NAME" COMMAND "$PROJECT_NAME")
+#add_test(NAME "test_$PROJECT_NAME" COMMAND "$PROJECT_NAME")
