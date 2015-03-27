@@ -27,7 +27,6 @@ using namespace yarpWbi;
 using namespace yarp::os;
 using namespace yarp::dev;
 using namespace yarp::sig;
-using namespace iCub::skinDynLib;
 
 #define MAX_NJ 20
 #define WAIT_TIME 0.001

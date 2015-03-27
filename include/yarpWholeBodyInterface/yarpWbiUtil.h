@@ -21,7 +21,6 @@
 
 #include <yarp/dev/ControlBoardInterfaces.h>
 #include <yarp/dev/PolyDriver.h>
-#include <iCub/skinDynLib/common.h>
 #include <wbi/wbi.h>
 #include <vector>
 #include <cstdio>

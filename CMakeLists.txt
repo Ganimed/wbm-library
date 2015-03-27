@@ -48,7 +48,6 @@ SET(folder_header include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
 source_group("Source Files" FILES ${folder_source})
 source_group("Header Files" FILES ${folder_header})
 
-
 add_definitions(-Wall)
 
 option(YARPWBI_ENABLE_RPATH "Enable RPATH for the library" TRUE)
@@ -80,6 +79,7 @@ set_target_properties(${LIBRARY_NAME}  PROPERTIES VERSION ${${VARS_PREFIX}_VERSI
 target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
                                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${${VARS_PREFIX}_INSTALL_INCLUDEDIR}>"
                                            ${YARP_INCLUDE_DIRS}
+                                           ${ICUB_INCLUDE_DIRS}
                                            ${iDynTree_INCLUDE_DIRS}
                                            ${wholeBodyInterface_INCLUDE_DIRS})
 
