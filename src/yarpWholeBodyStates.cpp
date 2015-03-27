@@ -1045,6 +1045,8 @@ void yarpWholeBodyEstimator::lockAndResizeAll(int n)
 void yarpWholeBodyEstimator::resizeAll(int n)
 {
     q.resize(n);
+    dq.resize(n);
+    d2q.resize(n);
     qStamps.resize(n);
     tauJ.resize(n);
     tauJStamps.resize(n);
