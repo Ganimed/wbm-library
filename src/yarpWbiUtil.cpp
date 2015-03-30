@@ -333,7 +333,9 @@ bool loadIdListsFromConfigRecursiveHelper(std::string & requested_list,
 bool loadIdListFromConfig(std::string requested_list,
                           const yarp::os::Searchable & wbi_yarp_properties,
                           wbi::IDList & requestedIdList,
-                          std::string list_group)
+                          std::string list_group,
+                          bool verbose=false
+                         )
 {
     yarp::os::ConstString list_group_cstr = list_group;
     yarp::os::Bottle & list_bot = wbi_yarp_properties.findGroup(list_group_cstr);
@@ -343,7 +345,8 @@ bool loadIdListFromConfig(std::string requested_list,
 
     if( requested_list_val.isNull() || (requested_list_bot == NULL) )
     {
-        std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " not found" << std::endl;
+        if( verbose )
+            std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " not found" << std::endl;
         return false;
     }
 
@@ -354,7 +357,8 @@ bool loadIdListFromConfig(std::string requested_list,
 
     if( !ret )
     {
-        std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " is malformed" << std::endl;
+        if( verbose )
+            std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " is malformed" << std::endl;
         return false;
     }
 
