@@ -133,14 +133,14 @@ bool getControlBoardAxisList(yarp::os::Bottle & joints_config,
 
         if( ctrlBoard_mapping->size() != 2 )
         {
-            yError() << "[ERR] yarpWbiUtil error: joint " << wbi_jnt_name.toString() << " found in WBI_YARP_JOINTS section, but with wrong format ";
+            yError() << "yarpWbiUtil error: joint " << wbi_jnt_name.toString() << " found in WBI_YARP_JOINTS section, but with wrong format ";
             return false;
         }
 
         std::string controlboard_name = ctrlBoard_mapping->get(0).asString().c_str();
         if( controlBoardIds.find(controlboard_name) == controlBoardIds.end() )
         {
-            std::cerr << "[ERR] yarpWbiUtil :: getControlBoardAxisList error in configuration files with joint " << wbi_jnt_name.toString() << std::endl;
+            yError() << "yarpWbiUtil :: getControlBoardAxisList error in configuration files with joint " << wbi_jnt_name.toString();
             return false;
         }
     }
@@ -251,8 +251,8 @@ bool loadSensorPortsFromConfig(yarp::os::Property & wbi_yarp_properties,
         sensorIdList.indexToID(sensor_index,sensorID);
         yarp::os::Value & port = ports_list.find(sensorID.toString());
         if( (port.isNull()) || !(port.isString()) ) {
-            std::cout << "yarpWbi::loadSensorPortsFromConfig error: " << ports_list.toString() <<
-                         " returned an error when search for port of sensor " << sensorID.toString() << std::endl;
+            yError() << "yarpWbi::loadSensorPortsFromConfig error: " << ports_list.toString() <<
+                         " returned an error when search for port of sensor " << sensorID.toString();
             return false;
         }
         std::string port_name = port.asString().c_str();
@@ -293,15 +293,15 @@ bool loadIdListsFromConfigRecursiveHelper(std::string & requested_list,
     //std::cout << "[INFO] Requested list bot: " << requested_list_bot->toString() << std::endl;
     if( requested_list_bot == NULL )
     {
-        std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " not found in configuration file " << std::endl;
+        yError() << "loadIdListFromConfig error: requested list " << requested_list << " not found in configuration file ";
         return false;
     }
     //This is needed to check for a circular inclusion in the lists
     if (std::find(lists_names_stack.begin(), lists_names_stack.end(), requested_list) != lists_names_stack.end())
     {
         // List already include once, error
-        std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " is duplicated "
-                  << "[ERR] inside of parent list " << lists_names_stack[0] << std::endl;
+        yError() << "loadIdListFromConfig error: requested list " << requested_list << " is duplicated "
+                  << " inside of parent list " << lists_names_stack[0];
         return false;
     }
 
@@ -334,7 +334,7 @@ bool loadIdListFromConfig(std::string requested_list,
                           const yarp::os::Searchable & wbi_yarp_properties,
                           wbi::IDList & requestedIdList,
                           std::string list_group,
-                          bool verbose=false
+                          bool verbose
                          )
 {
     yarp::os::ConstString list_group_cstr = list_group;
@@ -346,7 +346,7 @@ bool loadIdListFromConfig(std::string requested_list,
     if( requested_list_val.isNull() || (requested_list_bot == NULL) )
     {
         if( verbose )
-            std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " not found" << std::endl;
+            yError() << "loadIdListFromConfig error: requested list " << requested_list << " not found";
         return false;
     }
 
@@ -358,7 +358,7 @@ bool loadIdListFromConfig(std::string requested_list,
     if( !ret )
     {
         if( verbose )
-            std::cerr << "[ERR] loadIdListFromConfig error: requested list " << requested_list << " is malformed" << std::endl;
+            yError() << "loadIdListFromConfig error: requested list " << requested_list << " is malformed";
         return false;
     }
 

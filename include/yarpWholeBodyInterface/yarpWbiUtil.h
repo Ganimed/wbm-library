@@ -111,7 +111,7 @@ namespace yarpWbi
     bool loadIdListFromConfig(std::string requested_list,
                               const yarp::os::Searchable & wbi_yarp_properties,
                               wbi::IDList & requestedIdList,
-                              std::string list_group = "WBI_ID_LISTS");
+                              std::string list_group = "WBI_ID_LISTS", bool verbose=false);
 
 
 
