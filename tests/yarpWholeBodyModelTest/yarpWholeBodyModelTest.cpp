@@ -226,39 +226,22 @@ int main(int argc, char * argv[])
     yarpWbiOptions.fromConfigFile(wbiConfFile);
 
     IDList RobotDynamicModelJoints;
-    std::string RobotDynamicModelJointsName = "ROBOT_TORQUE_CONTROL_JOINTS_WITHOUT_PRONOSUP";
+    std::string RobotDynamicModelJointsName = "ROBOT_DYNAMIC_MODEL_JOINTS";
     if( !loadIdListFromConfig(RobotDynamicModelJointsName,yarpWbiOptions,RobotDynamicModelJoints) )
     {
         fprintf(stderr, "[ERR] locomotionControl: impossible to load wbiId joint list with name %s\n",RobotDynamicModelJointsName.c_str());
         return EXIT_FAILURE;
     }
 
-    wholeBodyInterface *interface = new yarpWholeBodyInterface("test", yarpWbiOptions);
-    Vector vels(RobotDynamicModelJoints.size(), 0.0);
-    Vector pos(RobotDynamicModelJoints.size(), 0.0);
-    interface->addJoints(RobotDynamicModelJoints);
-    interface->init();
-
-    int result = true;
-    while (1) {
-        result = result && interface->getEstimates(wbi::ESTIMATE_JOINT_VEL, vels.data());
-        result = result && interface->getEstimates(wbi::ESTIMATE_JOINT_POS, pos.data());
-
-//        std::cerr << "Pos:"  << pos.toString() << "\n\n\n";
-//        std::cerr << "Vels: " << vels.toString() << "\n";
-        Time::delay(0.01);
-
+    Rand::init();
+    for(int i = 0; i < n_checks; i++ ) {
+        if( i % 100 == 0 ) { std::cout << "wholeBodyModelIcub inverse dynamics : test " << i << std::endl; }
+        iWholeBodyModel *icub = new yarpWholeBodyModel(localName.c_str(), yarpWbiOptions);
+        if( ! checkInverseDynamicsAndMassMatrixConsistency(icub,RobotDynamicModelJoints,TOL,true) ) {
+            return EXIT_FAILURE;
+        }
+        delete icub;
     }
-    
-//    Rand::init();
-//    for(int i = 0; i < n_checks; i++ ) {
-//        if( i % 100 == 0 ) { std::cout << "wholeBodyModelIcub inverse dynamics : test " << i << std::endl; }
-//        iWholeBodyModel *icub = new yarpWholeBodyModel(localName.c_str(), yarpWbiOptions);
-//        if( ! checkInverseDynamicsAndMassMatrixConsistency(icub,RobotDynamicModelJoints,TOL,true) ) {
-//            return EXIT_FAILURE;
-//        }
-//        delete icub;
-//    }
 
 
     return EXIT_SUCCESS;
