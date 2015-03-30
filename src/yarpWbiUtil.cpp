@@ -47,7 +47,7 @@ bool openPolyDriver(const std::string &localName,
     pd = new yarp::dev::PolyDriver(options);
     if(!pd || !(pd->isValid()))
     {
-        yError("Problems instantiating the device driver %s\n", bodyPartName.c_str());
+        yError("Problems instantiating the device driver %s", bodyPartName.c_str());
         return false;
     }
     return true;

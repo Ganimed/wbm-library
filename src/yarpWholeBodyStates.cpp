@@ -223,12 +223,12 @@ bool yarpWholeBodyStates::init()
     if(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("WORLD_REFERENCE_FRAME"))
     {
      //yInf
-      yInfo()<<"\n\n\n\nFound world reference frame mention in yarpConfig. Setting as "<<wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str()<<"\n\n\n";
+      yInfo() << "Found world reference frame mention in yarpConfig. Setting as "<<wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str();
       estimator->setWorldBaseLinkName(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str());
     }
     else
     {
-      yInfo()<<"\n\n\n\nDid not find WORLD_REFERENCE_FRAME option in config file\n\n\n";
+      yInfo()<<"Did not find WORLD_REFERENCE_FRAME option in config file";
     }
 
     if( wbi_yarp_properties.check("readSpeedAccFromControlBoard") )
@@ -1232,7 +1232,7 @@ bool yarpWholeBodyEstimator::setWorldBaseLinkName(std::string linkName)
   {
     yInfo()<<"Reference link set as world was "<<robot_reference_frame_link;
     wholeBodyModel->getFrameList().idToIndex(linkName.c_str(),robot_reference_frame_link);
-    yInfo()<<", now it is set to "<<robot_reference_frame_link<<"\n\n\n";
+    yInfo()<<", now it is set to "<<robot_reference_frame_link;
     return(true);
   }
   else

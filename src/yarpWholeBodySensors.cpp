@@ -625,12 +625,12 @@ bool yarpWholeBodySensors::openTorqueSensor(const int bp)
 
 bool yarpWholeBodySensors::getEncodersPosSpeedAccTimed(const EncoderType st, yarp::dev::IEncodersTimed* ienc, double *encs, double *time)
 {
-    bool result = ienc->getEncodersTimed(encs, time);
-//    bool result = true;
+//    bool result = ienc->getEncodersTimed(encs, time);
+    bool result = true;
     switch (st) {
-        case ENCODER_POS:          return result;// ienc->getEncodersTimed(encs, time);
+        case ENCODER_POS:          return result && ienc->getEncodersTimed(encs, time);
         case ENCODER_SPEED:        return result && ienc->getEncoderSpeeds(encs);// getEncodersTimed(encs, time);
-        case ENCODER_ACCELERATION: return result && ienc->getEncoderAccelerations(encs);//(encs, time);
+        case ENCODER_ACCELERATION: return true; //result && ienc->getEncoderAccelerations(encs);//(encs, time);
         default:                   return false;
     }
 }
