@@ -53,7 +53,7 @@ namespace yarpWbi
      *
      * * | Parameter name | Type | Units | Default Value | Required | Description | Notes |
      * |:--------------:|:------:|:-----:|:-------------:|:--------:|:-----------:|:-----:|
-     * | urdf | string | - | - | Yes | File name of the urdf file to load for getting the model of the robot. | The file name will be opened by the ResourceFinder::findFile call, using the search rules of the ResourceFinder, that you can find in http://wiki.icub.org/yarpdoc/yarp_resource_finder_tutorials.html |
+     * | urdf | - | - | - | Yes | File name of the urdf file to load for getting the model of the robot. | The file name will be opened by the ResourceFinder::findFile call, using the search rules of the ResourceFinder, that you can find in http://wiki.icub.org/yarpdoc/yarp_resource_finder_tutorials.html |
      * | getLimitsFromControlBoard | string | - | - | No | Get limits from the real robot instead of the URDF model. |  |
      *
      *  Given that the limits in the URDF file could be outdated with respect to the real robot,

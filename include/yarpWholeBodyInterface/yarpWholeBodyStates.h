@@ -221,12 +221,19 @@ namespace yarpWbi
      * Class to access the estimates of the state of an YARP robot.
      * You can configure this object with a yarp::os::Property object, that you can
      * pass to the constructor or to the setYarpWbiProperties method.
-     * The option that this Property object should contain are:
+     * The option that this Property object should contain at first level are:
      *
      * | Parameter name | Type | Units | Default Value | Required | Description | Notes |
      * |:--------------:|:------:|:-----:|:-------------:|:--------:|:-----------:|:-----:|
      * | readSpeedAccFromControlBoard | string | - | - | No | If present, read speeds and accelerations from the low level controlboards instead of using an high level numerical derivative.  |  |
-     *
+     * 
+     * 
+     * # WBI_STATE_OPTIONS 
+     * | Parameter name | Type | Units | Default Value | Required | Description | Notes |
+     * |:--------------:|:------:|:-----:|:-------------:|:--------:|:-----------:|:-----:|
+     * | WORLD_REFERENCE_FRAME | string | - | - | No | If present, specifies the default frame for computation of the world-to-root rototranslation.  |  |
+     * | estimateBasePosAndVel | - | - | - | No | Necessary for estimation of root roto translation and velocity. If not present these estimates will always return 0  |  
+     * 
      * Furthermore for accessing joint sensors, the property should contain all the information used
      * for configuring a a yarpWholeBodyActuators object.
      */

@@ -223,7 +223,7 @@ bool yarpWholeBodyStates::init()
     if(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("WORLD_REFERENCE_FRAME"))
     {
      //yInf
-      yInfo() << "Found world reference frame mention in yarpConfig. Setting as "<<wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str();
+      yInfo() << "Found world reference frame mention in wbiConfig. Setting as "<<wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str();
       estimator->setWorldBaseLinkName(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str());
     }
     else
@@ -242,7 +242,7 @@ bool yarpWholeBodyStates::init()
         estimator->readSpeedAccFromControlBoard = false;
     }
 
-    if( wbi_yarp_properties.check("estimateBasePosAndVel") )
+    if( wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("estimateBasePosAndVel") )
     {
         yInfo() << "yarpWholeBodyStates : estimateBasePosAndVel option found, we are estimating base position and velocity";
         estimator->estimateBasePosAndVel = true;
@@ -794,15 +794,14 @@ bool yarpWholeBodyEstimator::threadInit()
 //     dqjVect_.resize(6,dof+6);
 //     std::cout<<" dqjVect : "<<dqjVect_.rows()<<" , "<<dqjVect_.cols()<<"\n";
 
-
-
-/*
     complete_jacobian.resize(6,dof+6);
     joint_jacobian.resize(6,dof);
 //     floatingBase_jacobian(6,6);
     tempMatForComputation.resize(6,dof);
     new (&rotationalVelocityWrapper) Eigen::Map<Eigen::VectorXd>(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
     new (&dqjVect) Eigen::Map<Eigen::VectorXd>(estimates.lastDq.data(),dof);
+
+
 /*
     dvbVect.resize(6);
     new(&rotationalVelocityWrapper) Eigen::Map<Eigen::VectorXd>(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
@@ -1267,7 +1266,6 @@ bool yarpWholeBodyEstimator::computeBasePosition(double *q_temp)
 }
 bool yarpWholeBodyEstimator::computeBaseVelocity(double* qj,double* dqj)
 {
-
   if(wholeBodyModel!=NULL)
   {
     int dof = estimates.lastQ.size();
@@ -1286,10 +1284,12 @@ bool yarpWholeBodyEstimator::computeBaseVelocity(double* qj,double* dqj)
     floatingBase_jacobian.setZero();
     tempMatForComputation.setZero();
 
+    
     wholeBodyModel->computeJacobian(qj,world_H_rootLink,robot_reference_frame_link,complete_jacobian.data());
     floatingBase_jacobian = complete_jacobian.leftCols(6);
     joint_jacobian = complete_jacobian.rightCols(dof);
 
+    
     tempMatForComputation = (floatingBase_jacobian.inverse()*joint_jacobian);
     tempMatForComputation*=-1.0;
 
