@@ -754,72 +754,6 @@ void yarpWholeBodyEstimator::run()
     return;
 }
 
-/*
-bool yarpWholeBodyEstimator::openEEWrenchPorts(const wbi::ID & local_id)
-{
-    std::string wbd_module_name = "wholeBodyDynamicsTree";
-    std::string part, remotePort;
-    part = getPartName(local_id);
-    if( part == "")
-    {
-        std::cerr << "yarpWholeBodyEstimator::openEEWrenchPorts: local_id not found " << std::endl;
-    }
-    remotePort = "/" + wbd_module_name + "/" + part + "/" + "cartesianEndEffectorWrench:o";
-    stringstream localPort;
-    localPort << "/" << "yarpWholeBodyEstimator" << "/eeWrench" << local_id.bodyPart << "_" << local_id.index << ":i";
-    portsEEWrenches[local_id] = new BufferedPort<Vector>();
-    if(!portsEEWrenches[local_id]->open(localPort.str().c_str())) {
-        // open local input port
-        std::cerr << " yarpWholeBodyEstimator::openEEWrenchPorts: Open of localPort " << localPort << " failed " << std::endl;
-        //YARP_ASSERT(false);
-        ee_wrenches_enabled = false;
-        return false;
-    }
-    if(!Network::exists(remotePort.c_str())) {            // check remote output port exists
-        std::cerr << "yarpWholeBodyEstimator::openEEWrenchPorts:  " << remotePort << " does not exist " << std::endl;
-        //YARP_ASSERT(false);
-        ee_wrenches_enabled = false;
-        return false;
-    }
-    if(!Network::connect(remotePort.c_str(), localPort.str().c_str(), "udp")) {  // connect remote to local port
-        std::cerr << "yarpWholeBodyEstimator::openEEWrenchPorts:  could not connect " << remotePort << " to " << localPort << std::endl;
-        //YARP_ASSERT(false);
-        ee_wrenches_enabled = false;
-        return false;
-    }
-
-    //allocate lastRead variables
-    lastEEWrenches[local_id].resize(6,0.0);
-    ee_wrenches_enabled = true;
-
-    return true;
-}
-
-void yarpWholeBodyEstimator::readEEWrenches(const wbi::ID & local_id, yarp::sig::Vector & vec)
-{
-    vec.resize(6);
-    vec.zero();
-    if( ee_wrenches_enabled )
-    {
-        yarp::sig::Vector*res = portsEEWrenches[local_id]->read();
-        if( res )
-        {
-            lastEEWrenches[local_id].setSubvector(0,H_world_base.submatrix(0,2,0,2)*(*res).subVector(0,2));
-            lastEEWrenches[local_id].setSubvector(3,H_world_base.submatrix(0,2,0,2)*(*res).subVector(3,5));
-        }
-        vec = lastEEWrenches[local_id];
-    }
-}
-
-void yarpWholeBodyEstimator::closeEEWrenchPorts(const wbi::ID & local_id)
-{
-    if( ee_wrenches_enabled )
-    {
-        portsEEWrenches[local_id]->close();
-        delete portsEEWrenches[local_id];
-    }
-}*/
-
 void yarpWholeBodyEstimator::threadRelease()
 {
     //this causes a memory access violation (to investigate)
@@ -831,11 +765,6 @@ void yarpWholeBodyEstimator::threadRelease()
     if(tauMFilt!=0)  { delete tauMFilt; tauMFilt=0; }  ///< low pass filter for motor torque
     if(pwmFilt!=0)   { delete pwmFilt; pwmFilt=0;   }
 
-    /*
-    if( ee_wrenches_enabled )
-    {
-        closeExternalWrenchPorts(right_gripper_local_id);
-    }*/
 
     return;
 }
