@@ -120,34 +120,9 @@ namespace yarpWbi
         /** Set the cut frequency of the motor PWM low pass filter. */
         bool setPwmCutFrequency(double fc);
 
-        /*
-        std::map<wbi::ID, yarp::os::BufferedPort<yarp::sig::Vector>*>  portsEEWrenches;
-        std::map<wbi::ID, yarp::sig::Vector>  lastEEWrenches;
 
-        bool openEEWrenchPorts(const wbi::LocalId & local_id);
-        void readEEWrenches(const wbi::LocalId & local_id,yarp::sig::Vector & vec);
-        void closeEEWrenchPorts(const wbi::LocalId & local_id);
-
-        yarp::sig::Matrix H_world_base;
-        */
 
     public:
-        // end effector wrenches ports (the key of the maps is the sensor id)
-        //bool ee_wrenches_enabled;
-        //bool openEEWrenchPorts();
-
-        /*
-        yarp::sig::Vector RAExtWrench;
-        yarp::sig::Vector LAExtWrench;
-        yarp::sig::Vector RLExtWrench;
-        yarp::sig::Vector LLExtWrench;
-
-
-        wbi::ID right_gripper_local_id;
-        wbi::ID left_gripper_local_id;
-        wbi::ID left_sole_local_id;
-        wbi::ID right_sole_local_id;
-        */
 
         yarp::os::Semaphore         mutex;          // mutex for access to class global variables
 
