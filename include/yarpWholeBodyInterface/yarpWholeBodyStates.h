@@ -76,7 +76,7 @@ namespace yarpWbi
         double tauMCutFrequency;
         double pwmCutFrequency;
 
-        int robot_reference_frame_link;                        //Reference link assigned as base frame
+        int robot_reference_frame_link;                     //Reference link assigned as world frame
         wbi::Frame rootLink_H_ReferenceLink;                //Rototranslation between Reference frame (assigned as world) and Root Link
         wbi::Frame world_H_rootLink;                        //Rototranslation between Root link and World
         wbi::Frame world_H_reference;                        //Rototranslation between Reference frame and world (future work)
@@ -253,6 +253,7 @@ namespace yarpWbi
 
         // End motor-quantites estimation
 
+        // Base estimation methods 
         wbi::iWholeBodyModel *wholeBodyModel;
 
     public:

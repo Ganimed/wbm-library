@@ -241,16 +241,6 @@ bool yarpWholeBodyStates::init()
     sensors = new yarpWholeBodySensors(name.c_str(), wbi_yarp_properties);              // sensor interface
     estimator = new yarpWholeBodyEstimator(estimatorPeriod_in_ms, sensors,wholeBodyModel);  // estimation thread
 
-    //wb
-    if(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("WORLD_REFERENCE_FRAME"))
-    {
-        yInfo() << "Found world reference frame mention in wbiConfig. Setting as "<<wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str();
-        estimator->setWorldBaseLinkName(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str());
-    }
-    else
-    {
-        yInfo()<<"Did not find WORLD_REFERENCE_FRAME option in config file";
-    }
 
     if( wbi_yarp_properties.check("readSpeedAccFromControlBoard") )
     {
@@ -274,6 +264,16 @@ bool yarpWholeBodyStates::init()
         estimator->estimateBasePosAndVel = false;
     }
 
+    if(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("WORLD_REFERENCE_FRAME"))
+    {
+        yInfo() << "Found world reference frame mention in wbiConfig. Setting as "<<wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str();
+        estimator->setWorldBaseLinkName(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str());
+    }
+    else
+    {
+        yWarning()<<"Did not find WORLD_REFERENCE_FRAME option in config file, disabling world to base position and velocity estimation";
+        estimator->estimateBasePosAndVel = false;
+    }
 
     //Add required sensors given the estimate list
     // TODO FIXME ugly, we should probably have a way to iterate on estimate type
@@ -484,8 +484,28 @@ bool yarpWholeBodyStates::getEstimates(const EstimateType et, double *data, doub
     case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return estimator->lockAndCopyVector(estimator->estimates.lastDtauM, data);
     case ESTIMATE_MOTOR_PWM:                return lockAndReadSensors(SENSOR_PWM, data, time, blocking);
     //case ESTIMATE_IMU:                    return lockAndReadSensors(SENSOR_IMU, data, time, blocking);
-    case ESTIMATE_BASE_POS:                    return estimator->lockAndCopyVector(estimator->estimates.lastBasePos,data);
-    case ESTIMATE_BASE_VEL:                    return estimator->lockAndCopyVector(estimator->estimates.lastBaseVel,data);
+    case ESTIMATE_BASE_POS:
+    {
+        if( estimator->estimateBasePosAndVel )
+        {
+            return estimator->lockAndCopyVector(estimator->estimates.lastBasePos,data);
+        }
+        else
+        {
+            return false;
+        }
+    }
+    case ESTIMATE_BASE_VEL:
+    {
+        if( estimator->estimateBasePosAndVel )
+        {
+            return estimator->lockAndCopyVector(estimator->estimates.lastBaseVel,data);
+        }
+        else
+        {
+            return false;
+        }
+    }
     case ESTIMATE_FORCE_TORQUE_SENSOR:      return lockAndReadSensors(SENSOR_FORCE_TORQUE, data, time, blocking);
     default: break;
     }
@@ -615,10 +635,8 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, yarp
     tauMCutFrequency    =   3.0;
     pwmCutFrequency     =   3.0;
 
-    //default setting for refence frame as l_sole for icub to maintain backward compatibility
-    robot_reference_frame_link = 9;
-
-//     motor_quantites_estimation_enabled = false;
+    //default setting: invalid
+    robot_reference_frame_link = -1;
 
 }
 
