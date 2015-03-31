@@ -244,7 +244,6 @@ bool yarpWholeBodyStates::init()
     //wb
     if(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("WORLD_REFERENCE_FRAME"))
     {
-        //yInf
         yInfo() << "Found world reference frame mention in wbiConfig. Setting as "<<wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str();
         estimator->setWorldBaseLinkName(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str());
     }
@@ -364,37 +363,10 @@ bool yarpWholeBodyStates::close()
     return ok;
 }
 
-bool yarpWholeBodyStates::setWorldBasePosition(const wbi::Frame & xB)
-{
-    return false;
-    //return estimator->setWorldBasePosition(xB);
-}
-
 bool yarpWholeBodyStates::addEstimate(const EstimateType et, const ID &sid)
 {
     if( initDone ) return false;
-    /*
-    switch(et)
-    {
-    case ESTIMATE_JOINT_POS:                return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
-    case ESTIMATE_JOINT_VEL:                return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
-    case ESTIMATE_JOINT_ACC:                return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
-    case ESTIMATE_JOINT_TORQUE:             return lockAndAddSensor(SENSOR_TORQUE, sid);
-    case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return lockAndAddSensor(SENSOR_TORQUE, sid);
-    case ESTIMATE_MOTOR_POS:                return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
-    case ESTIMATE_MOTOR_VEL:                return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
-    case ESTIMATE_MOTOR_ACC:                return lockAndAddSensor(SENSOR_ENCODER_POS, sid);
-    case ESTIMATE_MOTOR_TORQUE:             return lockAndAddSensor(SENSOR_TORQUE, sid);
-    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return lockAndAddSensor(SENSOR_TORQUE, sid);
-    case ESTIMATE_MOTOR_PWM:                return lockAndAddSensor(SENSOR_PWM, sid);
-    //case ESTIMATE_IMU:                      return lockAndAddSensor(SENSOR_IMU, sid);
-    case ESTIMATE_FORCE_TORQUE_SENSOR:      return lockAndAddSensor(SENSOR_FORCE_TORQUE, sid);
-    ///< \todo TODO properly account for external forque torque
-    case ESTIMATE_EXTERNAL_FORCE_TORQUE:    return false; //estimator->openEEWrenchPorts();
-    default: break;
-    }
-    return false;
-    */
+
     estimateIdList[et].addID(sid);
     return true;
 }
@@ -402,28 +374,6 @@ bool yarpWholeBodyStates::addEstimate(const EstimateType et, const ID &sid)
 int yarpWholeBodyStates::addEstimates(const EstimateType et, const IDList &sids)
 {
     if( initDone ) return false;
-    /*
-    switch(et)
-    {
-    case ESTIMATE_JOINT_POS:                return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
-    case ESTIMATE_JOINT_VEL:                return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
-    case ESTIMATE_JOINT_ACC:                return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
-    case ESTIMATE_JOINT_TORQUE:             return lockAndAddSensors(SENSOR_TORQUE, sids);
-    case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return lockAndAddSensors(SENSOR_TORQUE, sids);
-    case ESTIMATE_MOTOR_POS:                return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
-    case ESTIMATE_MOTOR_VEL:                return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
-    case ESTIMATE_MOTOR_ACC:                return lockAndAddSensors(SENSOR_ENCODER_POS, sids);
-    case ESTIMATE_MOTOR_TORQUE:             return lockAndAddSensors(SENSOR_TORQUE, sids);
-    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return lockAndAddSensors(SENSOR_TORQUE, sids);
-    case ESTIMATE_MOTOR_PWM:                return lockAndAddSensors(SENSOR_PWM, sids);
-    //case ESTIMATE_IMU:                    return lockAndAddSensors(SENSOR_IMU, sids);
-    case ESTIMATE_FORCE_TORQUE_SENSOR:      return lockAndAddSensors(SENSOR_FORCE_TORQUE, sids);
-    ///< \todo TODO properly account for external forque torque
-    case ESTIMATE_EXTERNAL_FORCE_TORQUE:    return true;
-    default: break;
-    }
-    return false;
-    */
     estimateIdList[et].addIDList(sids);
     return true;
 }
@@ -432,26 +382,6 @@ bool yarpWholeBodyStates::removeEstimate(const EstimateType et, const ID &sid)
 {
     if( initDone ) return false;
 
-    /*
-    switch(et)
-    {
-    case ESTIMATE_JOINT_POS:                return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
-    case ESTIMATE_JOINT_VEL:                return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
-    case ESTIMATE_JOINT_ACC:                return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
-    case ESTIMATE_JOINT_TORQUE:             return lockAndRemoveSensor(SENSOR_TORQUE, sid);
-    case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return lockAndRemoveSensor(SENSOR_TORQUE, sid);
-    case ESTIMATE_MOTOR_POS:                return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
-    case ESTIMATE_MOTOR_VEL:                return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
-    case ESTIMATE_MOTOR_ACC:                return lockAndRemoveSensor(SENSOR_ENCODER_POS, sid);
-    case ESTIMATE_MOTOR_TORQUE:             return lockAndRemoveSensor(SENSOR_TORQUE, sid);
-    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return lockAndRemoveSensor(SENSOR_TORQUE, sid);
-    case ESTIMATE_MOTOR_PWM:                return lockAndRemoveSensor(SENSOR_PWM, sid);
-    //case ESTIMATE_IMU:                      return lockAndRemoveSensor(SENSOR_IMU, sid);
-    case ESTIMATE_FORCE_TORQUE_SENSOR:             return lockAndRemoveSensor(SENSOR_FORCE_TORQUE, sid);
-    default: break;
-    }
-    return false;
-    */
    estimateIdList[et].removeID(sid);
    return true;
 }
@@ -486,27 +416,6 @@ const IDList& yarpWholeBodyStates::getEstimateList(const EstimateType et)
 int yarpWholeBodyStates::getEstimateNumber(const EstimateType et)
 {
     if( initDone ) return false;
-    /*
-    switch(et)
-    {
-    case ESTIMATE_JOINT_POS:                return sensors->getSensorNumber(SENSOR_ENCODER_POS);
-    case ESTIMATE_JOINT_VEL:                return sensors->getSensorNumber(SENSOR_ENCODER_POS);
-    case ESTIMATE_JOINT_ACC:                return sensors->getSensorNumber(SENSOR_ENCODER_POS);
-    case ESTIMATE_JOINT_TORQUE:             return sensors->getSensorNumber(SENSOR_TORQUE);
-    case ESTIMATE_JOINT_TORQUE_DERIVATIVE:  return sensors->getSensorNumber(SENSOR_TORQUE);
-    case ESTIMATE_MOTOR_POS:                return sensors->getSensorNumber(SENSOR_ENCODER_POS);
-    case ESTIMATE_MOTOR_VEL:                return sensors->getSensorNumber(SENSOR_ENCODER_POS);
-    case ESTIMATE_MOTOR_ACC:                return sensors->getSensorNumber(SENSOR_ENCODER_POS);
-    case ESTIMATE_MOTOR_TORQUE:             return sensors->getSensorNumber(SENSOR_TORQUE);
-    case ESTIMATE_MOTOR_TORQUE_DERIVATIVE:  return sensors->getSensorNumber(SENSOR_TORQUE);
-    case ESTIMATE_MOTOR_PWM:                return sensors->getSensorNumber(SENSOR_PWM);
-    //case ESTIMATE_IMU:                      return sensors->getSensorNumber(SENSOR_IMU);
-    case ESTIMATE_FORCE_TORQUE_SENSOR:      return sensors->getSensorNumber(SENSOR_FORCE_TORQUE);
-    ESTIMATE_EXTERNAL_FORCE_TORQUE: return number of links where is possible to get contact
-    default: break;
-    }
-    return 0;
-    */
     return estimateIdList[et].size();
 }
 
@@ -598,37 +507,12 @@ bool yarpWholeBodyStates::getMotorVel(double *data, double time, bool /*blocking
 {
     bool res = estimator->lockAndCopyVector(estimator->estimates.lastDq, data);    ///< read joint vel
     if(!res) return false;
-    /*
-    IDList idList = lockAndGetSensorList(SENSOR_ENCODER_POS);
-    int i=0;
-    FOR_ALL_OF(itBp, itJ, idList)   ///< manage coupled joints
-    {
-        if(itBp->first == LEFT_ARM && *itJ==0)          // left arm shoulder
-            data[i] = data[i];
-        else if(itBp->first == LEFT_ARM && *itJ==1)     // left arm shoulder
-            data[i] = data[i];
-        else if(itBp->first == LEFT_ARM && *itJ==2)     // left arm shoulder
-            data[i] = data[i];
-        else if(itBp->first == RIGHT_ARM && *itJ==0)    // right arm shoulder
-            data[i] = data[i];
-        else  if(itBp->first == RIGHT_ARM && *itJ==1)   // right arm shoulder
-            data[i] = data[i];
-        else if(itBp->first == RIGHT_ARM && *itJ==2)    // right arm shoulder
-            data[i] = data[i];
-        else if(itBp->first == TORSO && *itJ==1)        // torso
-            data[i] = data[i];
-        else if(itBp->first == TORSO && *itJ==2)        // torso
-            data[i] = data[i];
-        i++;
-    }
-    */
+
     return false;
 }
 
 bool yarpWholeBodyStates::getMotorVel(const int numeric_id, double *data, double /*time*/, bool /*blocking*/)
 {
-    ///< read joint vel
-    //return estimator->lockAndCopyVectorElement(sensors->getSensorList(SENSOR_ENCODER_POS).localToGlobalId(lid), estimator->estimates.lastDq, data);
     return false;
 }
 
@@ -648,38 +532,7 @@ bool yarpWholeBodyStates::lockAndReadSensor(const SensorType st, const int numer
     return res;
 }
 
-/*
-bool yarpWholeBodyStates::lockAndGetExternalWrench(const int numeric_id, double * data)
-{
-    return false;
 
-    estimator->mutex.wait();
-    if( !estimator->ee_wrenches_enabled )
-    {
-        estimator->mutex.post();
-        return false;
-    }
-
-    if( sid == estimator->right_gripper_local_id )
-    {
-        memcpy(data,estimator->RAExtWrench.data(),6*sizeof(double));
-    }
-    else if( sid == estimator->left_gripper_local_id )
-    {
-        memcpy(data,estimator->LAExtWrench.data(),6*sizeof(double));
-    }
-    else if( sid == estimator->right_sole_local_id )
-    {
-        memcpy(data,estimator->RLExtWrench.data(),6*sizeof(double));
-    }
-    else if( sid == estimator->left_sole_local_id )
-    {
-        memcpy(data,estimator->LLExtWrench.data(),6*sizeof(double));
-    }
-    estimator->mutex.post();
-    return true;
-}
-*/
 
 bool yarpWholeBodyStates::lockAndAddSensor(const SensorType st, const ID &sid)
 {
@@ -723,7 +576,7 @@ int yarpWholeBodyStates::lockAndGetSensorNumber(const SensorType st)
 
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-//                                          ICUB WHOLE BODY ESTIMATOR
+//                                         YARP WHOLE BODY ESTIMATOR
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, yarpWholeBodySensors *_sensors, wbi::iWholeBodyModel *wholeBodyModelRef)
@@ -740,7 +593,6 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, yarp
   dqjVect(NULL,NULL),
   floatingBase_jacobian(6,6),
   rotationalVelocityWrapper(NULL,NULL)
-  //ee_wrenches_enabled(false)
 {
 
     wholeBodyModel = wholeBodyModelRef;
@@ -788,86 +640,18 @@ bool yarpWholeBodyEstimator::threadInit()
     tauMFilt    = new FirstOrderLowPassFilter(tauMCutFrequency, getRate()*1e-3, estimates.lastTauJ);
     pwmFilt     = new FirstOrderLowPassFilter(pwmCutFrequency, getRate()*1e-3, estimates.lastPwm);
 
-    //H_world_base.resize(4,4);
-    //H_world_base.eye();
-
- //   robot_reference_frame_link = 9; // Default value corresponds to l_sole to maintain backward compatibility.
- /*
-    if(wholeBodyModel!=NULL)
-    {
-      wholeBodyModel->getFrameList().idToIndex("l_sole",robot_reference_frame_link);
-    }
- */
-    /*
-    right_gripper_local_id = wbi::ID(RIGHT_ARM,8);
-    left_gripper_local_id = wbi::ID(LEFT_ARM,8);
-    left_sole_local_id = wbi::ID(LEFT_LEG,8);
-    right_sole_local_id = wbi::ID(RIGHT_LEG,8);
-    */
-
-    /*    Eigen::Map<Eigen::VectorXd> dqjVect(dqj,dof);
-    Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> complete_jacobian(6,dof+6), joint_jacobian(6,dof),floatingBase_jacobian(6,6);
-    Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> tempMatForComputation(6,dof);//, minusTemp(6,dof);
-    Eigen::VectorXd dvbVect(6);
-    Eigen::Map<Eigen::VectorXd> yarpWrapper(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
-  */
-
      int dof = estimates.lastQ.length();
-//     dqjVect_.resize(6,dof+6);
-//     std::cout<<" dqjVect : "<<dqjVect_.rows()<<" , "<<dqjVect_.cols()<<"\n";
 
     complete_jacobian.resize(6,dof+6);
     joint_jacobian.resize(6,dof);
-//     floatingBase_jacobian(6,6);
     tempMatForComputation.resize(6,dof);
     new (&rotationalVelocityWrapper) Eigen::Map<Eigen::VectorXd>(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
     new (&dqjVect) Eigen::Map<Eigen::VectorXd>(estimates.lastDq.data(),dof);
 
 
-/*
-    dvbVect.resize(6);
-    new(&rotationalVelocityWrapper) Eigen::Map<Eigen::VectorXd>(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
-    //Eigen::Map<Eigen::VectorXd> yarpWrapper;//(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
-    //new (&v) Map<RowVectorXi>(data+4,5);
-    /*
-    std::cout<<" CompleteJacobian size : "<<complete_jacobian.rows()<<"X"<<complete_jacobian.cols()<<"\n";
-    std::cout<<" JointJacobian size : "<<joint_jacobian.rows()<<"X"<<joint_jacobian.cols()<<"\n";
-    std::cout<<" FloatingBaseJacobian size : "<<floatingBase_jacobian.rows()<<"X"<<floatingBase_jacobian.cols()<<"\n";
-    std::cout<<" TempMat size : "<<tempMatForComputation.rows()<<"X"<<tempMatForComputation.cols()<<"\n";
-    std::cout<<" rotationalVelocityWrapper size : "<<rotationalVelocityWrapper.rows()<<"\n\n";*/
     return ok;
 }
 
-/*
-bool yarpWholeBodyEstimator::openEEWrenchPorts()
-{
-    return false;
-
-    bool okEE = true;
-    if( ee_wrenches_enabled ) return true;
-    mutex.wait();
-    okEE = okEE && openEEWrenchPorts(right_gripper_local_id);
-    okEE = okEE && openEEWrenchPorts(left_gripper_local_id);
-    okEE = okEE && openEEWrenchPorts(right_sole_local_id);
-    okEE = okEE && openEEWrenchPorts(left_sole_local_id);
-    ee_wrenches_enabled = okEE;
-    mutex.post();
-
-    return okEE;
-
-}*/
-
-bool yarpWholeBodyEstimator::setWorldBasePosition(const wbi::Frame & xB)
-{
-    return false;
-    /*
-    mutex.wait();
-    H_world_base.resize(4,4);
-    xB.get4x4Matrix(H_world_base.data());
-    mutex.post();
-    return true;
-    */
-}
 
 Eigen::Map<Eigen::VectorXd> toEigen(yarp::sig::Vector & vec)
 {
@@ -1249,15 +1033,17 @@ bool yarpWholeBodyEstimator::setPwmCutFrequency(double fc)
 }
 bool yarpWholeBodyEstimator::setWorldBaseLinkName(std::string linkName)
 {
-  if(wholeBodyModel!=NULL)
-  {
-    yInfo()<<"Reference link set as world was "<<robot_reference_frame_link;
-    wholeBodyModel->getFrameList().idToIndex(linkName.c_str(),robot_reference_frame_link);
-    yInfo()<<", now it is set to "<<robot_reference_frame_link;
-    return(true);
-  }
-  else
-    return(false);
+    if(wholeBodyModel!=NULL)
+    {
+        yInfo()<<"Reference link set as world was "<<robot_reference_frame_link;
+        wholeBodyModel->getFrameList().idToIndex(linkName.c_str(),robot_reference_frame_link);
+        yInfo()<<", now it is set to "<<robot_reference_frame_link;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 
 }
 
@@ -1288,40 +1074,34 @@ bool yarpWholeBodyEstimator::computeBasePosition(double *q_temp)
 }
 bool yarpWholeBodyEstimator::computeBaseVelocity(double* qj,double* dqj)
 {
-  if(wholeBodyModel!=NULL)
-  {
-    int dof = estimates.lastQ.size();
-//     new (&dqjVect) Eigen::Map<Eigen::VectorXd>(dqj,dof);
+    if(wholeBodyModel!=NULL)
+    {
+        int dof = estimates.lastQ.size();
 
-//     Eigen::Map<Eigen::VectorXd> dqjVect(dqj,dof);
-//     Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> complete_jacobian(6,dof+6);
-//     Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> joint_jacobian(6,dof);
-//     Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> tempMatForComputation(6,dof);
-//     Eigen::VectorXd dvbVect(6);
-//     new (&rotationalVelocityWrapper) Eigen::Map<Eigen::VectorXd>(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
-
-    dvbVect.setZero();
-    complete_jacobian.setZero();
-    joint_jacobian.setZero();
-    floatingBase_jacobian.setZero();
-    tempMatForComputation.setZero();
+        dvbVect.setZero();
+        complete_jacobian.setZero();
+        joint_jacobian.setZero();
+        floatingBase_jacobian.setZero();
+        tempMatForComputation.setZero();
 
 
-    wholeBodyModel->computeJacobian(qj,world_H_rootLink,robot_reference_frame_link,complete_jacobian.data());
-    floatingBase_jacobian = complete_jacobian.leftCols(6);
-    joint_jacobian = complete_jacobian.rightCols(dof);
+        wholeBodyModel->computeJacobian(qj,world_H_rootLink,robot_reference_frame_link,complete_jacobian.data());
+        floatingBase_jacobian = complete_jacobian.leftCols(6);
+        joint_jacobian = complete_jacobian.rightCols(dof);
 
 
-    tempMatForComputation = (floatingBase_jacobian.inverse()*joint_jacobian);
-    tempMatForComputation*=-1.0;
+        tempMatForComputation = (floatingBase_jacobian.inverse()*joint_jacobian);
+        tempMatForComputation*=-1.0;
 
-    dvbVect =tempMatForComputation*dqjVect;
-    rotationalVelocityWrapper = dvbVect;
+        dvbVect =tempMatForComputation*dqjVect;
+        rotationalVelocityWrapper = dvbVect;
 
-    return(true);
-  }
-  else
-    return(false);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 

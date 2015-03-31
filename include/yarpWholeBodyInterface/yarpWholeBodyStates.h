@@ -358,8 +358,6 @@ namespace yarpWbi
          * @param value Value of the parameter to set.
          * @return True if the operation succeeded, false otherwise. */
         virtual bool setEstimationParameter(const wbi::EstimateType et, const wbi::EstimationParameter ep, const void *value);
-
-        virtual bool setWorldBasePosition(const wbi::Frame & xB);
     };
 
 
