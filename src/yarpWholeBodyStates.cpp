@@ -42,8 +42,6 @@ using namespace iCub::skinDynLib;
 using namespace iCub::ctrl;
 using namespace yarp::math;
 
-#define ESTIMATOR_PERIOD 10 // <------- FIXME TODO UUUUUUUUUGGGGGGGLYYYYYYY
-
 
 // *********************************************************************************************************************
 // *********************************************************************************************************************
@@ -216,19 +214,43 @@ bool yarpWholeBodyStates::init()
         return false;
     }
 
+    int estimatorPeriod_in_ms = 10;
+    if( wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("estimatorPeriod") &&
+        wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("estimatorPeriod").isDouble() )
+    {
+        double estimatorPeriod_in_ms_dbl = wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("estimatorPeriod").asDouble();
+        if( estimatorPeriod_in_ms_dbl >= 1.0 )
+        {
+            estimatorPeriod_in_ms = (int)estimatorPeriod_in_ms_dbl;
+            yInfo() << "yarpWholeBodyStates : valid estimatorPeriod option found"
+                    << ", setting estimator thread period to " << estimatorPeriod_in_ms << "milliseconds";
+        }
+        else
+        {
+            yWarning() << "yarpWholeBodyStates : estimatorPeriod option found but invalid (< 1ms)"
+                       << ", setting estimator thread period to default value of " << estimatorPeriod_in_ms << " milliseconds";
+        }
+    }
+    else
+    {
+        yInfo() << "yarpWholeBodyStates : estimatorPeriod option not found"
+                << ", setting estimator thread period to default value of " << estimatorPeriod_in_ms << " milliseconds";
+    }
+
+
     sensors = new yarpWholeBodySensors(name.c_str(), wbi_yarp_properties);              // sensor interface
-    estimator = new yarpWholeBodyEstimator(ESTIMATOR_PERIOD, sensors,wholeBodyModel);  // estimation thread
+    estimator = new yarpWholeBodyEstimator(estimatorPeriod_in_ms, sensors,wholeBodyModel);  // estimation thread
 
     //wb
     if(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("WORLD_REFERENCE_FRAME"))
     {
-     //yInf
-      yInfo() << "Found world reference frame mention in wbiConfig. Setting as "<<wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str();
-      estimator->setWorldBaseLinkName(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str());
+        //yInf
+        yInfo() << "Found world reference frame mention in wbiConfig. Setting as "<<wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str();
+        estimator->setWorldBaseLinkName(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str());
     }
     else
     {
-      yInfo()<<"Did not find WORLD_REFERENCE_FRAME option in config file";
+        yInfo()<<"Did not find WORLD_REFERENCE_FRAME option in config file";
     }
 
     if( wbi_yarp_properties.check("readSpeedAccFromControlBoard") )
@@ -704,8 +726,8 @@ int yarpWholeBodyStates::lockAndGetSensorNumber(const SensorType st)
 //                                          ICUB WHOLE BODY ESTIMATOR
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period, yarpWholeBodySensors *_sensors, wbi::iWholeBodyModel *wholeBodyModelRef)
-: RateThread(_period),
+yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, yarpWholeBodySensors *_sensors, wbi::iWholeBodyModel *wholeBodyModelRef)
+: RateThread(_period_in_milliseconds),
   sensors(_sensors),
   dqFilt(0),
   d2qFilt(0),
@@ -743,7 +765,7 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period, yarpWholeBodySensors
 
     //default setting for refence frame as l_sole for icub to maintain backward compatibility
     robot_reference_frame_link = 9;
-    
+
 //     motor_quantites_estimation_enabled = false;
 
 }
@@ -1284,12 +1306,12 @@ bool yarpWholeBodyEstimator::computeBaseVelocity(double* qj,double* dqj)
     floatingBase_jacobian.setZero();
     tempMatForComputation.setZero();
 
-    
+
     wholeBodyModel->computeJacobian(qj,world_H_rootLink,robot_reference_frame_link,complete_jacobian.data());
     floatingBase_jacobian = complete_jacobian.leftCols(6);
     joint_jacobian = complete_jacobian.rightCols(dof);
 
-    
+
     tempMatForComputation = (floatingBase_jacobian.inverse()*joint_jacobian);
     tempMatForComputation*=-1.0;
 

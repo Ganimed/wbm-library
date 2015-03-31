@@ -189,7 +189,7 @@ namespace yarpWbi
 
         /** Constructor.
          */
-        yarpWholeBodyEstimator(int _period, yarpWbi::yarpWholeBodySensors *_sensors, wbi::iWholeBodyModel *wholeBodyModelRef=NULL);
+        yarpWholeBodyEstimator(int period_in_ms, yarpWbi::yarpWholeBodySensors *_sensors, wbi::iWholeBodyModel *wholeBodyModelRef=NULL);
 
         bool lockAndSetEstimationParameter(const wbi::EstimateType et,
                                            const wbi::EstimationParameter ep,
@@ -221,19 +221,23 @@ namespace yarpWbi
      * Class to access the estimates of the state of an YARP robot.
      * You can configure this object with a yarp::os::Property object, that you can
      * pass to the constructor or to the setYarpWbiProperties method.
+     *
      * The option that this Property object should contain at first level are:
      *
      * | Parameter name | Type | Units | Default Value | Required | Description | Notes |
      * |:--------------:|:------:|:-----:|:-------------:|:--------:|:-----------:|:-----:|
      * | readSpeedAccFromControlBoard | string | - | - | No | If present, read speeds and accelerations from the low level controlboards instead of using an high level numerical derivative.  |  |
-     * 
-     * 
-     * # WBI_STATE_OPTIONS 
+     *
+     * All other options should be placed in the WBI_STATE_OPTIONS group, to separate
+     * them from the other yarpWholeBodyInterface option when placed all together in the .ini configuration file.
+     *
+     * # WBI_STATE_OPTIONS
      * | Parameter name | Type | Units | Default Value | Required | Description | Notes |
      * |:--------------:|:------:|:-----:|:-------------:|:--------:|:-----------:|:-----:|
      * | WORLD_REFERENCE_FRAME | string | - | - | No | If present, specifies the default frame for computation of the world-to-root rototranslation.  |  |
-     * | estimateBasePosAndVel | - | - | - | No | Necessary for estimation of root roto translation and velocity. If not present these estimates will always return 0  |  
-     * 
+     * | estimateBasePosAndVel | - | - | - | No | Necessary for estimation of root roto translation and velocity. If not present these estimates will always return 0  |
+     * | estimatorPeriod       | double | milliseconds | 10 | No | Period (in milliseconds) of the estimator thread | For undeliyng limitations of the yarp::os::RateThread class, this period should not be lower of 1.0 ms . |
+     *
      * Furthermore for accessing joint sensors, the property should contain all the information used
      * for configuring a a yarpWholeBodyActuators object.
      */
@@ -244,11 +248,11 @@ namespace yarpWbi
         std::string name;
         yarp::os::Property wbi_yarp_properties;
 
-
         yarpWbi::yarpWholeBodySensors        *sensors;       // interface to access the robot sensors
         yarpWholeBodyEstimator      *estimator;     // estimation thread
         wbi::IDList               emptyList;      ///< empty list of IDs to return in case of error
-        //double                      estWind;      // time window for the estimation
+
+
 
         //List of IDList for each estimate
         std::vector<wbi::IDList> estimateIdList;
@@ -271,6 +275,9 @@ namespace yarpWbi
         // For now we support motor quantites estimation by assuming a stiff actuation
         // and knowledge of the coupling matrix
         bool loadCouplingsFromConfigurationFile();
+
+        // End motor-quantites estimation
+
         wbi::iWholeBodyModel *wholeBodyModel;
 
     public:
