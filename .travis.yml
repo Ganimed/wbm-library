@@ -31,7 +31,7 @@ before_script:
   - pwd
   - cd ../..
   # Prepare wholeBodyInterface build
-  - cd wholeBodyInterface
+  - cd wholebodyinterface
   - mkdir build
   - cd build
   - cmake -DCMAKE_BUILD_TYPE=-DWHOLEBODYINTERFACE_BUILD_TESTS:BOOL=ON  -DSTANDARD_FIND_MODULE_DEBUG:BOOL=ON ..
