@@ -161,7 +161,7 @@ int yarpWholeBodyInterface::addJoints(const IDList &jList)
     int res2 = modelForStateInt->addJoints(jList);
     int res4 = modelInt->addJoints(jList);
     assert(res1==res4);
-    return res1;
+    return res1 && res2 && res4;
 }
 
 yarp::os::Mutex& yarpWholeBodyInterface::getInterfaceMutex()
