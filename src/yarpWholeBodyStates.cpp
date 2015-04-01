@@ -971,7 +971,8 @@ bool yarpWholeBodyEstimator::setPwmCutFrequency(double fc)
 
 localFloatingBaseStateEstimator::localFloatingBaseStateEstimator(iWholeBodyModel * _wholeBodyModel, int _dof):
     wholeBodyModel(NULL),
-    robot_reference_frame_link(-1)
+    robot_reference_frame_link(-1),
+    luDecompositionOfBaseJacobian(6)
 {
     init(_wholeBodyModel,_dof);
 }
@@ -985,12 +986,7 @@ bool localFloatingBaseStateEstimator::init(iWholeBodyModel * _wholeBodyModel, in
 bool localFloatingBaseStateEstimator::changeDoF(int _dof)
 {
     dof = _dof;
-    dvbVect.resize(6);
-    floatingBase_jacobian.resize(6,6);
     complete_jacobian.resize(6,dof+6);
-    joint_jacobian.resize(6,dof);
-    tempMatForComputation.resize(6,dof);
-
     return true;
 }
 
@@ -1040,29 +1036,19 @@ bool localFloatingBaseStateEstimator::computeBasePosition(double *q_temp, double
   else
         return(false);
 }
-bool localFloatingBaseStateEstimator::computeBaseVelocity(double* qj,double* dqj,double* base_vel_estimate)
+bool localFloatingBaseStateEstimator::computeBaseVelocity(double* qj, double* dqj, double* base_vel_estimate)
 {
     if(wholeBodyModel!=NULL)
     {
-        dvbVect.setZero();
         complete_jacobian.setZero();
-        joint_jacobian.setZero();
-        floatingBase_jacobian.setZero();
-        tempMatForComputation.setZero();
+        Eigen::Map<Eigen::VectorXd> dqjVect(dqj, dof);
+        Eigen::Map<Eigen::VectorXd> baseVelocityWrapper(base_vel_estimate, 6);
+        baseVelocityWrapper.setZero();
 
+        wholeBodyModel->computeJacobian(qj, world_H_rootLink, robot_reference_frame_link, complete_jacobian.data());
+        luDecompositionOfBaseJacobian.compute(complete_jacobian.leftCols<6>());
 
-        wholeBodyModel->computeJacobian(qj,world_H_rootLink,robot_reference_frame_link,complete_jacobian.data());
-        floatingBase_jacobian = complete_jacobian.leftCols(6);
-        joint_jacobian = complete_jacobian.rightCols(dof);
-
-
-        tempMatForComputation = (floatingBase_jacobian.inverse()*joint_jacobian);
-        tempMatForComputation*=-1.0;
-
-        Eigen::Map<Eigen::VectorXd> dqjVect(dqj,dof);
-        Eigen::Map<Eigen::VectorXd> baseVelocityWrapper(base_vel_estimate,6);
-        dvbVect =tempMatForComputation*dqjVect;
-        baseVelocityWrapper = dvbVect;
+        baseVelocityWrapper =-luDecompositionOfBaseJacobian.solve(complete_jacobian.rightCols(dof) * dqjVect);
 
         return true;
     }

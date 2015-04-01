@@ -30,6 +30,7 @@
 
 //#include <Eigen/Sparse>
 #include<Eigen/Core>
+#include<Eigen/LU>
 
 
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
@@ -65,14 +66,10 @@ namespace yarpWbi
         /*
          * optimised computation of world-to-base velocity
         */
-        //Eigen::Map<Eigen::VectorXd> dqjVect;
-        //Eigen::Map<Eigen::VectorXd> rotationalVelocityWrapper;
-        Eigen::VectorXd dvbVect;
-        Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> floatingBase_jacobian;
 
         Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> complete_jacobian;
-        Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> joint_jacobian;
-        Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> tempMatForComputation;
+
+        Eigen::PartialPivLU<Eigen::MatrixXd::PlainObject> luDecompositionOfBaseJacobian;
 
     public:
         localFloatingBaseStateEstimator(wbi::iWholeBodyModel * _wholeBodyModel=0, int _dof=0);
