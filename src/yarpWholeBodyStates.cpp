@@ -181,7 +181,6 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
     //Transform loaded coupling to the one actually needed
     Eigen::MatrixXd I(encoders,encoders);
     I.setIdentity();
-    double sparse_eps = 1e-3;
     Eigen::MatrixXd joint_to_motor_kinematic_coupling_dense = motor_to_joint_kinematic_coupling.inverse();
     Eigen::MatrixXd joint_to_motor_torque_coupling_dense = motor_to_joint_kinematic_coupling.transpose();
     estimator->joint_to_motor_kinematic_coupling = joint_to_motor_kinematic_coupling_dense;//.sparseView(sparse_eps);
@@ -239,7 +238,7 @@ bool yarpWholeBodyStates::init()
 
 
     sensors = new yarpWholeBodySensors(name.c_str(), wbi_yarp_properties);              // sensor interface
-    estimator = new yarpWholeBodyEstimator(estimatorPeriod_in_ms, sensors,wholeBodyModel);  // estimation thread
+    estimator = new yarpWholeBodyEstimator(estimatorPeriod_in_ms, sensors);  // estimation thread
 
 
     if( wbi_yarp_properties.check("readSpeedAccFromControlBoard") )
@@ -264,10 +263,11 @@ bool yarpWholeBodyStates::init()
         estimator->estimateBasePosAndVel = false;
     }
 
-    if(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("WORLD_REFERENCE_FRAME"))
+    if(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("WORLD_REFERENCE_FRAME") && wholeBodyModel)
     {
         yInfo() << "Found world reference frame mention in wbiConfig. Setting as "<<wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str();
-        estimator->setWorldBaseLinkName(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str());
+        estimator->localFltBaseStateEstimator.init(wholeBodyModel);
+        estimator->localFltBaseStateEstimator.setWorldBaseLinkName(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str());
     }
     else
     {
@@ -599,7 +599,7 @@ int yarpWholeBodyStates::lockAndGetSensorNumber(const SensorType st)
 //                                         YARP WHOLE BODY ESTIMATOR
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, yarpWholeBodySensors *_sensors, wbi::iWholeBodyModel *wholeBodyModelRef)
+yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, yarpWholeBodySensors *_sensors)
 : RateThread(_period_in_milliseconds),
   sensors(_sensors),
   dqFilt(0),
@@ -608,14 +608,8 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, yarp
   dTauMFilt(0),
   tauJFilt(0),
   tauMFilt(0),
-  motor_quantites_estimation_enabled(false),
-  dvbVect(6),
-  dqjVect(NULL,NULL),
-  floatingBase_jacobian(6,6),
-  rotationalVelocityWrapper(NULL,NULL)
+  motor_quantites_estimation_enabled(false)
 {
-
-    wholeBodyModel = wholeBodyModelRef;
     resizeAll(sensors->getSensorNumber(SENSOR_ENCODER_POS));
 
     ///< Window lengths of adaptive window filters
@@ -634,9 +628,6 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, yarp
     tauJCutFrequency    =   3.0;
     tauMCutFrequency    =   3.0;
     pwmCutFrequency     =   3.0;
-
-    //default setting: invalid
-    robot_reference_frame_link = -1;
 
 }
 
@@ -658,14 +649,9 @@ bool yarpWholeBodyEstimator::threadInit()
     tauMFilt    = new FirstOrderLowPassFilter(tauMCutFrequency, getRate()*1e-3, estimates.lastTauJ);
     pwmFilt     = new FirstOrderLowPassFilter(pwmCutFrequency, getRate()*1e-3, estimates.lastPwm);
 
-     int dof = estimates.lastQ.length();
-
-    complete_jacobian.resize(6,dof+6);
-    joint_jacobian.resize(6,dof);
-    tempMatForComputation.resize(6,dof);
-    new (&rotationalVelocityWrapper) Eigen::Map<Eigen::VectorXd>(estimates.lastBaseVel.data(), estimates.lastBaseVel.size());
-    new (&dqjVect) Eigen::Map<Eigen::VectorXd>(estimates.lastDq.data(),dof);
-
+    int dof = estimates.lastQ.length();
+    // Update dof in base estimator
+    localFltBaseStateEstimator.changeDoF(dof);
 
     return ok;
 }
@@ -762,8 +748,8 @@ void yarpWholeBodyEstimator::run()
         // Compute world to base position, if the estimate was added
         if( this->estimateBasePosAndVel )
         {
-            computeBasePosition(estimates.lastQ.data());
-            computeBaseVelocity(estimates.lastQ.data(),estimates.lastDq.data());
+            localFltBaseStateEstimator.computeBasePosition(estimates.lastQ.data(),estimates.lastBasePos.data());
+            localFltBaseStateEstimator.computeBaseVelocity(estimates.lastQ.data(),estimates.lastDq.data(),estimates.lastBaseVel.data());
         }
 
     }
@@ -978,14 +964,47 @@ bool yarpWholeBodyEstimator::setPwmCutFrequency(double fc)
 {
     return pwmFilt->setCutFrequency(fc);
 }
-bool yarpWholeBodyEstimator::setWorldBaseLinkName(std::string linkName)
+
+//////////////////////////////////////////////////////////////////////////////
+/// localFloatingBaseStateEstimator methods
+//////////////////////////////////////////////////////////////////////////////
+
+localFloatingBaseStateEstimator::localFloatingBaseStateEstimator(iWholeBodyModel * _wholeBodyModel, int _dof):
+    wholeBodyModel(NULL),
+    robot_reference_frame_link(-1),
+    luDecompositionOfBaseJacobian(6)
+{
+    init(_wholeBodyModel,_dof);
+}
+
+bool localFloatingBaseStateEstimator::init(iWholeBodyModel * _wholeBodyModel, int _dof)
+{
+    wholeBodyModel = _wholeBodyModel;
+    return changeDoF(_dof);
+}
+
+bool localFloatingBaseStateEstimator::changeDoF(int _dof)
+{
+    dof = _dof;
+    complete_jacobian.resize(6,dof+6);
+    return true;
+}
+
+
+
+bool localFloatingBaseStateEstimator::setWorldBaseLinkName(std::string linkName)
 {
     if(wholeBodyModel!=NULL)
     {
-        yInfo()<<"Reference link set as world was "<<robot_reference_frame_link;
         wholeBodyModel->getFrameList().idToIndex(linkName.c_str(),robot_reference_frame_link);
-        yInfo()<<", now it is set to "<<robot_reference_frame_link;
-        return true;
+        if( robot_reference_frame_link < 0 )
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
     else
     {
@@ -994,54 +1013,42 @@ bool yarpWholeBodyEstimator::setWorldBaseLinkName(std::string linkName)
 
 }
 
-
-
-bool yarpWholeBodyEstimator::computeBasePosition(double *q_temp)
+bool localFloatingBaseStateEstimator::computeBasePosition(double *q_temp, double * base_pos_estimate)
 {
   if(wholeBodyModel!=NULL)
   {
       wholeBodyModel->computeH(q_temp,wbi::Frame::identity(),robot_reference_frame_link, rootLink_H_ReferenceLink);
-      rootLink_H_ReferenceLink.setToInverse().get4x4Matrix (H_w2b.data());
-      referenceLink_H_rootLink.set4x4Matrix (H_w2b.data());
+
+      referenceLink_H_rootLink = rootLink_H_ReferenceLink.getInverse();
       world_H_rootLink = world_H_reference*referenceLink_H_rootLink ;
 
       int ctr;
       for (ctr=0;ctr<3;ctr++)
       {
-        estimates.lastBasePos(ctr) = world_H_rootLink.p[ctr];
+        base_pos_estimate[ctr] = world_H_rootLink.p[ctr];
       }
       for (ctr=0;ctr<9;ctr++)
       {
-        estimates.lastBasePos(3+ctr) = world_H_rootLink.R.data[ctr];
+        base_pos_estimate[3+ctr] = world_H_rootLink.R.data[ctr];
       }
       return(true);
   }
   else
         return(false);
 }
-bool yarpWholeBodyEstimator::computeBaseVelocity(double* qj,double* dqj)
+bool localFloatingBaseStateEstimator::computeBaseVelocity(double* qj, double* dqj, double* base_vel_estimate)
 {
     if(wholeBodyModel!=NULL)
     {
-        int dof = estimates.lastQ.size();
-
-        dvbVect.setZero();
         complete_jacobian.setZero();
-        joint_jacobian.setZero();
-        floatingBase_jacobian.setZero();
-        tempMatForComputation.setZero();
+        Eigen::Map<Eigen::VectorXd> dqjVect(dqj, dof);
+        Eigen::Map<Eigen::VectorXd> baseVelocityWrapper(base_vel_estimate, 6);
+        baseVelocityWrapper.setZero();
 
+        wholeBodyModel->computeJacobian(qj, world_H_rootLink, robot_reference_frame_link, complete_jacobian.data());
+        luDecompositionOfBaseJacobian.compute(complete_jacobian.leftCols<6>());
 
-        wholeBodyModel->computeJacobian(qj,world_H_rootLink,robot_reference_frame_link,complete_jacobian.data());
-        floatingBase_jacobian = complete_jacobian.leftCols(6);
-        joint_jacobian = complete_jacobian.rightCols(dof);
-
-
-        tempMatForComputation = (floatingBase_jacobian.inverse()*joint_jacobian);
-        tempMatForComputation*=-1.0;
-
-        dvbVect =tempMatForComputation*dqjVect;
-        rotationalVelocityWrapper = dvbVect;
+        baseVelocityWrapper =-luDecompositionOfBaseJacobian.solve(complete_jacobian.rightCols(dof) * dqjVect);
 
         return true;
     }
