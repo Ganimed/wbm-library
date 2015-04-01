@@ -379,7 +379,7 @@ namespace wbi
         /** Create a Frame based on the specified 3D rotation and translation. */
         inline Frame(const Rotation& _R, const double _p[3]);
         /** Read data from a 16-dim double array. */
-        inline Frame(double* d):R(d[0],d[1],d[2],d[4],d[5],d[6],d[8],d[9],d[10]){ p[0]=d[3]; p[1]=d[7]; p[2]=d[8];}
+        inline Frame(double* d):R(d[0],d[1],d[2],d[4],d[5],d[6],d[8],d[9],d[10]){ p[0]=d[3]; p[1]=d[7]; p[2]=d[11];}
         /** The rotation matrix defaults to identity. */
         explicit inline Frame(const double _p[3]);
         /** The position matrix defaults to zero. */
