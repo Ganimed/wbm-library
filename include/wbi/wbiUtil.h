@@ -445,9 +445,11 @@ namespace wbi
     //! Composition of two frames.
     Frame operator *(const Frame& lhs, const Frame& rhs);
 
-
 // include inline function definitions
 #include <wbi/wbiUtil.inl>
+
+    void serializationFromFrame(const Frame& frame, double *serialization);
+    void frameFromSerialization(double *serialization, Frame& outputFrame);
 
 } // end namespace
 

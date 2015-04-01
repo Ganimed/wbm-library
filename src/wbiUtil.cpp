@@ -25,9 +25,6 @@ using namespace std;
 using namespace wbi;
 
 const double PI         = 3.1415926535897932384626433832795;
-// const double deg2rad    = 0.01745329251994329576923690768488;
-const double rad2deg    = 57.2957795130823208767981548141052;
-const double epsilon          = 0.000001;
 
 /*******************************************************************************************************************/
 /*******************************************************************************************************************/
@@ -276,4 +273,34 @@ bool wbi::isEqual(const Frame& a, const Frame& b, double eps)
             wbi::equal(a.p[0],b.p[0],eps) &&
             wbi::equal(a.p[1],b.p[1],eps) &&
             wbi::equal(a.p[2],b.p[2],eps));
+}
+
+
+//Frame serialization utilities
+
+void wbi::serializationFromFrame(const Frame& frame, double *serialization)
+{
+    if (!serialization) return;
+    serialization[0] = frame.R.data[0];
+    serialization[1] = frame.R.data[1];
+    serialization[2] = frame.R.data[2];
+    serialization[4] = frame.R.data[3];
+    serialization[5] = frame.R.data[4];
+    serialization[6] = frame.R.data[5];
+    serialization[8] = frame.R.data[6];
+    serialization[9] = frame.R.data[7];
+    serialization[10] = frame.R.data[8];
+
+    serialization[3] = frame.p[0];
+    serialization[7] = frame.p[1];
+    serialization[11] = frame.p[2];
+
+    serialization[12] = serialization[13] = serialization[14] = 0;
+    serialization[15] = 1;
+}
+
+void wbi::frameFromSerialization(double *serialization, Frame& outputFrame)
+{
+    if (!serialization) return;
+    outputFrame = Frame(serialization);
 }
