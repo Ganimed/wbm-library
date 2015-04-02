@@ -35,6 +35,7 @@
 
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
 #include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
+#include "yarpWholeBodyInterface/floatingBaseEstimators.h"
 
 #include <map>
 
@@ -46,50 +47,6 @@ namespace wbi {
 
 namespace yarpWbi
 {
-    /**
-     * Class that performs local estimation of the floating base state (position, velocity, acceleration)
-     *
-     */
-    class localFloatingBaseStateEstimator
-    {
-    protected:
-        int baseFrameLinkID;         // ID of the assigned base frame for base to root rototranslation computation
-        wbi::iWholeBodyModel *wholeBodyModel;
-        int dof;                                            // Number of degrees of freedom in the wbi
-
-        int robot_reference_frame_link;                     //Reference link assigned as world frame
-        wbi::Frame rootLink_H_ReferenceLink;                //Rototranslation between Reference frame (assigned as world) and Root Link
-        wbi::Frame world_H_rootLink;                        //Rototranslation between Root link and World
-        wbi::Frame world_H_reference;                        //Rototranslation between Reference frame and world (future work)
-        wbi::Frame referenceLink_H_rootLink;                //Rototranslation between Root link and Reference frame
-
-        /*
-         * optimised computation of world-to-base velocity
-        */
-
-        Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> complete_jacobian;
-
-        Eigen::PartialPivLU<Eigen::MatrixXd::PlainObject> luDecompositionOfBaseJacobian;
-
-    public:
-        localFloatingBaseStateEstimator(wbi::iWholeBodyModel * _wholeBodyModel=0, int _dof=0);
-
-        /** Initialize the class */
-        bool init(wbi::iWholeBodyModel * _wholeBodyModel=0, int _dof=0);
-
-        bool changeDoF(int new_dof);
-
-        /** Sets a desired link as the world reference frame **/
-        bool setWorldBaseLinkName(std::string);
-        /** Computes the Base position for a given joint configuration **/
-        bool computeBasePosition(double *q, double * base_pos_estimate);
-        /** Computes the Base velocity for a given set of joint velocities **/
-        bool computeBaseVelocity(double *q, double *dq, double * base_vel_estimate);
-        /** Computes the Base acceleration for a given joint velocity **/
-        //bool computeBaseAcceleration();
-
-    };
-
 
     /**
      * Thread that estimates the state of the iCub robot.
