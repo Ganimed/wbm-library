@@ -81,9 +81,24 @@ namespace yarpWbi
 
         /** Sets a desired link as the world reference frame **/
         bool setWorldBaseLinkName(std::string);
-        /** Computes the Base position for a given joint configuration **/
+
+        /** @brief Computes the Base position for a given joint configuration
+         *
+         * The resulting estimate is serialized into a 16x1 vector of double. Use wbi#frameFromSerialization function to transform it into a proper Frame object
+         * @param q the current joint positions
+         * @param base_pos_estimate estimate of the base position w.r.t. world frame.
+         * @return true if successful, false otherwise
+         */
         bool computeBasePosition(double *q, double * base_pos_estimate);
-        /** Computes the Base velocity for a given set of joint velocities **/
+
+        /** Computes the Base velocity for a given set of joint velocities 
+         * Output a 6x1 representing the linear and angular velocity of the base frame w.r.t world frame
+         *
+         * @param q joint positions
+         * @param dq joint velocities
+         * @param base_vel_estimate resulting estimate of base velocity
+         * @return true if successful, false otherwise
+         */
         bool computeBaseVelocity(double *q, double *dq, double * base_vel_estimate);
         /** Computes the Base acceleration for a given joint velocity **/
         //bool computeBaseAcceleration();

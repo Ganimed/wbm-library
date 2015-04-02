@@ -15,21 +15,21 @@
  * Public License for more details
  */
 
-#include <iCub/skinDynLib/common.h>
-#include <yarp/os/Time.h>
-#include <string>
-#include <boost/concept_check.hpp>
-//#include <eigen3/Eigen/src/Core/arch/SSE/Complex.h>
-#include <yarp/os/Log.h>
-#include <yarp/os/LogStream.h>
-#include <yarp/math/api.h>
-
 #include "yarpWholeBodyInterface/yarpWholeBodyStates.h"
+
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
 
 #include <wbi/iWholeBodyModel.h>
+#include <wbi/wbiUtil.h>
 
-//#include <Eigen/Sparse>
+#include <yarp/os/Time.h>
+#include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
+#include <yarp/math/api.h>
+#include <iCub/skinDynLib/common.h>
+
+#include <string>
+
 #include <Eigen/LU>
 
 using namespace std;
@@ -1020,21 +1020,14 @@ bool localFloatingBaseStateEstimator::computeBasePosition(double *q_temp, double
       wholeBodyModel->computeH(q_temp,wbi::Frame::identity(),robot_reference_frame_link, rootLink_H_ReferenceLink);
 
       referenceLink_H_rootLink = rootLink_H_ReferenceLink.getInverse();
-      world_H_rootLink = world_H_reference*referenceLink_H_rootLink ;
+      world_H_rootLink = world_H_reference * referenceLink_H_rootLink;
 
-      int ctr;
-      for (ctr=0;ctr<3;ctr++)
-      {
-        base_pos_estimate[ctr] = world_H_rootLink.p[ctr];
-      }
-      for (ctr=0;ctr<9;ctr++)
-      {
-        base_pos_estimate[3+ctr] = world_H_rootLink.R.data[ctr];
-      }
-      return(true);
+      wbi::serializationFromFrame(world_H_rootLink, base_pos_estimate);
+
+      return true;
   }
   else
-        return(false);
+        return false;
 }
 bool localFloatingBaseStateEstimator::computeBaseVelocity(double* qj, double* dqj, double* base_vel_estimate)
 {
