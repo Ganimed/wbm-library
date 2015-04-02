@@ -84,7 +84,12 @@ namespace yarpWbi
 
         /** @brief Computes the Base position for a given joint configuration
          *
-         * The resulting estimate is serialized into a 16x1 vector of double. Use wbi#frameFromSerialization function to transform it into a proper Frame object
+         * The resulting estimate is serialized into a 16x1 vector of double. 
+         * Use wbi#frameFromSerialization function to transform it into a proper Frame object.
+         * The deserialized Frame object will contained the transformation that multiplied for point coordinates
+         * vector expressed in the floating base frame gives the poin coordinate vector of the same
+         * point expressed in the world frame (${}^{world} H_{base}$)
+         * 
          * @param q the current joint positions
          * @param base_pos_estimate estimate of the base position w.r.t. world frame.
          * @return true if successful, false otherwise
@@ -92,7 +97,9 @@ namespace yarpWbi
         bool computeBasePosition(double *q, double * base_pos_estimate);
 
         /** Computes the Base velocity for a given set of joint velocities 
-         * Output a 6x1 representing the linear and angular velocity of the base frame w.r.t world frame
+         * Output a 6x1 vector representing the linear and angular velocity of the base frame.
+         * The linear and angular velocity are oriented using the orientation of the world frame, 
+         * and the linear velocity is the velocity of the origin of the base frame link. 
          *
          * @param q joint positions
          * @param dq joint velocities
