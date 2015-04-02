@@ -445,9 +445,24 @@ namespace wbi
     //! Composition of two frames.
     Frame operator *(const Frame& lhs, const Frame& rhs);
 
-
 // include inline function definitions
 #include <wbi/wbiUtil.inl>
+
+    /** Serialize the Frame object into a vector of double
+     *
+     * The Frame (4x4 matrix) is serialized in Row Major order
+     * @param frame the frame object to be serialized
+     * @param serialization the (already allocated) vector of 16 double representing the 4x4 matrix
+     */
+    void serializationFromFrame(const Frame& frame, double *serialization);
+
+    /** Construct a Frame object from a serialization (vector of 16 double)
+     *
+     * The Frame (4x4 matrix) is deserialized considering Row Major order
+     * @param serialization vector of 16 double representing the 4x4 matrix
+     * @param outputFrame the frame object in which the vector will be deserialized
+     */
+    void frameFromSerialization(double *serialization, Frame& outputFrame);
 
 } // end namespace
 
