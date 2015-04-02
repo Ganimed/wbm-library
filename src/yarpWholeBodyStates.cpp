@@ -799,7 +799,7 @@ void yarpWholeBodyEstimator::resizeAll(int n)
     estimates.lastDtauM.resize(n);
     estimates.lastPwm.resize(n);
     estimates.lastPwmBuffer.resize(n);
-    estimates.lastBasePos.resize(12);
+    estimates.lastBasePos.resize(16);
     estimates.lastBaseVel.resize(6);
     estimates.lastBaseAccl.resize(6);
 }
