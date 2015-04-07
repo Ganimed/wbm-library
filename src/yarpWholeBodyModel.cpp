@@ -17,6 +17,7 @@
 
 #include "yarpWholeBodyInterface/yarpWholeBodyModel.h"
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
+
 #include <string>
 #include <cmath>
 
@@ -25,6 +26,7 @@
 
 #include <yarp/math/Math.h>
 #include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
 
 #include <yarp/os/ResourceFinder.h>
 
@@ -38,11 +40,6 @@ using namespace yarp::dev;
 using namespace yarp::sig;
 using namespace yarp::math;
 using namespace iCub::skinDynLib;
-
-// print the floating point vector pointed by data of size size and name name
-#define PRINT_VECTOR(name, size, data)  printf("%s: ",name); for(int i=0;i<size;i++) printf("%.1lf ",data[i]); printf("\n");
-// print the floating point matrix pointed by data of name "name"
-#define PRINT_MATRIX(name, rows, cols, data) printf("%s:\n",name); for(int i=0;i<rows;i++){ for(int j=0;j<cols;j++) printf("%.1lf ",data[i*(cols)+j]); printf("\n"); }
 
 // *********************************************************************************************************************
 // *********************************************************************************************************************
@@ -81,18 +78,18 @@ bool yarpWholeBodyModel::init()
     }
     else if (wbi_yarp_properties.check("robotName") )
     {
-        std::cerr << "[WARN] yarpWholeBodyModel: robot option not found, using robotName" << std::endl;
+        yWarning() << "yarpWholeBodyModel: robot option not found, using robotName";
         robot = wbi_yarp_properties.find("robotName").asString().c_str();
     }
     else
     {
-        std::cerr << "[ERR] yarpWholeBodyModel: robot option not found" << std::endl;
+        yError() << "yarpWholeBodyModel: robot option not found";
         return false;
     }
 
     if(  !wbi_yarp_properties.check("urdf") && !wbi_yarp_properties.check("urdf_file") )
     {
-        std::cerr << "yarpWholeBodyModel error: urdf not found in configuration files" << std::endl;
+        yError() << "yarpWholeBodyModel error: urdf not found in configuration files";
         return false;
     }
 
@@ -107,8 +104,12 @@ bool yarpWholeBodyModel::init()
     }
 
     yarp::os::ResourceFinder rf;
-    std::string urdf_file_path = rf.findFile(urdf_file.c_str());
+    if(  wbi_yarp_properties.check("verbose") )
+    {
+        rf.setVerbose();
+    }
 
+    std::string urdf_file_path = rf.findFile(urdf_file.c_str());
 
     // Use the default kinematic base link
     std::string kinematic_base_link_name = "";
@@ -168,7 +169,7 @@ bool yarpWholeBodyModel::init()
         int idyntree_id = p_model->getDOFIndex(joint_id.toString());
         if( idyntree_id == - 1 )
         {
-            std::cerr << "yarpWholeBodyModel error: joint " << joint_id.toString() << " not found in URDF file" << std::endl;
+            yError() << "yarpWholeBodyModel error: joint " << joint_id.toString() << " not found in URDF file";
             initDone = false;
             return false;
         }
@@ -197,7 +198,7 @@ bool yarpWholeBodyModel::openDrivers(int bp)
     bool ok = dd[bp]->view(ilim[bp]);   //if(!isRobotSimulator(robot))
     if(ok)
         return true;
-    fprintf(stderr, "Problem initializing drivers of %s\n", controlBoardNames[bp].c_str());
+    yError("Problem initializing drivers of %s", controlBoardNames[bp].c_str());
     return false;
 }
 
@@ -494,12 +495,6 @@ bool yarpWholeBodyModel::computeJacobian(double *q, const Frame &xBase, int link
     reduced_jacobian.setSubmatrix(complete_jacobian.submatrix(0,5,0,5),0,0);
     memcpy(J,reduced_jacobian.data(),sizeof(double)*6*dof_jacobian);
 
-#ifndef NDEBUG
-    //printf("J of link %d:\n%s\n", linkId, reduced_jacobian.submatrix(0,5,0,9).toString(1).c_str());
-    //printf("J of link %d:\n%s\n", linkId, reduced_jacobian.submatrix(0,5,10,19).toString(1).c_str());
-    //printf("J of link %d:\n%s\n", linkId, reduced_jacobian.submatrix(0,5,20,29).toString(1).c_str());
-#endif
-
     return true;
 }
 
@@ -593,12 +588,6 @@ bool yarpWholeBodyModel::forwardKinematics(double *q, const Frame &xB, int linkI
     x[4] = axisangle(1);
     x[5] = axisangle(2);
     x[6] = axisangle(3);
-
-//#ifndef NDEBUG
-//    PRINT_VECTOR("xB", 7, xB);
-//    PRINT_VECTOR("q", jointIdList.size(), q);
-//    PRINT_MATRIX("world_base_transformation", 4, 4, world_base_transformation.data());
-//#endif
 
     return true;
 }
