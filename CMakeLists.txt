@@ -79,7 +79,6 @@ set_target_properties(${LIBRARY_NAME}  PROPERTIES VERSION ${${VARS_PREFIX}_VERSI
 target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
                                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${${VARS_PREFIX}_INSTALL_INCLUDEDIR}>"
                                            ${YARP_INCLUDE_DIRS}
-                                           ${ICUB_INCLUDE_DIRS}
                                            ${iDynTree_INCLUDE_DIRS}
                                            ${wholeBodyInterface_INCLUDE_DIRS})
 
