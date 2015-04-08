@@ -120,7 +120,7 @@ namespace yarpWbi
             yarp::sig::Vector lastPwmBuffer;            // buffer for proper decoupling PWM readings
             yarp::sig::Vector lastBasePos;                // last Base Position
             yarp::sig::Vector lastBaseVel;                // last Base Velocity
-            yarp::sig::Vector lastBaseAccl;                // last Base Acceleration
+            yarp::sig::Vector lastBaseAcc;                // last Base Acceleration
         }
         estimates;
 
@@ -136,10 +136,14 @@ namespace yarpWbi
         bool motor_quantites_estimation_enabled;
 
         /** If true, perform base position and velocity estimation */
-        bool estimateBasePosAndVel;
+        bool estimateBaseState;
 
         /** helper for base state estimation */
+        bool use_localFloatingBaseStateEstimator;
         localFloatingBaseStateEstimator localFltBaseStateEstimator;
+
+        bool use_remoteFloatingBaseStateEstimator;
+        remoteFloatingBaseStateEstimator remoteFltBaseStateEstimator;
 
         /** Constructor.
          */
@@ -176,11 +180,20 @@ namespace yarpWbi
      * them from the other yarpWholeBodyInterface option when placed all together in the .ini configuration file.
      *
      * # WBI_STATE_OPTIONS
+     *
+     * Notice that for estimating floating base state (position, velocity and acceleration)
+     * of the floating base with respect to the inertial/world frame, you have to explictly
+     * enable this estimation in the configuration file using the estimateBaseState option. After that, you can either
+     * read this estimate externally (reading it from a yarp port) using the `externalFloatingBaseStatePort`
+     * or computing it internally by assuming that a frame is always fixed with respect to the inertial/world .
+     * You can specify this frame that is always fixed using the `localWorldReferenceFrame` option.
+     *
      * | Parameter name | Type | Units | Default Value | Required | Description | Notes |
      * |:--------------:|:------:|:-----:|:-------------:|:--------:|:-----------:|:-----:|
-     * | WORLD_REFERENCE_FRAME | string | - | - | No | If present, specifies the default frame for computation of the world-to-root rototranslation.  |  |
-     * | estimateBasePosAndVel | - | - | - | No | Necessary for estimation of root roto translation and velocity. If not present these estimates will always return 0  |
      * | estimatorPeriod       | double | milliseconds | 10 | No | Period (in milliseconds) of the estimator thread | For undeliyng limitations of the yarp::os::RateThread class, this period should not be lower of 1.0 ms . |
+     * | estimateBaseState | - | - | - | No | Necessary for estimation of root roto translation and velocity. If not present these estimates will always return 0  |
+     * | externalFloatingBaseStatePort     | string | - | - | - | If present, reads the floating base state (position, velocities and acceleration from an external port, using the format described in remoteFloatingBaseStateEstimator class. | Not compatible with WORLD_REFERENCE_FRAME option  |
+     * | localWorldReferenceFrame | string | - | - | No | If present, specifies the default frame for computation of the world-to-root rototranslation.  | Not compatible with the externalFloatingBaseStatePort |
      *
      * Furthermore for accessing joint sensors, the property should contain all the information used
      * for configuring a a yarpWholeBodyActuators object.
@@ -218,7 +231,12 @@ namespace yarpWbi
         // and knowledge of the coupling matrix
         bool loadCouplingsFromConfigurationFile();
 
+
         // End motor-quantites estimation
+
+        // Configure (using options provided by a configuration file)
+        // the estimate of the floating base state
+        bool configureFloatingBaseStateEstimator();
 
         // Pointer to a wholeBodyModel
         wbi::iWholeBodyModel * wholeBodyModel;

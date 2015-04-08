@@ -18,6 +18,9 @@
 #include "yarpWholeBodyInterface/floatingBaseEstimators.h"
 
 #include <wbi/wbiUtil.h>
+#include <yarp/os/LockGuard.h>
+#include <yarp/os/Log.h>
+#include <yarp/os/Time.h>
 
 namespace yarpWbi
 {
@@ -113,15 +116,26 @@ bool localFloatingBaseStateEstimator::computeBaseVelocity(double* qj, double* dq
 /// localFloatingBaseStateEstimator methods
 //////////////////////////////////////////////////////////////////////////////
 
-remoteFloatingBaseStateEstimator::remoteFloatingBaseStateEstimator()
+remoteFloatingBaseStateEstimator::remoteFloatingBaseStateEstimator():
+    measureAvailable(false)
 {
-
+    callbackHandler.setMutex(&(this->buff_mutex));
+    callbackHandler.setBuffers(this->base_pos_estimate,
+                               this->base_vel_estimate,
+                               this->base_acc_estimate,
+                               &(this->lastTimestamp));
+    callbackHandler.setFlags(&(this->measureAvailable));
 }
 
 
 bool remoteFloatingBaseStateEstimator::open(yarp::os::Searchable &config)
 {
-    ConstString carrier = config.check("carrier", Value("udp"), "default carrier for streaming floating base state").asString().c_str();
+    yarp::os::LockGuard guard(buff_mutex);
+
+    yarp::os::ConstString carrier = config.check("carrier", yarp::os::Value("udp"), "default carrier for streaming floating base state").asString().c_str();
+
+    timeoutLimit_in_seconds = config.check("timeoutLimit", yarp::os::Value(1.0), "time limit after which a timeout is raised").asDouble();
+
 
     local.clear();
     remote.clear();
@@ -145,9 +159,9 @@ bool remoteFloatingBaseStateEstimator::open(yarp::os::Searchable &config)
         yError("remoteFloatingBaseEstimator::open() error could not open port %s, check network",local.c_str());
         return false;
     }
-    inputPort.useCallback();
+    inputPort.useCallback(callbackHandler);
 
-    bool ok=Network::connect(remote.c_str(), local.c_str(), carrier.c_str());
+    bool ok=yarp::os::Network::connect(remote.c_str(), local.c_str(), carrier.c_str());
     if (!ok)
     {
         yError("remoteFloatingBaseEstimator::open() error could not connect to %s", remote.c_str());
@@ -157,10 +171,172 @@ bool remoteFloatingBaseStateEstimator::open(yarp::os::Searchable &config)
     return true;
 }
 
-bool remoteFloatingBaseEstimator::close()
+bool remoteFloatingBaseStateEstimator::close()
 {
+    yarp::os::LockGuard guard(buff_mutex);
+    yarp::os::Network::disconnect(remote.c_str(), local.c_str());
     inputPort.close();
     return true;
 }
+
+bool remoteFloatingBaseStateEstimator::getBasePosition(double* _base_pos_estimate)
+{
+    yarp::os::LockGuard guard(buff_mutex);
+    updateTimeout();
+    if( measureAvailable )
+    {
+        memcpy(_base_pos_estimate,this->base_pos_estimate,BASE_POS_ESTIMATE_SIZE*sizeof(double));
+        return true;
+    }
+    else
+    {
+        yWarning("remoteFloatingBaseStateEstimator::getBasePosition called, but no floating base pos estimate is available");
+        return false;
+    }
+}
+
+bool remoteFloatingBaseStateEstimator::getBaseVelocity(double* _base_vel_estimate)
+{
+    yarp::os::LockGuard guard(buff_mutex);
+    updateTimeout();
+    if( measureAvailable )
+    {
+        memcpy(_base_vel_estimate,this->base_vel_estimate,BASE_VEL_ESTIMATE_SIZE*sizeof(double));
+        return true;
+    }
+    else
+    {
+        yWarning("remoteFloatingBaseStateEstimator::getBaseVelocity called, but no floating base vel estimate is available");
+        return false;
+    }
+}
+
+bool remoteFloatingBaseStateEstimator::getBaseAcceleration(double* _base_acc_estimate)
+{
+    yarp::os::LockGuard guard(buff_mutex);
+    updateTimeout();
+    if( measureAvailable )
+    {
+        memcpy(_base_acc_estimate,this->base_acc_estimate,BASE_ACC_ESTIMATE_SIZE*sizeof(double));
+        return true;
+    }
+    else
+    {
+        yWarning("remoteFloatingBaseStateEstimator::getBaseAcceleration called, but no floating base vel estimate is available");
+        return false;
+    }
+}
+
+bool remoteFloatingBaseStateEstimator::getBaseState(double* _base_pos_estimate,
+                                                    double* _base_vel_estimate,
+                                                    double* _base_acc_estimate)
+{
+    yarp::os::LockGuard guard(buff_mutex);
+    updateTimeout();
+    if( measureAvailable )
+    {
+        memcpy(_base_pos_estimate,this->base_pos_estimate,BASE_POS_ESTIMATE_SIZE*sizeof(double));
+        memcpy(_base_vel_estimate,this->base_vel_estimate,BASE_VEL_ESTIMATE_SIZE*sizeof(double));
+        memcpy(_base_acc_estimate,this->base_acc_estimate,BASE_ACC_ESTIMATE_SIZE*sizeof(double));
+        return true;
+    }
+    else
+    {
+        yWarning("remoteFloatingBaseStateEstimator::getBaseState called, but no floating base state estimate is available");
+        return false;
+    }
+}
+
+void remoteFloatingBaseStateEstimator::updateTimeout()
+{
+    if( !measureAvailable ) return;
+
+    double now = yarp::os::Time::now();
+    if( (now - lastTimestamp) > timeoutLimit_in_seconds )
+    {
+        yError("remoteFloatingBaseStateEstimator::updateTimeout() : timeout detected");
+        measureAvailable = false;
+    }
+
+    return;
+}
+
+
+remoteFloatingBaseStatePortProcessor::remoteFloatingBaseStatePortProcessor():
+    base_pos_mat(4,4),
+    base_vel_vec(6),
+    base_acc_vec(6),
+    p_mutex(0),
+    base_pos_estimate_buf(0),
+    base_vel_estimate_buf(0),
+    base_acc_estimate_buf(0),
+    measureAvailableFlag(0)
+{
+}
+
+
+
+void remoteFloatingBaseStatePortProcessor::setBuffers(double* _base_pos_estimate_buf,
+                                                      double* _base_vel_estimate_buf,
+                                                      double* _base_acc_estimate_buf,
+                                                      double* _lastTimestamp
+                                                     )
+{
+    base_pos_estimate_buf = _base_pos_estimate_buf;
+    base_vel_estimate_buf = _base_vel_estimate_buf;
+    base_acc_estimate_buf = _base_acc_estimate_buf;
+    lastTimestamp         = _lastTimestamp;
+    return;
+}
+
+void remoteFloatingBaseStatePortProcessor::setMutex(yarp::os::Mutex* _p_mutex)
+{
+    this->p_mutex = _p_mutex;
+    return;
+}
+
+void remoteFloatingBaseStatePortProcessor::setFlags(bool* _measureAvailableFlag)
+{
+    this->measureAvailableFlag = _measureAvailableFlag;
+}
+
+void remoteFloatingBaseStatePortProcessor::onRead(yarp::os::Bottle& b)
+{
+    if( !p_mutex ) return;
+
+    // process the bottle
+    if( b.size() != 3 ||
+        !(b.get(0).isList()) ||
+        !(b.get(1).isList()) ||
+        !(b.get(2).isList()) )
+    {
+        yError("remoteFloatingBaseStatePortProcessor::onRead : bottle is not made up of 3 list");
+        return;
+    }
+
+
+    // Try to read the base matrix
+    bool ok = true;
+    ok = ok && b.get(0).asList()->write(base_pos_mat);
+    ok = ok && b.get(1).asList()->write(base_vel_vec);
+    ok = ok && b.get(2).asList()->write(base_acc_vec);
+
+    if( !ok )
+    {
+        yError("remoteFloatingBaseStatePortProcessor::onRead : deserialization failed");
+        return;
+    }
+
+    // copy the data
+    memcpy(base_pos_estimate_buf,base_pos_mat.data(),BASE_POS_ESTIMATE_SIZE*sizeof(double));
+    memcpy(base_vel_estimate_buf,base_vel_vec.data(),BASE_VEL_ESTIMATE_SIZE*sizeof(double));
+    memcpy(base_acc_estimate_buf,base_acc_vec.data(),BASE_ACC_ESTIMATE_SIZE*sizeof(double));
+
+    *lastTimestamp = yarp::os::Time::now();
+    *measureAvailableFlag = true;
+
+    return;
+}
+
 
 }

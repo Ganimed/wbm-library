@@ -19,16 +19,10 @@
 #ifndef WB_FLOATING_BASE_ESTIMATOR_YARP_H
 #define WB_FLOATING_BASE_ESTIMATOR_YARP_H
 
-#include <yarp/dev/ControlBoardInterfaces.h>
-#include <yarp/dev/IVelocityControl2.h>
 #include <yarp/os/RateThread.h>
 #include <yarp/os/Semaphore.h>
 #include <yarp/os/BufferedPort.h>
-#include <iCub/ctrl/adaptWinPolyEstimator.h>
-#include <iCub/ctrl/filters.h>
-#include <iCub/skinDynLib/skinContactList.h>
 
-//#include <Eigen/Sparse>
 #include<Eigen/Core>
 #include<Eigen/LU>
 
@@ -46,6 +40,10 @@ namespace wbi {
 
 namespace yarpWbi
 {
+    const int BASE_POS_ESTIMATE_SIZE = 16;
+    const int BASE_VEL_ESTIMATE_SIZE  = 6;
+    const int BASE_ACC_ESTIMATE_SIZE  = 6;
+
     /**
      * Class that performs local estimation of the floating base state (position, velocity, acceleration)
      *
@@ -106,6 +104,43 @@ namespace yarpWbi
 
     };
 
+
+    /**
+     * Helper class for remoteFloatingBaseStateEstimator, providing a callback to directly
+     * fill remoteFloatingBaseStateEstimator.
+     *
+     */
+    class remoteFloatingBaseStatePortProcessor : public yarp::os::TypedReaderCallback<yarp::os::Bottle>
+    {
+            yarp::sig::Matrix base_pos_mat;
+            yarp::sig::Vector base_vel_vec;
+            yarp::sig::Vector base_acc_vec;
+
+            yarp::os::Mutex * p_mutex;
+            double * base_pos_estimate_buf;
+            double * base_vel_estimate_buf;
+            double * base_acc_estimate_buf;
+            bool   * measureAvailableFlag;
+
+            double * lastTimestamp;
+
+        public:
+            remoteFloatingBaseStatePortProcessor();
+            void setMutex(yarp::os::Mutex * p_mutex);
+
+            void setBuffers(double * base_pos_estimate_buf,
+                            double * base_vel_estimate_buf,
+                            double * base_acc_estimate_buf,
+                            double * lastTimestamp
+                           );
+
+            void setFlags(bool * measureAvailableFlag);
+
+            virtual void onRead(yarp::os::Bottle& b);
+    };
+
+
+
     /**
      * Class that performs read the floating base state (position, velocity, acceleration)
      * from an external port. Currently the message is read from the wholeBodyDynamicsTree in
@@ -128,10 +163,29 @@ namespace yarpWbi
      */
     class remoteFloatingBaseStateEstimator
     {
+    private:
+        remoteFloatingBaseStatePortProcessor callbackHandler;
+
     protected:
         yarp::os::BufferedPort<yarp::os::Bottle> inputPort;
+
         yarp::os::ConstString local;
         yarp::os::ConstString remote;
+
+        yarp::os::Mutex buff_mutex;
+
+        double base_pos_estimate[BASE_POS_ESTIMATE_SIZE];
+        double base_vel_estimate[BASE_VEL_ESTIMATE_SIZE];
+        double base_acc_estimate[BASE_ACC_ESTIMATE_SIZE];
+
+        bool measureAvailable; // this flag is false if a measure is not available,
+                               // for example if it has not have been reader of a
+                               // timeout has been detected
+
+        double timeoutLimit_in_seconds;
+        double lastTimestamp;
+
+        void updateTimeout();
 
     public:
         remoteFloatingBaseStateEstimator();
@@ -139,17 +193,26 @@ namespace yarpWbi
         /** Initialize the class */
         bool open(yarp::os::Searchable &config);
 
-        /** Sets a desired link as the world reference frame **/
-        bool setWorldBaseLinkName(std::string);
-        /** Computes the Base position for a given joint configuration **/
-        bool computeBasePosition(double *q, double * base_pos_estimate);
-        /** Computes the Base velocity for a given set of joint velocities **/
-        bool computeBaseVelocity(double *q, double *dq, double * base_vel_estimate);
-        /** Computes the Base acceleration for a given joint velocity **/
-        //bool computeBaseAcceleration();
+        /** Gets the Base position for the remote floating base published source.
+            Check the class info for more informations. **/
+        bool getBasePosition(double * base_pos_estimate);
+
+        /** Gets the Base velocity  for the remote floating base published source.
+            Check the class info for more informations. **/
+        bool getBaseVelocity(double * base_vel_estimate);
+
+        /** Gets the Base velocity  for the remote floating base published source.
+            Check the class info for more informations. **/
+        bool getBaseAcceleration(double * base_acc_estimate);
+
+        bool getBaseState(double * base_pos_estimate,
+                               double * base_vel_estimate,
+                               double * base_acc_estimate);
+
 
         bool close();
     };
+
 
 }
 

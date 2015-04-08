@@ -191,6 +191,71 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
     return true;
 }
 
+bool yarpWholeBodyStates::configureFloatingBaseStateEstimator()
+{
+    yarp::os::Bottle & state_opt_bot = wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS");
+
+    // handle deprecated parameters
+    if( state_opt_bot.check("WORLD_REFERENCE_FRAME") )
+    {
+        yWarning("yarpWholeBodyStates: you are using the depreacted WORLD_REFERENCE_FRAME parameter.");
+        yWarning("                     please use the new localWorldReferenceFrame parameter instead.");
+        yarp::os::Bottle keyAndValue;
+        keyAndValue.addString("localWorldReferenceFrame");
+        keyAndValue.add(state_opt_bot.find("WORLD_REFERENCE_FRAME"));
+        state_opt_bot.append(keyAndValue);
+    }
+
+
+    // if neither localWorldReferenceFrame or externalFloatingBaseStatePort are defined, give error
+    if( !state_opt_bot.check("localWorldReferenceFrame") &&
+        !state_opt_bot.check("externalFloatingBaseStatePort") )
+    {
+        yError("yarpWholeBodyStates fatal error: you must specify the way of estimate floating base state");
+        return false;
+    }
+
+    // if both localWorldReferenceFrame and externalFloatingBaseStatePort are defined, give error
+    // because only one is ok
+    if( state_opt_bot.check("localWorldReferenceFrame") ||
+        state_opt_bot.check("externalFloatingBaseStatePort") )
+    {
+        yError("yarpWholeBodyStates fatal error: you cannot use both local estimation of the world reference frame");
+        yError("  specified by localWorldReferenceFrame and remote one, specified by externalFloatingBaseStatePort");
+        return false;
+    }
+
+    if(state_opt_bot.check("localWorldReferenceFrame") )
+    {
+        yInfo() << "Found localWorldReferenceFrame frame mention in configuration.";
+        std::string world_frame = wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("localWorldReferenceFrame").asString().c_str();
+        yInfo() << "configuring the use of local estimation of the floating base state using " << world_frame << " as the world frame";
+        estimator->use_localFloatingBaseStateEstimator = true;
+        estimator->localFltBaseStateEstimator.init(wholeBodyModel);
+        estimator->localFltBaseStateEstimator.setWorldBaseLinkName(world_frame);
+    }
+
+    if( state_opt_bot.check("externalFloatingBaseStatePort") )
+    {
+        // For a complete list of option supported by remoteFltBaseStateEstimator, check
+        // the doxygen documentation of the class
+        yarp::os::Property prop;
+        prop.put("remote", state_opt_bot.find("externalFloatingBaseStatePort").asString().c_str());
+        std::string local_port_name = "/" + name + "/" +  state_opt_bot.find("externalFloatingBaseStatePort").asString().c_str();
+        prop.put("local",local_port_name.c_str());
+
+        estimator->use_remoteFloatingBaseStateEstimator = true;
+        bool ok = estimator->remoteFltBaseStateEstimator.open(prop);
+
+        if( !ok )
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool yarpWholeBodyStates::init()
 {
     if( initDone ) return false;
@@ -252,27 +317,36 @@ bool yarpWholeBodyStates::init()
         estimator->readSpeedAccFromControlBoard = false;
     }
 
+    // handle legacy parameter
     if( wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("estimateBasePosAndVel") )
     {
-        yInfo() << "yarpWholeBodyStates : estimateBasePosAndVel option found, we are estimating base position and velocity";
-        estimator->estimateBasePosAndVel = true;
+        yWarning("yarpWholeBodyStates: you are using the depreacted estimateBasePosAndVel parameter.");
+        yWarning("                     please use the new estimateBaseState parameter instead.");
+        yarp::os::Bottle keyAndValue;
+        keyAndValue.addString("estimateBaseState");
+        keyAndValue.addString("true");
+        wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").append(keyAndValue);
+    }
+
+    if( wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("estimateBaseState") )
+    {
+        yInfo() << "yarpWholeBodyStates : estimateBaseState option found, we are estimating base position and velocity";
+        estimator->estimateBaseState = true;
     }
     else
     {
         yInfo() << "yarpWholeBodyStates : estimateBasePosAndVel option not found, we are estimating base position and velocity";
-        estimator->estimateBasePosAndVel = false;
+        estimator->estimateBaseState = false;
     }
 
-    if(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("WORLD_REFERENCE_FRAME") && wholeBodyModel)
+    if( estimator->estimateBaseState )
     {
-        yInfo() << "Found world reference frame mention in wbiConfig. Setting as "<<wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str();
-        estimator->localFltBaseStateEstimator.init(wholeBodyModel);
-        estimator->localFltBaseStateEstimator.setWorldBaseLinkName(wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("WORLD_REFERENCE_FRAME").asString().c_str());
-    }
-    else
-    {
-        yWarning()<<"Did not find WORLD_REFERENCE_FRAME option in config file, disabling world to base position and velocity estimation";
-        estimator->estimateBasePosAndVel = false;
+        bool ok = this->configureFloatingBaseStateEstimator();
+
+        if( !ok )
+        {
+            return false;
+        }
     }
 
     //Add required sensors given the estimate list
@@ -327,8 +401,8 @@ bool yarpWholeBodyStates::init()
     bool ok = sensors->init();              // initialize sensor interface
     if( !ok )
     {
-        std::cerr << "[ERR] yarpWholeBodyStates::init : sensor interface initialization failed" << std::endl;
-        std::cerr << "[ERR] yarpWholeBodyStates::init : halting initialization routine" << std::endl;
+        yError() << "yarpWholeBodyStates::init : sensor interface initialization failed";
+        yError() << "yarpWholeBodyStates::init : halting initialization routine";
         delete sensors;
         sensors = 0;
         return false;
@@ -339,13 +413,13 @@ bool yarpWholeBodyStates::init()
 
     if(ok)
     {
-        std::cout << "[DEBUG] yarpWholeBodyStates correctly initialized " << std::endl;
+        yDebug() << "yarpWholeBodyStates correctly initialized ";
         this->initDone = true;
         return true;
     }
     else
     {
-        std::cerr << "[ERR] yarpWholeBodyStates::init : estimator thread initialization failed" << std::endl;
+        yError() << "yarpWholeBodyStates::init : estimator thread initialization failed";
 
         sensors->close();
         delete sensors;
@@ -486,7 +560,7 @@ bool yarpWholeBodyStates::getEstimates(const EstimateType et, double *data, doub
     //case ESTIMATE_IMU:                    return lockAndReadSensors(SENSOR_IMU, data, time, blocking);
     case ESTIMATE_BASE_POS:
     {
-        if( estimator->estimateBasePosAndVel )
+        if( estimator->estimateBaseState )
         {
             return estimator->lockAndCopyVector(estimator->estimates.lastBasePos,data);
         }
@@ -497,7 +571,7 @@ bool yarpWholeBodyStates::getEstimates(const EstimateType et, double *data, doub
     }
     case ESTIMATE_BASE_VEL:
     {
-        if( estimator->estimateBasePosAndVel )
+        if( estimator->estimateBaseState )
         {
             return estimator->lockAndCopyVector(estimator->estimates.lastBaseVel,data);
         }
@@ -608,7 +682,10 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, yarp
   dTauMFilt(0),
   tauJFilt(0),
   tauMFilt(0),
-  motor_quantites_estimation_enabled(false)
+  motor_quantites_estimation_enabled(false),
+  estimateBaseState(false),
+  use_localFloatingBaseStateEstimator(false),
+  use_remoteFloatingBaseStateEstimator(false)
 {
     resizeAll(sensors->getSensorNumber(SENSOR_ENCODER_POS));
 
@@ -746,10 +823,26 @@ void yarpWholeBodyEstimator::run()
         }
 
         // Compute world to base position, if the estimate was added
-        if( this->estimateBasePosAndVel )
+        if( this->estimateBaseState )
         {
-            localFltBaseStateEstimator.computeBasePosition(estimates.lastQ.data(),estimates.lastBasePos.data());
-            localFltBaseStateEstimator.computeBaseVelocity(estimates.lastQ.data(),estimates.lastDq.data(),estimates.lastBaseVel.data());
+            if( this->use_localFloatingBaseStateEstimator )
+            {
+                localFltBaseStateEstimator.computeBasePosition(estimates.lastQ.data(),estimates.lastBasePos.data());
+                localFltBaseStateEstimator.computeBaseVelocity(estimates.lastQ.data(),estimates.lastDq.data(),estimates.lastBaseVel.data());
+            }
+
+            if( this->use_remoteFloatingBaseStateEstimator )
+            {
+                bool ok = remoteFltBaseStateEstimator.getBaseState(estimates.lastBasePos.data(),
+                                                         estimates.lastBaseVel.data(),
+                                                         estimates.lastBaseAcc.data());
+
+                if( !ok )
+                {
+                    yError("yarpWholeBodyStates: Error in reading floating base state");
+                }
+
+            }
         }
 
     }
@@ -799,9 +892,9 @@ void yarpWholeBodyEstimator::resizeAll(int n)
     estimates.lastDtauM.resize(n);
     estimates.lastPwm.resize(n);
     estimates.lastPwmBuffer.resize(n);
-    estimates.lastBasePos.resize(16);
-    estimates.lastBaseVel.resize(6);
-    estimates.lastBaseAccl.resize(6);
+    estimates.lastBasePos.resize(BASE_POS_ESTIMATE_SIZE);
+    estimates.lastBaseVel.resize(BASE_VEL_ESTIMATE_SIZE);
+    estimates.lastBaseAcc.resize(BASE_ACC_ESTIMATE_SIZE);
 }
 
 bool yarpWholeBodyEstimator::lockAndCopyVector(const Vector &src, double *dest)
