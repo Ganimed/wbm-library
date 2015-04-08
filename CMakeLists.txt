@@ -11,7 +11,7 @@ set(INCLUDE_DIRS yarpWholeBodyInterface)
 
 set(${VARS_PREFIX}_MAJOR_VERSION 0)
 set(${VARS_PREFIX}_MINOR_VERSION 2)
-set(${VARS_PREFIX}_PATCH_VERSION 1)
+set(${VARS_PREFIX}_PATCH_VERSION 2)
 set(${VARS_PREFIX}_VERSION ${${VARS_PREFIX}_MAJOR_VERSION}.${${VARS_PREFIX}_MINOR_VERSION}.${${VARS_PREFIX}_PATCH_VERSION})
 
 find_package(YCM REQUIRED)
@@ -30,7 +30,7 @@ add_definitions(-DIDYNTREE_USES_ICUB)
 find_package(YARP 2.3.63.7 REQUIRED)
 find_package(ICUB REQUIRED)
 find_package(iDynTree REQUIRED)
-find_package(wholeBodyInterface 0.2.0 REQUIRED)
+find_package(wholeBodyInterface 0.2.2 REQUIRED)
 
 SET(folder_source src/yarpWbiUtil.cpp
                   src/yarpWholeBodyInterface.cpp
@@ -81,7 +81,6 @@ set_target_properties(${LIBRARY_NAME}  PROPERTIES VERSION ${${VARS_PREFIX}_VERSI
 target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
                                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${${VARS_PREFIX}_INSTALL_INCLUDEDIR}>"
                                            ${YARP_INCLUDE_DIRS}
-                                           ${ICUB_INCLUDE_DIRS}
                                            ${iDynTree_INCLUDE_DIRS}
                                            ${wholeBodyInterface_INCLUDE_DIRS})
 

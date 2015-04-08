@@ -15,21 +15,21 @@
  * Public License for more details
  */
 
-#include <iCub/skinDynLib/common.h>
-#include <yarp/os/Time.h>
-#include <string>
-#include <boost/concept_check.hpp>
-//#include <eigen3/Eigen/src/Core/arch/SSE/Complex.h>
-#include <yarp/os/Log.h>
-#include <yarp/os/LogStream.h>
-#include <yarp/math/api.h>
-
 #include "yarpWholeBodyInterface/yarpWholeBodyStates.h"
+
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
 
 #include <wbi/iWholeBodyModel.h>
+#include <wbi/wbiUtil.h>
 
-//#include <Eigen/Sparse>
+#include <yarp/os/Time.h>
+#include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
+#include <yarp/math/api.h>
+#include <iCub/skinDynLib/common.h>
+
+#include <string>
+
 #include <Eigen/LU>
 
 using namespace std;
@@ -799,7 +799,7 @@ void yarpWholeBodyEstimator::resizeAll(int n)
     estimates.lastDtauM.resize(n);
     estimates.lastPwm.resize(n);
     estimates.lastPwmBuffer.resize(n);
-    estimates.lastBasePos.resize(12);
+    estimates.lastBasePos.resize(16);
     estimates.lastBaseVel.resize(6);
     estimates.lastBaseAccl.resize(6);
 }
@@ -964,4 +964,3 @@ bool yarpWholeBodyEstimator::setPwmCutFrequency(double fc)
 {
     return pwmFilt->setCutFrequency(fc);
 }
-

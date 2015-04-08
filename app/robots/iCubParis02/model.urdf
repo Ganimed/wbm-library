@@ -62,12 +62,12 @@
     </link>
     <link name="l_ankle_1">
         <inertial>
-            <mass value="0.643" />
-            <origin xyz="2.65892e-05 -0.00082253 0.0102574" rpy="0 -0 0" />
-            <inertia ixx="4.76593" ixy="9.7426e-06" ixz="2.68085e-05" iyy="0.0040935" iyz="-0.000353796" izz="0.0036688" />
+            <mass value="0.746" />
+            <origin xyz="-0.0054 0.00163 0.0172" rpy="0 -0 0" />
+            <inertia ixx="0.00063323" ixy="-7.081e-06" ixz="4.1421e-05" iyy="0.00068776" iyz="2.0817e-05" izz="0.000313897" />
         </inertial>
         <visual>
-            <origin xyz="-0.001555 -5.54343e-12 0.0009175" rpy="1.5708 1.53106e-11 1.53105e-11" />
+            <origin xyz="1.11022e-16 -5.54343e-12 4.45647e-12" rpy="1.5708 1.53106e-11 1.53105e-11" />
             <geometry>
                 <mesh filename="meshes/visual/icub_l_ankle_1.dae" scale="1 1 1" />
             </geometry>
@@ -77,7 +77,7 @@
             </material>
         </visual>
         <collision>
-            <origin xyz="-0.001555 -5.54343e-12 0.0009175" rpy="1.5708 1.53106e-11 1.53105e-11" />
+            <origin xyz="1.11022e-16 -5.54343e-12 4.45647e-12" rpy="1.5708 1.53106e-11 1.53105e-11" />
             <geometry>
                 <mesh filename="meshes/collision/icub_simple_collision_l_ankle_1.dae" scale="1 1 1" />
             </geometry>
@@ -85,8 +85,8 @@
     </link>
     <link name="l_ankle_2">
         <inertial>
-            <mass value="0.1" />
-            <origin xyz="-0.0035 0 -0.0065" rpy="0 -0 0" />
+            <mass value="0.2675" />
+            <origin xyz="0.0135 0 0.0695" rpy="0 -0 0" />
             <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
         </inertial>
     </link>
@@ -99,12 +99,12 @@
     </link>
     <link name="l_foot">
         <inertial>
-            <mass value="0.761" />
-            <origin xyz="0.024069 -0.000613931 0.0425846" rpy="0 -0 0" />
-            <inertia ixx="0.00253893" ixy="-4.51893e-06" ixz="-0.000903578" iyy="0.00407487" iyz="3.68679e-05" izz="0.00208378" />
+            <mass value="0.5935" />
+            <origin xyz="0.007069 -0.000613931 -0.0334154" rpy="0 -0 0" />
+            <inertia ixx="0.00193893" ixy="-1.3505e-05" ixz="0.0001823" iyy="0.0030191" iyz="-3.30533e-06" izz="0.00162801" />
         </inertial>
         <visual>
-            <origin xyz="0.0044175 -5.54343e-12 0.008055" rpy="2.35619 1.5708 2.35619" />
+            <origin xyz="-0.0135 -5.54341e-12 -0.0695" rpy="2.35619 1.5708 2.35619" />
             <geometry>
                 <mesh filename="meshes/visual/icub_l_foot.dae" scale="1 1 1" />
             </geometry>
@@ -114,7 +114,7 @@
             </material>
         </visual>
         <collision>
-            <origin xyz="0.0044175 -5.54343e-12 0.008055" rpy="2.35619 1.5708 2.35619" />
+            <origin xyz="-0.0135 -5.54341e-12 -0.0695" rpy="2.35619 1.5708 2.35619" />
             <geometry>
                 <mesh filename="meshes/collision/icub_simple_collision_l_foot.dae" scale="1 1 1" />
             </geometry>
@@ -196,9 +196,9 @@
     </link>
     <link name="l_hip_1">
         <inertial>
-            <mass value="0.695" />
-            <origin xyz="8.0431e-05 -0.00691643 -0.0023047" rpy="0 -0 0" />
-            <inertia ixx="0.00447053" ixy="-2.2209e-05" ixz="1.39712e-05" iyy="0.00325085" iyz="4.77629e-05" izz="0.00490487" />
+            <mass value="0.754" />
+            <origin xyz="0 -0.0782 0" rpy="0 -0 0" />
+            <inertia ixx="0.000471076" ixy="2.059e-06" ixz="1.451e-06" iyy="0.000346478" iyz="1.545e-06" izz="0.000510315" />
         </inertial>
         <visual>
             <origin xyz="0 0 0" rpy="2.35619 1.5708 0.785398" />
@@ -219,9 +219,9 @@
     </link>
     <link name="l_hip_2">
         <inertial>
-            <mass value="0.982" />
-            <origin xyz="0.0010964 -3.13229e-05 0.0598624" rpy="0 -0 0" />
-            <inertia ixx="0.0253646" ixy="1.2116e-06" ixz="0.000491081" iyy="0.0272714" iyz="1.15713e-05" izz="0.0041739" />
+            <mass value="0.526" />
+            <origin xyz="0 0 0.03045" rpy="0 -0 0" />
+            <inertia ixx="0.000561583" ixy="-7.4e-08" ixz="1.0835e-05" iyy="0.000738049" iyz="-6.2e-08" izz="0.000294119" />
         </inertial>
         <visual>
             <origin xyz="0 0 0" rpy="-2.35623 -1.5708 -0.785361" />
@@ -249,12 +249,12 @@
     </link>
     <link name="l_lower_leg">
         <inertial>
-            <mass value="2.032" />
-            <origin xyz="-0.0761044 -4.50091e-05 0.0062408" rpy="0 -0 0" />
-            <inertia ixx="0.0154559" ixy="-0.0013903" ixz="-0.0039454" iyy="0.070277" iyz="0.00071995" izz="0.0659645" />
+            <mass value="1.264" />
+            <origin xyz="-0.1071 0.00182 0.00211" rpy="0 -0 0" />
+            <inertia ixx="0.00099895" ixy="-0.000185699" ixz="-6.3147e-05" iyy="0.00445054" iyz="7.86e-07" izz="0.00420766" />
         </inertial>
         <visual>
-            <origin xyz="0.010945 0.0009175 2.2823e-12" rpy="-3.14159 -2.33487e-16 1.5708" />
+            <origin xyz="5.55112e-17 2.28232e-12 2.2823e-12" rpy="-3.14159 -2.33487e-16 1.5708" />
             <geometry>
                 <mesh filename="meshes/visual/icub_l_shank.dae" scale="1 1 1" />
             </geometry>
@@ -264,7 +264,7 @@
             </material>
         </visual>
         <collision>
-            <origin xyz="0.010945 0.0009175 2.2823e-12" rpy="-3.14159 -2.33487e-16 1.5708" />
+            <origin xyz="5.55112e-17 2.28232e-12 2.2823e-12" rpy="-3.14159 -2.33487e-16 1.5708" />
             <geometry>
                 <mesh filename="meshes/collision/icub_simple_collision_l_shank.dae" scale="1 1 1" />
             </geometry>
@@ -362,9 +362,9 @@
     </link>
     <link name="l_upper_leg">
         <inertial>
-            <mass value="1.522" />
-            <origin xyz="0.0021968 -0.174502 0.0013437" rpy="0 -0 0" />
-            <inertia ixx="0.0454917" ixy="-0.000940971" ixz="5.37405e-05" iyy="0.01004" iyz="0.001203" izz="0.0458255" />
+            <mass value="2.175" />
+            <origin xyz="0.00144 -0.15943 -0.00039" rpy="0 -0 0" />
+            <inertia ixx="0.00759107" ixy="-6.726e-05" ixz="2.267e-06" iyy="0.00142302" iyz="3.63726e-05" izz="0.00755385" />
         </inertial>
         <visual>
             <origin xyz="0 0 0" rpy="0.463626 1.5708 2.03443" />
@@ -438,12 +438,12 @@
     </link>
     <link name="r_ankle_1">
         <inertial>
-            <mass value="0.643" />
-            <origin xyz="-2.65892e-05 -0.00082253 -0.0102574" rpy="0 -0 0" />
-            <inertia ixx="4.76593" ixy="9.7426e-06" ixz="-2.68085e-05" iyy="0.0040935" iyz="0.000353796" izz="0.0036688" />
+            <mass value="0.746" />
+            <origin xyz="-0.0054 0.00163 -0.0172" rpy="0 -0 0" />
+            <inertia ixx="2.71051e-20" ixy="-1.69407e-21" ixz="1.35525e-20" iyy="5.42101e-20" iyz="3.38813e-21" izz="1.35525e-20" />
         </inertial>
         <visual>
-            <origin xyz="-0.001555 -1.08717e-12 -0.0009175" rpy="-1.5708 -1.53106e-11 5.10376e-12" />
+            <origin xyz="1.11022e-16 -1.08717e-12 -4.45647e-12" rpy="-1.5708 -1.53106e-11 5.10376e-12" />
             <geometry>
                 <mesh filename="meshes/visual/icub_r_ankle_1.dae" scale="1 1 1" />
             </geometry>
@@ -453,7 +453,7 @@
             </material>
         </visual>
         <collision>
-            <origin xyz="-0.001555 -1.08717e-12 -0.0009175" rpy="-1.5708 -1.53106e-11 5.10376e-12" />
+            <origin xyz="1.11022e-16 -1.08717e-12 -4.45647e-12" rpy="-1.5708 -1.53106e-11 5.10376e-12" />
             <geometry>
                 <mesh filename="meshes/collision/icub_simple_collision_r_ankle_1.dae" scale="1 1 1" />
             </geometry>
@@ -461,9 +461,9 @@
     </link>
     <link name="r_ankle_2">
         <inertial>
-            <mass value="0.1" />
-            <origin xyz="-0.0035 4.28626e-19 -0.0065" rpy="0 -0 0" />
-            <inertia ixx="0" ixy="-2.35099e-38" ixz="0" iyy="0" iyz="4.70198e-38" izz="0" />
+            <mass value="0.2675" />
+            <origin xyz="0.0135 4.28626e-19 0.0695" rpy="0 -0 0" />
+            <inertia ixx="0" ixy="-1.88079e-37" ixz="0" iyy="0" iyz="0" izz="0" />
         </inertial>
     </link>
     <link name="r_elbow_1">
@@ -475,12 +475,12 @@
     </link>
     <link name="r_foot">
         <inertial>
-            <mass value="0.761" />
-            <origin xyz="0.024069 0.000613931 0.0425846" rpy="0 -0 0" />
-            <inertia ixx="0.00253893" ixy="4.51893e-06" ixz="-0.000903578" iyy="0.00407487" iyz="-3.68677e-05" izz="0.00208378" />
+            <mass value="0.5935" />
+            <origin xyz="0.007069 0.000613931 -0.0334154" rpy="0 -0 0" />
+            <inertia ixx="0.00193893" ixy="1.3505e-05" ixz="0.0001823" iyy="0.0030191" iyz="3.30551e-06" izz="0.00162801" />
         </inertial>
         <visual>
-            <origin xyz="0.0044175 1.08717e-12 0.008055" rpy="0.321762 1.5708 -2.81983" />
+            <origin xyz="-0.0135 1.08716e-12 -0.0695" rpy="0.321762 1.5708 -2.81983" />
             <geometry>
                 <mesh filename="meshes/visual/icub_r_foot.dae" scale="1 1 1" />
             </geometry>
@@ -490,7 +490,7 @@
             </material>
         </visual>
         <collision>
-            <origin xyz="0.0044175 1.08717e-12 0.008055" rpy="0.321762 1.5708 -2.81983" />
+            <origin xyz="-0.0135 1.08716e-12 -0.0695" rpy="0.321762 1.5708 -2.81983" />
             <geometry>
                 <mesh filename="meshes/collision/icub_simple_collision_r_foot.dae" scale="1 1 1" />
             </geometry>
@@ -572,9 +572,9 @@
     </link>
     <link name="r_hip_1">
         <inertial>
-            <mass value="0.695" />
-            <origin xyz="8.0431e-05 -0.00691643 0.0023047" rpy="0 -0 0" />
-            <inertia ixx="0.00447053" ixy="-2.2209e-05" ixz="-1.39712e-05" iyy="0.00325085" iyz="-4.77629e-05" izz="0.00490487" />
+            <mass value="0.754" />
+            <origin xyz="0 -0.0782 0" rpy="0 -0 0" />
+            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
         </inertial>
         <visual>
             <origin xyz="0 0 0" rpy="-1.3734 -1.5708 -0.380506" />
@@ -595,9 +595,9 @@
     </link>
     <link name="r_hip_2">
         <inertial>
-            <mass value="0.982" />
-            <origin xyz="0.0010964 -3.13229e-05 0.0598624" rpy="0 -0 0" />
-            <inertia ixx="0.0253646" ixy="1.2116e-06" ixz="0.000491081" iyy="0.0272714" iyz="1.15713e-05" izz="0.0041739" />
+            <mass value="0.526" />
+            <origin xyz="0 0 0.03045" rpy="0 -0 0" />
+            <inertia ixx="-5.42101e-20" ixy="0" ixz="0" iyy="-5.42101e-20" iyz="0" izz="0" />
         </inertial>
         <visual>
             <origin xyz="0 0 0" rpy="0.785327 -1.5708 -0.785327" />
@@ -625,12 +625,12 @@
     </link>
     <link name="r_lower_leg">
         <inertial>
-            <mass value="2.032" />
-            <origin xyz="-0.0761044 -4.50091e-05 -0.0062408" rpy="0 -0 0" />
-            <inertia ixx="0.0154559" ixy="-0.0013903" ixz="0.0039454" iyy="0.070277" iyz="-0.00071995" izz="0.0659645" />
+            <mass value="1.264" />
+            <origin xyz="-0.1071 0.00182 -0.00211" rpy="0 -0 0" />
+            <inertia ixx="-6.2511e-19" ixy="5.42101e-20" ixz="-5.42101e-20" iyy="-1.73472e-18" iyz="8.47033e-22" izz="-1.73472e-18" />
         </inertial>
         <visual>
-            <origin xyz="0.010945 0.0009175 -8.32667e-17" rpy="3.14159 -1.14424e-17 1.5708" />
+            <origin xyz="5.55112e-17 2.28232e-12 -8.32667e-17" rpy="3.14159 -1.14424e-17 1.5708" />
             <geometry>
                 <mesh filename="meshes/visual/icub_r_shank.dae" scale="1 1 1" />
             </geometry>
@@ -640,7 +640,7 @@
             </material>
         </visual>
         <collision>
-            <origin xyz="0.010945 0.0009175 -8.32667e-17" rpy="3.14159 -1.14424e-17 1.5708" />
+            <origin xyz="5.55112e-17 2.28232e-12 -8.32667e-17" rpy="3.14159 -1.14424e-17 1.5708" />
             <geometry>
                 <mesh filename="meshes/collision/icub_simple_collision_r_shank.dae" scale="1 1 1" />
             </geometry>
@@ -738,9 +738,9 @@
     </link>
     <link name="r_upper_leg">
         <inertial>
-            <mass value="1.522" />
-            <origin xyz="0.0021968 -0.174502 -0.0013437" rpy="0 -0 0" />
-            <inertia ixx="0.0454917" ixy="-0.000940971" ixz="-5.37405e-05" iyy="0.01004" iyz="-0.001203" izz="0.0458255" />
+            <mass value="2.175" />
+            <origin xyz="0.00144 -0.15943 0.00039" rpy="0 -0 0" />
+            <inertia ixx="0" ixy="0" ixz="0" iyy="4.07592e-18" iyz="-2.71051e-20" izz="0" />
         </inertial>
         <visual>
             <origin xyz="0 0 0" rpy="-1.57072 -1.5708 3.14152" />
@@ -835,7 +835,7 @@
         <limit effort="80" velocity="100" lower="-1.02974" upper="1.02974" />
     </joint>
     <joint name="codyco_balancing_world_fixed_joint" type="fixed">
-        <origin xyz="-8.67362e-19 -1.38778e-17 0.075" rpy="3.14159 -0 0" />
+        <origin xyz="-0.0353 -1.38778e-17 -0.001" rpy="3.14159 -0 0" />
         <axis xyz="0 0 0" />
         <parent link="l_foot" />
         <child link="codyco_balancing_world" />
@@ -855,7 +855,7 @@
         <child link="imu_frame" />
     </joint>
     <joint name="l_ankle_pitch" type="revolute">
-        <origin xyz="-0.2005 0 0" rpy="-1.5708 0 0" />
+        <origin xyz="-0.213 0 0" rpy="-1.5708 0 0" />
         <axis xyz="0 -1 6.12323e-17" />
         <parent link="l_lower_leg" />
         <child link="l_ankle_1" />
@@ -879,13 +879,13 @@
         <limit effort="20" velocity="100" lower="0.0959931" upper="1.85005" />
     </joint>
     <joint name="l_foot_ft_sensor" type="fixed">
-        <origin xyz="-0.0035 0 -0.0065" rpy="0 -0 0" />
+        <origin xyz="0.0135 0 0.0695" rpy="0 -0 0" />
         <axis xyz="0 0 0" />
         <parent link="l_ankle_2" />
         <child link="l_foot" />
     </joint>
     <joint name="l_foot_dh_frame_fixed_joint" type="fixed">
-        <origin xyz="-8.67362e-19 -1.38778e-17 0.075" rpy="-9.70754e-18 1.5708 -9.70754e-18" />
+        <origin xyz="-0.0353 0 -0.001" rpy="0 1.5708 0" />
         <axis xyz="0 0 0" />
         <parent link="l_foot" />
         <child link="l_foot_dh_frame" />
@@ -947,7 +947,7 @@
         <child link="l_hip_3" />
     </joint>
     <joint name="l_knee" type="revolute">
-        <origin xyz="-0.0009175 -0.234545 -1.43617e-17" rpy="3.14159 -1.2326e-32 1.5708" />
+        <origin xyz="0 -0.2236 -1.36916e-17" rpy="3.14159 -1.2326e-32 1.5708" />
         <axis xyz="0 1.22465e-16 -1" />
         <parent link="l_upper_leg" />
         <child link="l_lower_leg" />
@@ -979,7 +979,7 @@
         <limit effort="34" velocity="100" lower="-0.645772" upper="1.74533" />
     </joint>
     <joint name="l_sole_fixed_joint" type="fixed">
-        <origin xyz="0 0 0.075" rpy="0 1.5708 0" />
+        <origin xyz="-0.0353 -1.38778e-17 -0.001" rpy="3.14159 -0 0" />
         <axis xyz="0 0 0" />
         <parent link="l_foot" />
         <child link="l_sole" />
@@ -997,7 +997,7 @@
         <child link="l_upper_arm_dh_frame" />
     </joint>
     <joint name="l_hip_yaw" type="revolute">
-        <origin xyz="0 -1.68519e-34 -0.0665" rpy="-1.5708 -6.16298e-33 -6.12323e-17" />
+        <origin xyz="0 0 -0.0665" rpy="-1.5708 -6.16298e-33 -6.12323e-17" />
         <axis xyz="0 1 6.12323e-17" />
         <parent link="l_hip_3" />
         <child link="l_upper_leg" />
@@ -1029,7 +1029,7 @@
         <limit effort="20" velocity="100" lower="-1.22173" upper="1.0472" />
     </joint>
     <joint name="r_ankle_pitch" type="revolute">
-        <origin xyz="-0.2005 0 0" rpy="1.5708 -0 0" />
+        <origin xyz="-0.213 0 0" rpy="1.5708 -0 0" />
         <axis xyz="0 1 6.12323e-17" />
         <parent link="r_lower_leg" />
         <child link="r_ankle_1" />
@@ -1053,13 +1053,13 @@
         <limit effort="20" velocity="100" lower="0.0959931" upper="1.85005" />
     </joint>
     <joint name="r_foot_ft_sensor" type="fixed">
-        <origin xyz="-0.0035 4.28626e-19 -0.0065" rpy="0 -0 0" />
+        <origin xyz="0.0135 4.28626e-19 0.0695" rpy="0 -0 0" />
         <axis xyz="0 0 0" />
         <parent link="r_ankle_2" />
         <child link="r_foot" />
     </joint>
     <joint name="r_foot_dh_frame_fixed_joint" type="fixed">
-        <origin xyz="-8.67362e-19 1.38778e-17 0.075" rpy="-1.01315e-16 1.5708 -1.01315e-16" />
+        <origin xyz="-0.0353 0 -0.001" rpy="0 1.5708 0" />
         <axis xyz="0 0 0" />
         <parent link="r_foot" />
         <child link="r_foot_dh_frame" />
@@ -1121,7 +1121,7 @@
         <child link="r_hip_3" />
     </joint>
     <joint name="r_knee" type="revolute">
-        <origin xyz="-0.0009175 -0.234545 1.43617e-17" rpy="3.14159 -1.2326e-32 1.5708" />
+        <origin xyz="0 -0.2236 1.36916e-17" rpy="3.14159 -1.2326e-32 1.5708" />
         <axis xyz="0 1.22465e-16 -1" />
         <parent link="r_upper_leg" />
         <child link="r_lower_leg" />
@@ -1153,7 +1153,7 @@
         <limit effort="34" velocity="100" lower="-0.645772" upper="1.74533" />
     </joint>
     <joint name="r_sole_fixed_joint" type="fixed">
-        <origin xyz="0 0 0.075" rpy="0 1.5708 0" />
+        <origin xyz="-0.0353 -1.38778e-17 -0.001" rpy="3.14159 -0 0" />
         <axis xyz="0 0 0" />
         <parent link="r_foot" />
         <child link="r_sole" />
@@ -1171,7 +1171,7 @@
         <child link="r_upper_arm_dh_frame" />
     </joint>
     <joint name="r_hip_yaw" type="revolute">
-        <origin xyz="0 1.68519e-34 -0.0665" rpy="-1.5708 -6.16298e-33 6.12323e-17" />
+        <origin xyz="0 0 -0.0665" rpy="-1.5708 -6.16298e-33 6.12323e-17" />
         <axis xyz="0 -1 6.12323e-17" />
         <parent link="r_hip_3" />
         <child link="r_upper_leg" />
