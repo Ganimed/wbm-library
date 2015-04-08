@@ -17,6 +17,7 @@
 
 #include "yarpWholeBodyInterface/floatingBaseEstimators.h"
 
+#include <wbi/wbiUtil.h>
 
 namespace yarpWbi
 {
@@ -78,19 +79,12 @@ bool localFloatingBaseStateEstimator::computeBasePosition(double *q_temp, double
       referenceLink_H_rootLink = rootLink_H_ReferenceLink.getInverse();
       world_H_rootLink = world_H_reference*referenceLink_H_rootLink ;
 
-      int ctr;
-      for (ctr=0;ctr<3;ctr++)
-      {
-        base_pos_estimate[ctr] = world_H_rootLink.p[ctr];
-      }
-      for (ctr=0;ctr<9;ctr++)
-      {
-        base_pos_estimate[3+ctr] = world_H_rootLink.R.data[ctr];
-      }
-      return(true);
+      wbi::serializationFromFrame(world_H_rootLink, base_pos_estimate);
+
+      return true;
   }
   else
-        return(false);
+        return false;
 }
 bool localFloatingBaseStateEstimator::computeBaseVelocity(double* qj, double* dqj, double* base_vel_estimate)
 {
