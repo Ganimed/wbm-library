@@ -217,7 +217,7 @@ bool yarpWholeBodyStates::configureFloatingBaseStateEstimator()
 
     // if both localWorldReferenceFrame and externalFloatingBaseStatePort are defined, give error
     // because only one is ok
-    if( state_opt_bot.check("localWorldReferenceFrame") ||
+    if( state_opt_bot.check("localWorldReferenceFrame") &&
         state_opt_bot.check("externalFloatingBaseStatePort") )
     {
         yError("yarpWholeBodyStates fatal error: you cannot use both local estimation of the world reference frame");
