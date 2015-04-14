@@ -116,7 +116,7 @@ namespace yarpWbi
             yarp::sig::Vector base_vel_vec;
             yarp::sig::Vector base_acc_vec;
 
-            yarp::os::Mutex * p_mutex;
+            yarp::os::Mutex & mutex;
             double * base_pos_estimate_buf;
             double * base_vel_estimate_buf;
             double * base_acc_estimate_buf;
@@ -125,8 +125,7 @@ namespace yarpWbi
             double * lastTimestamp;
 
         public:
-            remoteFloatingBaseStatePortProcessor();
-            void setMutex(yarp::os::Mutex * p_mutex);
+            remoteFloatingBaseStatePortProcessor(yarp::os::Mutex & mutex);
 
             void setBuffers(double * base_pos_estimate_buf,
                             double * base_vel_estimate_buf,

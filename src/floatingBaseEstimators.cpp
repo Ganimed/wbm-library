@@ -117,9 +117,9 @@ bool localFloatingBaseStateEstimator::computeBaseVelocity(double* qj, double* dq
 //////////////////////////////////////////////////////////////////////////////
 
 remoteFloatingBaseStateEstimator::remoteFloatingBaseStateEstimator():
+    callbackHandler(this->buff_mutex),
     measureAvailable(false)
 {
-    callbackHandler.setMutex(&(this->buff_mutex));
     callbackHandler.setBuffers(this->base_pos_estimate,
                                this->base_vel_estimate,
                                this->base_acc_estimate,
@@ -262,11 +262,11 @@ void remoteFloatingBaseStateEstimator::updateTimeout()
 }
 
 
-remoteFloatingBaseStatePortProcessor::remoteFloatingBaseStatePortProcessor():
+remoteFloatingBaseStatePortProcessor::remoteFloatingBaseStatePortProcessor(yarp::os::Mutex & _mutex):
     base_pos_mat(4,4),
     base_vel_vec(6),
     base_acc_vec(6),
-    p_mutex(0),
+    mutex(_mutex),
     base_pos_estimate_buf(0),
     base_vel_estimate_buf(0),
     base_acc_estimate_buf(0),
@@ -289,12 +289,6 @@ void remoteFloatingBaseStatePortProcessor::setBuffers(double* _base_pos_estimate
     return;
 }
 
-void remoteFloatingBaseStatePortProcessor::setMutex(yarp::os::Mutex* _p_mutex)
-{
-    this->p_mutex = _p_mutex;
-    return;
-}
-
 void remoteFloatingBaseStatePortProcessor::setFlags(bool* _measureAvailableFlag)
 {
     this->measureAvailableFlag = _measureAvailableFlag;
@@ -302,7 +296,7 @@ void remoteFloatingBaseStatePortProcessor::setFlags(bool* _measureAvailableFlag)
 
 void remoteFloatingBaseStatePortProcessor::onRead(yarp::os::Bottle& b)
 {
-    if( !p_mutex ) return;
+    yarp::os::LockGuard guard(mutex);
 
     // process the bottle
     if( b.size() != 3 ||
