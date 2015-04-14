@@ -1214,7 +1214,7 @@
         <dynamics damping="1" friction="0" />
         <limit effort="80" velocity="100" lower="-0.680678" upper="0.680678" />
     </joint>
-        <gazebo reference="l_arm_ft_sensor">
+    <gazebo reference="l_arm_ft_sensor">
         <sensor name="left_arm_ft" type="force_torque">
             <force_torque>
                 <frame>child</frame>

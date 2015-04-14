@@ -36,6 +36,7 @@ SET(folder_source src/yarpWbiUtil.cpp
                   src/yarpWholeBodyInterface.cpp
                   src/yarpWholeBodyModel.cpp
                   src/yarpWholeBodyStates.cpp
+                  src/floatingBaseEstimators.cpp
                   src/yarpWholeBodyActuators.cpp
                   src/yarpWholeBodySensors.cpp)
 SET(folder_header include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
@@ -43,6 +44,7 @@ SET(folder_header include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
                   include/yarpWholeBodyInterface/yarpWholeBodyStates.h
                   include/yarpWholeBodyInterface/yarpWholeBodyActuators.h
                   include/yarpWholeBodyInterface/yarpWholeBodySensors.h
+                  include/yarpWholeBodyInterface/floatingBaseEstimators.h
                   include/yarpWholeBodyInterface/yarpWbiUtil.h)
 
 source_group("Source Files" FILES ${folder_source})

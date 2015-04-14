@@ -35,6 +35,7 @@
 
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
 #include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
+#include "yarpWholeBodyInterface/floatingBaseEstimators.h"
 
 #include <map>
 
@@ -46,72 +47,6 @@ namespace wbi {
 
 namespace yarpWbi
 {
-    /**
-     * Class that performs local estimation of the floating base state (position, velocity, acceleration)
-     *
-     */
-    class localFloatingBaseStateEstimator
-    {
-    protected:
-        int baseFrameLinkID;         // ID of the assigned base frame for base to root rototranslation computation
-        wbi::iWholeBodyModel *wholeBodyModel;
-        int dof;                                            // Number of degrees of freedom in the wbi
-
-        int robot_reference_frame_link;                     //Reference link assigned as world frame
-        wbi::Frame rootLink_H_ReferenceLink;                //Rototranslation between Reference frame (assigned as world) and Root Link
-        wbi::Frame world_H_rootLink;                        //Rototranslation between Root link and World
-        wbi::Frame world_H_reference;                        //Rototranslation between Reference frame and world (future work)
-        wbi::Frame referenceLink_H_rootLink;                //Rototranslation between Root link and Reference frame
-
-        /*
-         * optimised computation of world-to-base velocity
-        */
-
-        Eigen::Matrix<double,6,Eigen::Dynamic,Eigen::RowMajor> complete_jacobian;
-
-        Eigen::PartialPivLU<Eigen::MatrixXd::PlainObject> luDecompositionOfBaseJacobian;
-
-    public:
-        localFloatingBaseStateEstimator(wbi::iWholeBodyModel * _wholeBodyModel=0, int _dof=0);
-
-        /** Initialize the class */
-        bool init(wbi::iWholeBodyModel * _wholeBodyModel=0, int _dof=0);
-
-        bool changeDoF(int new_dof);
-
-        /** Sets a desired link as the world reference frame **/
-        bool setWorldBaseLinkName(std::string);
-
-        /** @brief Computes the Base position for a given joint configuration
-         *
-         * The resulting estimate is serialized into a 16x1 vector of double. 
-         * Use wbi#frameFromSerialization function to transform it into a proper Frame object.
-         * The deserialized Frame object will contained the transformation that multiplied for point coordinates
-         * vector expressed in the floating base frame gives the poin coordinate vector of the same
-         * point expressed in the world frame (${}^{world} H_{base}$)
-         * 
-         * @param q the current joint positions
-         * @param base_pos_estimate estimate of the base position w.r.t. world frame.
-         * @return true if successful, false otherwise
-         */
-        bool computeBasePosition(double *q, double * base_pos_estimate);
-
-        /** Computes the Base velocity for a given set of joint velocities 
-         * Output a 6x1 vector representing the linear and angular velocity of the base frame.
-         * The linear and angular velocity are oriented using the orientation of the world frame, 
-         * and the linear velocity is the velocity of the origin of the base frame link. 
-         *
-         * @param q joint positions
-         * @param dq joint velocities
-         * @param base_vel_estimate resulting estimate of base velocity
-         * @return true if successful, false otherwise
-         */
-        bool computeBaseVelocity(double *q, double *dq, double * base_vel_estimate);
-        /** Computes the Base acceleration for a given joint velocity **/
-        //bool computeBaseAcceleration();
-
-    };
-
 
     /**
      * Thread that estimates the state of the iCub robot.
@@ -185,7 +120,7 @@ namespace yarpWbi
             yarp::sig::Vector lastPwmBuffer;            // buffer for proper decoupling PWM readings
             yarp::sig::Vector lastBasePos;                // last Base Position
             yarp::sig::Vector lastBaseVel;                // last Base Velocity
-            yarp::sig::Vector lastBaseAccl;                // last Base Acceleration
+            yarp::sig::Vector lastBaseAcc;                // last Base Acceleration
         }
         estimates;
 
@@ -201,10 +136,14 @@ namespace yarpWbi
         bool motor_quantites_estimation_enabled;
 
         /** If true, perform base position and velocity estimation */
-        bool estimateBasePosAndVel;
+        bool estimateBaseState;
 
         /** helper for base state estimation */
+        bool use_localFloatingBaseStateEstimator;
         localFloatingBaseStateEstimator localFltBaseStateEstimator;
+
+        bool use_remoteFloatingBaseStateEstimator;
+        remoteFloatingBaseStateEstimator remoteFltBaseStateEstimator;
 
         /** Constructor.
          */
@@ -241,11 +180,20 @@ namespace yarpWbi
      * them from the other yarpWholeBodyInterface option when placed all together in the .ini configuration file.
      *
      * # WBI_STATE_OPTIONS
+     *
+     * Notice that for estimating floating base state (position, velocity and acceleration)
+     * of the floating base with respect to the inertial/world frame, you have to explictly
+     * enable this estimation in the configuration file using the estimateBaseState option. After that, you can either
+     * read this estimate externally (reading it from a yarp port) using the `externalFloatingBaseStatePort`
+     * or computing it internally by assuming that a frame is always fixed with respect to the inertial/world .
+     * You can specify this frame that is always fixed using the `localWorldReferenceFrame` option.
+     *
      * | Parameter name | Type | Units | Default Value | Required | Description | Notes |
      * |:--------------:|:------:|:-----:|:-------------:|:--------:|:-----------:|:-----:|
-     * | WORLD_REFERENCE_FRAME | string | - | - | No | If present, specifies the default frame for computation of the world-to-root rototranslation.  |  |
-     * | estimateBasePosAndVel | - | - | - | No | Necessary for estimation of root roto translation and velocity. If not present these estimates will always return 0  |
      * | estimatorPeriod       | double | milliseconds | 10 | No | Period (in milliseconds) of the estimator thread | For undeliyng limitations of the yarp::os::RateThread class, this period should not be lower of 1.0 ms . |
+     * | estimateBaseState | - | - | - | No | Necessary for estimation of root roto translation and velocity. If not present these estimates will always return 0  |
+     * | externalFloatingBaseStatePort     | string | - | - | - | If present, reads the floating base state (position, velocities and acceleration from an external port, using the format described in remoteFloatingBaseStateEstimator class. | Not compatible with localWorldReferenceFrame option  |
+     * | localWorldReferenceFrame | string | - | - | No | If present, specifies the default frame for computation of the world-to-root rototranslation.  | Not compatible with the externalFloatingBaseStatePort |
      *
      * Furthermore for accessing joint sensors, the property should contain all the information used
      * for configuring a a yarpWholeBodyActuators object.
@@ -283,7 +231,12 @@ namespace yarpWbi
         // and knowledge of the coupling matrix
         bool loadCouplingsFromConfigurationFile();
 
+
         // End motor-quantites estimation
+
+        // Configure (using options provided by a configuration file)
+        // the estimate of the floating base state
+        bool configureFloatingBaseStateEstimator();
 
         // Pointer to a wholeBodyModel
         wbi::iWholeBodyModel * wholeBodyModel;
