@@ -294,6 +294,49 @@ void remoteFloatingBaseStatePortProcessor::setFlags(bool* _measureAvailableFlag)
     this->measureAvailableFlag = _measureAvailableFlag;
 }
 
+bool bot2Matrix(yarp::os::Bottle * p_bot, yarp::sig::Matrix & matrix)
+{
+    int rows = p_bot->get(0).asDouble();
+    int cols = p_bot->get(1).asDouble();
+    if( rows != 4 || cols != 4 )
+    {
+        return false;
+    }
+
+    matrix.resize(rows,cols);
+    yarp::os::Bottle * data_bot = p_bot->get(2).asList();
+
+    if( data_bot->size() != rows*cols )
+    {
+        return false;
+    }
+
+    for(int row =0; row < rows; row++ )
+    {
+        for(int col = 0; col < cols; col++ )
+        {
+            matrix(row,col) = data_bot->get(cols*row+col).asDouble();
+        }
+    }
+
+    return true;
+}
+
+bool bot2Vector(yarp::os::Bottle * p_bot, yarp::sig::Vector & vec )
+{
+    if( p_bot->size() != 6 )
+    {
+        return false;
+    }
+
+    for(int i=0; i < 6; i++ )
+    {
+        vec(i) = p_bot->get(i).asDouble();
+    }
+
+    return true;
+}
+
 void remoteFloatingBaseStatePortProcessor::onRead(yarp::os::Bottle& b)
 {
     yarp::os::LockGuard guard(mutex);
@@ -311,9 +354,9 @@ void remoteFloatingBaseStatePortProcessor::onRead(yarp::os::Bottle& b)
 
     // Try to read the base matrix
     bool ok = true;
-    ok = ok && b.get(0).asList()->write(base_pos_mat);
-    ok = ok && b.get(1).asList()->write(base_vel_vec);
-    ok = ok && b.get(2).asList()->write(base_acc_vec);
+    ok = bot2Matrix(b.get(0).asList(),base_pos_mat);
+    ok = ok && bot2Vector(b.get(1).asList(),base_vel_vec);
+    ok = ok && bot2Vector(b.get(2).asList(),base_acc_vec);
 
     if( !ok )
     {
