@@ -729,6 +729,8 @@ bool yarpWholeBodyEstimator::threadInit()
     int dof = estimates.lastQ.length();
     // Update dof in base estimator
     localFltBaseStateEstimator.changeDoF(dof);
+    
+    run();
 
     return ok;
 }
