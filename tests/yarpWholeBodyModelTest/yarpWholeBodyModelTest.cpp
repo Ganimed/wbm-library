@@ -84,120 +84,189 @@ bool checkInverseDynamicsAndMassMatrixConsistency(iWholeBodyModel * model_interf
     for( int local_check= 0; local_check < 10; local_check++ )
     {
 
-    assert(nr_of_activated_joints == nr_of_considered_joints);
-    assert(nr_of_considered_joints == (int)model_interface->getJointList().size());
+        assert(nr_of_activated_joints == nr_of_considered_joints);
+        assert(nr_of_considered_joints == (int)model_interface->getJointList().size());
 
-    //std::cout << "checkInverseDynamicsAndMassMatrixConsistency: nrOfPossibleJoints : " << nr_of_possible_joints << " nrOfConsiderJoints " << nr_of_considered_joints << " " << nr_of_activated_joints << std::endl;
+        //std::cout << "checkInverseDynamicsAndMassMatrixConsistency: nrOfPossibleJoints : " << nr_of_possible_joints << " nrOfConsiderJoints " << nr_of_considered_joints << " " << nr_of_activated_joints << std::endl;
 
-    //Select the random input
+        //Select the random input
 
-    wbi::Frame xB(wbi::Rotation::RPY(Rand::scalar(),Rand::scalar(),Rand::scalar()));
+        wbi::Frame xB(wbi::Rotation::RPY(Rand::scalar(),Rand::scalar(),Rand::scalar()));
 
-    //wbi::Frame xB;//(wbi::Rotation::rotX(M_PI));
-
-
-    xB.p[0] = Rand::scalar();
-    xB.p[1] = Rand::scalar();
-    xB.p[2] = Rand::scalar();
+        //wbi::Frame xB;//(wbi::Rotation::rotX(M_PI));
 
 
-    yarp::sig::Vector dxB = 2*M_PI*yarp::math::Rand::vector(6);
-    yarp::sig::Vector ddxB = 2*M_PI*yarp::math::Rand::vector(6);
-    yarp::sig::Vector g = yarp::math::Rand::vector(3);
-    yarp::sig::Vector theta = 2*M_PI*yarp::math::Rand::vector(nr_of_considered_joints);
-    yarp::sig::Vector dtheta = 2*M_PI*yarp::math::Rand::vector(nr_of_considered_joints);
-    yarp::sig::Vector ddtheta = 2*M_PI*yarp::math::Rand::vector(nr_of_considered_joints);
+        xB.p[0] = Rand::scalar();
+        xB.p[1] = Rand::scalar();
+        xB.p[2] = Rand::scalar();
 
 
-    //xB = wbi::Frame::identity();
-    //dxB.zero();
+        yarp::sig::Vector dxB = 2*M_PI*yarp::math::Rand::vector(6);
+        yarp::sig::Vector ddxB = 2*M_PI*yarp::math::Rand::vector(6);
+        yarp::sig::Vector g = yarp::math::Rand::vector(3);
+        yarp::sig::Vector theta = 2*M_PI*yarp::math::Rand::vector(nr_of_considered_joints);
+        yarp::sig::Vector dtheta = 2*M_PI*yarp::math::Rand::vector(nr_of_considered_joints);
+        yarp::sig::Vector ddtheta = 2*M_PI*yarp::math::Rand::vector(nr_of_considered_joints);
 
 
-    yarp::sig::Vector dq =  cat(dxB,dtheta);
-    yarp::sig::Vector ddq = cat(ddxB,ddtheta);
+        //xB = wbi::Frame::identity();
+        //dxB.zero();
 
 
-
-    //Create the outputs
-    yarp::sig::Vector generalized_torques(6+nr_of_considered_joints);
-    yarp::sig::Vector generalized_torques_computed_with_mass_matrix(6+nr_of_considered_joints);
-    yarp::sig::Vector generalized_bias_torques(6+nr_of_considered_joints);
-    yarp::sig::Matrix mass_matrix(6+nr_of_considered_joints,6+nr_of_considered_joints);
-
-    mass_matrix.zero();
-
-    if( !model_interface->inverseDynamics(theta.data(),xB,dtheta.data(),dxB.data(),ddtheta.data(),ddxB.data(),g.data(),generalized_torques.data()) ) {
-        if( verbose ) { std::cout << "checkInverseDynamicsAndMassMatrixConsistency: inverseDynamics failed" << std::endl; }
-        return false;
-    }
-    if( !model_interface->computeMassMatrix(theta.data(),xB,mass_matrix.data()) ) {
-        if( verbose ) { std::cout << "checkInverseDynamicsAndMassMatrixConsistency: computeMassMatrix failed" << std::endl; }
-        return false;
-    }
-    if( !model_interface->computeGeneralizedBiasForces(theta.data(),xB,dtheta.data(),dxB.data(),g.data(),generalized_bias_torques.data()) ) {
-        if( verbose ) { std::cout << "checkInverseDynamicsAndMassMatrixConsistency: computeGeneralizedBiasForces failed" << std::endl; }
-        return false;
-    }
+        yarp::sig::Vector dq =  cat(dxB,dtheta);
+        yarp::sig::Vector ddq = cat(ddxB,ddtheta);
 
 
 
-    std::cout << "Mass Matrix:             " << std::endl << mass_matrix.toString() << std::endl;
-    std::cout << "ddq:                     " << std::endl << ddq.toString() << std::endl;
-    std::cout << "M*ddq                    " << std::endl << (mass_matrix*ddq).toString() << std::endl;
-    std::cout << "M*ddq with inv dyn       " << std::endl << (generalized_torques-generalized_bias_torques).toString() << std::endl;
-    std::cout << "bias:                    " << std::endl << generalized_bias_torques.toString() << std::endl;
+        //Create the outputs
+        yarp::sig::Vector generalized_torques(6+nr_of_considered_joints);
+        yarp::sig::Vector generalized_torques_computed_with_mass_matrix(6+nr_of_considered_joints);
+        yarp::sig::Vector generalized_bias_torques(6+nr_of_considered_joints);
+        yarp::sig::Matrix mass_matrix(6+nr_of_considered_joints,6+nr_of_considered_joints);
 
-    std::cout << "invDyn:                  " << std::endl << generalized_torques.toString() << std::endl;
+        mass_matrix.zero();
 
-
-    generalized_torques_computed_with_mass_matrix = mass_matrix*ddq + generalized_bias_torques;
-    //std::cout << "invDyn with mass matrix: " << std::endl << generalized_torques_computed_with_mass_matrix.toString() << std::endl;
-
-
-    for(int i = 0; i < (int)generalized_torques.size(); i++ ) {
-        if( fabs(generalized_torques[i]-generalized_torques_computed_with_mass_matrix[i]) > tol ) {
-            if( verbose ) { std::cout << "checkInverseDynamicsAndMassMatrixConsistency: generalized torque " << i << " is different, failing" << std::endl; }
+        if( !model_interface->inverseDynamics(theta.data(),xB,dtheta.data(),dxB.data(),ddtheta.data(),ddxB.data(),g.data(),generalized_torques.data()) ) {
+            if( verbose ) { std::cout << "checkInverseDynamicsAndMassMatrixConsistency: inverseDynamics failed" << std::endl; }
             return false;
         }
-    }
-
-    //Compute consistency of linear momentum with center of mass velocity
-    double robotMass = mass_matrix(0,0);
-    yarp::sig::Matrix com_jacobian(6,6+nr_of_considered_joints);
-    //yarp::sig::Matrix momentum_jacobian(6,6+nr_of_considered_joints);
-    yarp::sig::Vector centroidal_momentum(6);
-    yarp::sig::Vector com_twist(6);
-    yarp::sig::Vector linear_momentum(3);
-
-   if( !model_interface->computeCentroidalMomentum(theta.data(),xB,dtheta.data(),dxB.data(),centroidal_momentum.data()) ) {
-        if( verbose ) { std::cout << "checkInverseDynamicsAndMassMatrixConsistency: computeCentroidalMomentum failed" << std::endl; }
-        return false;
-    }
-    if( !model_interface->computeJacobian(theta.data(),xB,iWholeBodyModel::COM_LINK_ID,com_jacobian.data()) ) {
-        if( verbose ) { std::cout << "checkInverseDynamicsAndMassMatrixConsistency: computeJacobian for COM failed" << std::endl; }
-        return false;
-    }
-
-    com_twist = com_jacobian*dq;
-
-    for(int i=0; i <= 2; i++) {
-        linear_momentum(i) = robotMass*com_twist(i);
-    }
-
-    /*
-    std::cout << "Com twist:               " << std::endl << com_twist.toString() << std::endl;
-    std::cout << "centroidal_momentu       " << std::endl << centroidal_momentum.toString() << std::endl;
-    std::cout << "robotmass                " << std::endl << robotMass << std::endl;
-    std::cout << "linear_momentu           " << std::endl << linear_momentum.toString() << std::endl;
-    */
-
-    for(int i=0; i <= 2; i++) {
-        if( fabs(linear_momentum[i]-centroidal_momentum[i]) > tol ) {
-            if( verbose ) { std::cout << "checkInverseDynamicsAndMassMatrixConsistency: component " << i << " of the linear momentum is different, failing" << std::endl; }
+        if( !model_interface->computeMassMatrix(theta.data(),xB,mass_matrix.data()) ) {
+            if( verbose ) { std::cout << "checkInverseDynamicsAndMassMatrixConsistency: computeMassMatrix failed" << std::endl; }
+            return false;
+        }
+        if( !model_interface->computeGeneralizedBiasForces(theta.data(),xB,dtheta.data(),dxB.data(),g.data(),generalized_bias_torques.data()) ) {
+            if( verbose ) { std::cout << "checkInverseDynamicsAndMassMatrixConsistency: computeGeneralizedBiasForces failed" << std::endl; }
             return false;
         }
 
-    }
+
+
+        std::cout << "Mass Matrix:             " << std::endl << mass_matrix.toString() << std::endl;
+        std::cout << "ddq:                     " << std::endl << ddq.toString() << std::endl;
+        std::cout << "M*ddq                    " << std::endl << (mass_matrix*ddq).toString() << std::endl;
+        std::cout << "M*ddq with inv dyn       " << std::endl << (generalized_torques-generalized_bias_torques).toString() << std::endl;
+        std::cout << "bias:                    " << std::endl << generalized_bias_torques.toString() << std::endl;
+        std::cout << "invDyn:                  " << std::endl << generalized_torques.toString() << std::endl;
+
+
+        generalized_torques_computed_with_mass_matrix = mass_matrix*ddq + generalized_bias_torques;
+        //std::cout << "invDyn with mass matrix: " << std::endl << generalized_torques_computed_with_mass_matrix.toString() << std::endl;
+
+
+        for(int i = 0; i < (int)generalized_torques.size(); i++ ) {
+            if( fabs(generalized_torques[i]-generalized_torques_computed_with_mass_matrix[i]) > tol ) {
+                if( verbose ) { std::cout << "checkInverseDynamicsAndMassMatrixConsistency: generalized torque " << i << " is different, failing" << std::endl; }
+                return false;
+            }
+        }
+
+        //Compute consistency of linear momentum with center of mass velocity
+        double robotMass = mass_matrix(0,0);
+        yarp::sig::Matrix com_jacobian(6,6+nr_of_considered_joints);
+        //yarp::sig::Matrix momentum_jacobian(6,6+nr_of_considered_joints);
+        yarp::sig::Vector centroidal_momentum(6);
+        yarp::sig::Vector com_twist(6);
+        yarp::sig::Vector linear_momentum(3);
+
+        if( !model_interface->computeCentroidalMomentum(theta.data(),xB,dtheta.data(),dxB.data(),centroidal_momentum.data()) ) {
+            if( verbose ) { std::cout << "checkInverseDynamicsAndMassMatrixConsistency: computeCentroidalMomentum failed" << std::endl; }
+            return false;
+        }
+        if( !model_interface->computeJacobian(theta.data(),xB,iWholeBodyModel::COM_LINK_ID,com_jacobian.data()) ) {
+            if( verbose ) { std::cout << "checkInverseDynamicsAndMassMatrixConsistency: computeJacobian for COM failed" << std::endl; }
+            return false;
+        }
+
+        com_twist = com_jacobian*dq;
+
+        for(int i=0; i <= 2; i++)
+        {
+            linear_momentum(i) = robotMass*com_twist(i);
+        }
+
+        /*
+        std::cout << "Com twist:               " << std::endl << com_twist.toString() << std::endl;
+        std::cout << "centroidal_momentu       " << std::endl << centroidal_momentum.toString() << std::endl;
+        std::cout << "robotmass                " << std::endl << robotMass << std::endl;
+        std::cout << "linear_momentu           " << std::endl << linear_momentum.toString() << std::endl;
+        */
+
+        for(int i=0; i <= 2; i++)
+        {
+            if( fabs(linear_momentum[i]-centroidal_momentum[i]) > tol )
+            {
+                if( verbose )
+                {
+                    std::cout << "checkInverseDynamicsAndMassMatrixConsistency: component "
+                            << i << " of the linear momentum is different, failing" << std::endl;
+                }
+                return false;
+            }
+        }
+
+        // Check centroidal momentum consitency with
+        // the result of the mass matrix
+        yarp::sig::Vector wholeBodyMomentum = mass_matrix*dq;
+
+        for(int i=0; i <= 2; i++)
+        {
+            if( fabs(linear_momentum[i]-wholeBodyMomentum[i]) > tol )
+            {
+                if( verbose )
+                {
+                    std::cout << "checkInverseDynamicsAndMassMatrixConsistency: component "
+                            << i << " of the linear momentum is different from the one of wholeBodyMomentum, failing" << std::endl;
+                }
+                return false;
+            }
+        }
+
+
+        wbi::Frame comFrame;
+        wbi::Frame rootLinkFrame;
+
+        int comIndex = wbi::iWholeBodyModel::COM_LINK_ID;
+        int rootLinkIndex = -1;
+
+        bool ok =model_interface->getFrameList().idToIndex("root_link",rootLinkIndex);
+
+        yarp::sig::Vector comPos(3);
+        yarp::sig::Vector basePos(3);
+        ok = ok && model_interface->computeH(theta.data(),xB,comIndex,comFrame);
+        ok = ok && model_interface->computeH(theta.data(),xB,rootLinkIndex,rootLinkFrame);
+
+        if( !ok )
+        {
+            std::cerr << "error in getting com and frame positions" << std::endl;
+            return false;
+        }
+
+        basePos[0] = rootLinkFrame.p[0];
+        basePos[1] = rootLinkFrame.p[1];
+        basePos[2] = rootLinkFrame.p[2];
+
+        comPos[0]  = comFrame.p[0];
+        comPos[1]  = comFrame.p[1];
+        comPos[2]  = comFrame.p[2];
+
+        yarp::sig::Vector angularMomentum = wholeBodyMomentum.subVector(3,5) - cross((comPos-basePos),wholeBodyMomentum.subVector(0,2));
+
+        std::cout << "Angular Momentum  (mass matrix and pole translation) :               " << std::endl << angularMomentum.toString() << std::endl;
+        std::cout << "Angular Momentum  (centroidal momentum)       " << std::endl << centroidal_momentum.subVector(3,5).toString() << std::endl;
+
+
+        for(int i=0; i <= 2; i++)
+        {
+            if( fabs(angularMomentum[i]-centroidal_momentum[i+3]) > tol )
+            {
+                if( verbose )
+                {
+                    std::cout << "checkInverseDynamicsAndMassMatrixConsistency: component "
+                            << i << " of the angular momentum is different from the corresponding one of the centroidal momentum, failing" << std::endl;
+                }
+                return false;
+            }
+        }
 
     }
 
