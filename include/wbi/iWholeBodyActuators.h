@@ -41,17 +41,41 @@ namespace wbi {
         virtual int addActuators(const IDList &j) = 0;
         virtual const IDList& getActuatorList() = 0;
 
-        /** Set the control mode of the specified joint(s).
+        /** 
+         * Set the control mode of the specified joint(s).
+         * 
+         * Depending on the implementation, this method can be slow. 
+         * It should be used before starting the control to switch
+         * the control mode to the desired one. Once the control mode
+         * is set, you should send reference in the control loop using the
+         * setControlReference method. 
+         * 
+         * For the unit of measurement of the the ref argument,
+         *  please check the setControlReference method. 
+         * 
          * @param controlMode Id of the control mode.
          * @param ref Reference value(s) for the controller.
          * @param joint Joint number, if negative, all joints are considered.
-         * @return True if operation succeeded, false otherwise. */
+         * @return True if operation succeeded, false otherwise.
+         */
         virtual bool setControlMode(ControlMode controlMode, double *ref=0, int joint=-1) = 0;
 
-        /** Set the reference value for the controller of the specified joint(s).
+        /** 
+         * Set the reference value for the controller of the specified joint(s).
+         * 
+         * For control modes that take in input a  desired position of a revolute joint,
+         *  the unit of measurement of the reference value is Radians.
+         * 
+         * For control modes that take in input a desired velocity of a revolute joint,
+         *  the unit of measurement of the reference value is Radians/Seconds.
+         * 
+         * For control modes that take in input a desired torque of a revolute joint,
+         *  the unit of measurement of the reference value is Newton*Meters.
+         * 
          * @param ref Reference value(s) for the controller.
          * @param joint Joint number, if negative, all joints are considered.
-         * @return True if operation succeeded, false otherwise. */
+         * @return True if operation succeeded, false otherwise.
+         */
         virtual bool setControlReference(double *ref, int joint=-1) = 0;
 
         /** Set a parameter (e.g. a gain) of one or more joint controllers.
