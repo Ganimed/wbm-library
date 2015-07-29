@@ -29,7 +29,7 @@ add_definitions(-DIDYNTREE_USES_ICUB)
 
 find_package(YARP 2.3.63.7 REQUIRED)
 find_package(ICUB REQUIRED)
-find_package(iDynTree REQUIRED)
+find_package(iDynTree 0.3.6 REQUIRED)
 find_package(wholeBodyInterface 0.2.2 REQUIRED)
 
 SET(folder_source src/yarpWbiUtil.cpp
