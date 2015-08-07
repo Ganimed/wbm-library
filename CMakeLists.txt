@@ -47,7 +47,8 @@ SET(folder_source src/wbiUtil.cpp
                   src/iWholeBodyStates.cpp
                   src/iWholeBodySensors.cpp
                   src/iWholeBodyActuators.cpp
-                  src/wholeBodyInterface.cpp)
+                  src/wholeBodyInterface.cpp
+                  src/Error.cpp)
 
 SET(folder_header include/wbi/wbi.h
                   include/wbi/wbiConstants.h
@@ -58,7 +59,8 @@ SET(folder_header include/wbi/wbi.h
                   include/wbi/iWholeBodyStates.h
                   include/wbi/iWholeBodySensors.h
                   include/wbi/iWholeBodyActuators.h
-                  include/wbi/wholeBodyInterface.h)
+                  include/wbi/wholeBodyInterface.h
+                  include/wbi/Error.h)
                   
 include_directories(include/wbi)
 
