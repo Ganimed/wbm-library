@@ -19,6 +19,7 @@
 #include "yarpWholeBodyInterface/yarpWholeBodyActuators.h"
 #include <wbi/wbiConstants.h>
 #include <wbi/Error.h>
+#include <yarp/os/LogStream.h>
 #include <yarp/os/Property.h>
 #include <string>
 #include <cassert>
@@ -33,7 +34,7 @@ using namespace yarp::dev;
 #define WAIT_TIME 0.001         ///< waiting time in seconds before retrying to perform an operation that has failed
 #define DEFAULT_REF_SPEED 10.0  ///< default reference joint speed for the joint position control
 
-const std::string yarpWbi::YarpWholeBodyActuatorsPropertyInteractionMode = "yarp.dev.interaction";
+const std::string yarpWbi::YarpWholeBodyActuatorsPropertyInteractionModeKey = "yarp.dev.interaction";
 const std::string yarpWbi::YarpWholeBodyActuatorsPropertyInteractionModeStiff = "yarp.dev.interaction.stiff";
 const std::string yarpWbi::YarpWholeBodyActuatorsPropertyInteractionModeCompliant = "yarp.dev.interaction.compliant";
 
@@ -839,37 +840,60 @@ bool yarpWholeBodyActuators::setControlProperty(std::string key, std::string val
 {
     //supported keys:
     //- interaction => {values: stiff, complaint}
-    if (key != YarpWholeBodyActuatorsPropertyInteractionMode) {
-        if (error) {
-            error->setError(ErrorDomain, 1, "Property key not supported");
+    if (key != YarpWholeBodyActuatorsPropertyInteractionModeKey)
+    {
+        if (error)
+        {
+            error->setError(ErrorDomain, ErrorCodePropertyNotSupported, "Property key not supported");
         }
+        yError("Property key not supported");
         return false; //not supported yet
     }
 
     yarp::dev::InteractionModeEnum interactioMode = yarp::dev::VOCAB_IM_UNKNOWN;
-    if (value == YarpWholeBodyActuatorsPropertyInteractionModeCompliant) {
+    if (value == YarpWholeBodyActuatorsPropertyInteractionModeCompliant)
+    {
         interactioMode = yarp::dev::VOCAB_IM_COMPLIANT;
-    } else if (value == YarpWholeBodyActuatorsPropertyInteractionModeStiff) {
+    }
+    else if (value == YarpWholeBodyActuatorsPropertyInteractionModeStiff)
+    {
         interactioMode = yarp::dev::VOCAB_IM_STIFF;
     }
-    if (interactioMode == yarp::dev::VOCAB_IM_UNKNOWN) {
-        if (error) {
-            error->setError(ErrorDomain, 2, "Value not supported for Interaction property");
+    if (interactioMode == yarp::dev::VOCAB_IM_UNKNOWN)
+    {
+        if (error)
+        {
+            error->setError(ErrorDomain, ErrorCodeConfigurationNotValid, "Value not supported for Interaction property");
         }
+        yError("Value not supported for Interaction property");
         return false; //interaction mode not supported
     }
 
-    if (joint < 0) {
-        if (error) {
-            error->setError(ErrorDomain, 1, "Interaction mode for all the robot not supported yet");
+    if (joint > (int)jointIdList.size())
+    {
+        if (error)
+        {
+            error->setError(ErrorDomain, ErrorCodeIndexOutOfRange, "Index out of range");
         }
+        yError("Control board index out of range");
+        return false;
+    }
+
+    if (joint < 0)
+    {
+        if (error)
+        {
+            error->setError(ErrorDomain, ErrorCodeNotImplementedYet, "Interaction mode for all the robot not supported yet");
+        }
+        yError("Interaction mode for all the robot not supported yet");
         return false; //not supported yet
-    } else {
+    }
+    else
+    {
         int bodyPart = controlBoardAxisList[joint].first;
         int controlBoardAxis = controlBoardAxisList[joint].second;
         return iinteraction[bodyPart]->setInteractionMode(controlBoardAxis, interactioMode);
     }
-
 
     return false;
 }

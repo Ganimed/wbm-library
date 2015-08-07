@@ -85,8 +85,19 @@ namespace yarpWbi
         yarpWholeBodyInterface(const char* _interfaceName,
                                const yarp::os::Property & _yarp_wbi_properties=yarp::os::Property());
 
+        /** gets the actuator implementation
+         * @return the wholeBodyActuator implementation
+         */
         yarpWholeBodyActuators* wholeBodyActuator();
+
+        /** gets the model implementation
+         * @return the wholeBodyModel implementation
+         */
         yarpWholeBodyModel* wholeBodyModel();
+
+        /** gets the state implementation
+         * @return the wholeBodyStates implementation
+         */
         yarpWholeBodyStates* wholeBodyState();
 
          /**

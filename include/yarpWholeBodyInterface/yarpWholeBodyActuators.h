@@ -48,9 +48,9 @@ namespace wbi {
 namespace yarpWbi
 {
     /* Constants */
-    extern const std::string YarpWholeBodyActuatorsPropertyInteractionMode;
-    extern const std::string YarpWholeBodyActuatorsPropertyInteractionModeStiff;
-    extern const std::string YarpWholeBodyActuatorsPropertyInteractionModeCompliant;
+    extern const std::string YarpWholeBodyActuatorsPropertyInteractionModeKey; /*!< Control property key for interaction mode */
+    extern const std::string YarpWholeBodyActuatorsPropertyInteractionModeStiff; /*<! Stiff interaction mode */
+    extern const std::string YarpWholeBodyActuatorsPropertyInteractionModeCompliant; /*<! Compliant interaction mode */
 
     /**
      * Helper structure for representing a controlled joint, containing
@@ -229,6 +229,17 @@ namespace yarpWbi
         virtual bool setControlParam(wbi::ControlParam paramId, const void *value, int joint=-1);
 
 
+        /**
+         * Set a generic property to the underlined controllers.
+         * Currently only setting interaction mode is supported.
+         *
+         * See YarpWholeBodyActuatorsProperty* properties for available properties and values
+         * @param key the property to be set
+         * @param value the value for the property
+         * @param joint joint index. Currently only single joint call is supported
+         * @param error optional error variable. It will be filled only if the function returns false
+         * @return true if the set is successful, false otherwise
+         */
         virtual bool setControlProperty(std::string key, std::string value, int joint = -1, ::wbi::Error *error = 0);
     };
 }

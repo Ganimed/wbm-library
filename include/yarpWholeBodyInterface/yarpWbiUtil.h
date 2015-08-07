@@ -33,6 +33,16 @@ namespace yarpWbi
 {
     extern const std::string ErrorDomain;
 
+    enum ErrorCode
+    {
+        ErrorCodeUnknown = 1, /*<! Unknown error */
+        ErrorCodeGeneric = 1 << 1, /*<! Generic error */
+        ErrorCodeNotImplementedYet = 1 << 2, /*<! Feature not implemented yet error */
+        ErrorCodeIndexOutOfRange = 1 << 3, /*<! Index out of range error */
+        ErrorCodePropertyNotSupported = 1 << 4, /*<! Property not supported error */
+        ErrorCodeConfigurationNotValid = 1 << 5, /*<! Configuration not valid error */
+    };
+
 
     /** Open a remote control board driver for the specified body part.
      * @param localName Name to use as stem for the names of the YARP ports to open.
