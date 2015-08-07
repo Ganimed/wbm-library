@@ -8,6 +8,11 @@
 
 #include "Error.h"
 
+wbi::Error::Error()
+: m_domain("")
+, m_errorCode(-1)
+, m_errorMessage("") {}
+
 wbi::Error::Error(std::string domain, int code, std::string message)
 : m_domain(domain)
 , m_errorCode(code)
