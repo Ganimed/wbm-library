@@ -31,6 +31,9 @@
 
 namespace yarpWbi
 {
+    extern const std::string ErrorDomain;
+
+
     /** Open a remote control board driver for the specified body part.
      * @param localName Name to use as stem for the names of the YARP ports to open.
      * @param robotName Name of the robot to connect to.
@@ -112,8 +115,6 @@ namespace yarpWbi
                               const yarp::os::Searchable & wbi_yarp_properties,
                               wbi::IDList & requestedIdList,
                               std::string list_group = "WBI_ID_LISTS", bool verbose=false);
-
-
 
 } // end namespace yarpWbi
 

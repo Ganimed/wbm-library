@@ -50,6 +50,10 @@ yarpWholeBodyInterface::~yarpWholeBodyInterface()
     close();
 }
 
+yarpWholeBodyActuators* yarpWholeBodyInterface::wholeBodyActuator() { return actuatorInt; }
+yarpWholeBodyModel* yarpWholeBodyInterface::wholeBodyModel() { return modelInt; }
+yarpWholeBodyStates* yarpWholeBodyInterface::wholeBodyState() { return stateInt; }
+
 
 bool yarpWholeBodyInterface::setYarpWbiProperties(const yarp::os::Property & yarp_wbi_properties)
 {

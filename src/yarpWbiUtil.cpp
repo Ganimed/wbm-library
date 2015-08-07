@@ -24,6 +24,7 @@
 #include <yarp/os/LogStream.h>
 
 static const std::string WBI_YARP_JOINTS_GROUP = "WBI_YARP_JOINTS";
+const std::string yarpWbi::ErrorDomain = "wbi.yarp.error";
 
 
 namespace yarpWbi
@@ -371,7 +372,4 @@ bool loadIdListFromConfig(std::string requested_list,
 
     return ret;
 }
-
-
-
 }

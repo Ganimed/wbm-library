@@ -18,6 +18,7 @@
 #define MAX_NJ 20
 #include "yarpWholeBodyInterface/yarpWholeBodyActuators.h"
 #include <wbi/wbiConstants.h>
+#include <wbi/Error.h>
 #include <yarp/os/Property.h>
 #include <string>
 #include <cassert>
@@ -32,6 +33,9 @@ using namespace yarp::dev;
 #define WAIT_TIME 0.001         ///< waiting time in seconds before retrying to perform an operation that has failed
 #define DEFAULT_REF_SPEED 10.0  ///< default reference joint speed for the joint position control
 
+const std::string yarpWbi::YarpWholeBodyActuatorsPropertyInteractionMode = "yarp.dev.interaction";
+const std::string yarpWbi::YarpWholeBodyActuatorsPropertyInteractionModeStiff = "yarp.dev.interaction.stiff";
+const std::string yarpWbi::YarpWholeBodyActuatorsPropertyInteractionModeCompliant = "yarp.dev.interaction.compliant";
 
 // *********************************************************************************************************************
 // *********************************************************************************************************************
@@ -829,4 +833,43 @@ bool yarpWholeBodyActuators::setControlOffset(const double *value, int joint)
         }
     }
     return result;
+}
+
+bool yarpWholeBodyActuators::setControlProperty(std::string key, std::string value, int joint, ::wbi::Error *error)
+{
+    //supported keys:
+    //- interaction => {values: stiff, complaint}
+    if (key != YarpWholeBodyActuatorsPropertyInteractionMode) {
+        if (error) {
+            error->setError(ErrorDomain, 1, "Property key not supported");
+        }
+        return false; //not supported yet
+    }
+
+    yarp::dev::InteractionModeEnum interactioMode = yarp::dev::VOCAB_IM_UNKNOWN;
+    if (value == YarpWholeBodyActuatorsPropertyInteractionModeCompliant) {
+        interactioMode = yarp::dev::VOCAB_IM_COMPLIANT;
+    } else if (value == YarpWholeBodyActuatorsPropertyInteractionModeStiff) {
+        interactioMode = yarp::dev::VOCAB_IM_STIFF;
+    }
+    if (interactioMode == yarp::dev::VOCAB_IM_UNKNOWN) {
+        if (error) {
+            error->setError(ErrorDomain, 2, "Value not supported for Interaction property");
+        }
+        return false; //interaction mode not supported
+    }
+
+    if (joint < 0) {
+        if (error) {
+            error->setError(ErrorDomain, 1, "Interaction mode for all the robot not supported yet");
+        }
+        return false; //not supported yet
+    } else {
+        int bodyPart = controlBoardAxisList[joint].first;
+        int controlBoardAxis = controlBoardAxisList[joint].second;
+        return iinteraction[bodyPart]->setInteractionMode(controlBoardAxis, interactioMode);
+    }
+
+
+    return false;
 }

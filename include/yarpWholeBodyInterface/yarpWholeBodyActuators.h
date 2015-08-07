@@ -42,10 +42,15 @@ namespace wbi {
     class iWholeBodyActuators;
     class IDList;
     class ID;
+    class Error;
 }
 
 namespace yarpWbi
 {
+    /* Constants */
+    extern const std::string YarpWholeBodyActuatorsPropertyInteractionMode;
+    extern const std::string YarpWholeBodyActuatorsPropertyInteractionModeStiff;
+    extern const std::string YarpWholeBodyActuatorsPropertyInteractionModeCompliant;
 
     /**
      * Helper structure for representing a controlled joint, containing
@@ -222,6 +227,9 @@ namespace yarpWbi
          * @return True if operation succeeded, false otherwise.
          */
         virtual bool setControlParam(wbi::ControlParam paramId, const void *value, int joint=-1);
+
+
+        virtual bool setControlProperty(std::string key, std::string value, int joint = -1, ::wbi::Error *error = 0);
     };
 }
 
