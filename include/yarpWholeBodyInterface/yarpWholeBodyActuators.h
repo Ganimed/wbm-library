@@ -248,7 +248,10 @@ namespace yarpWbi
          * @param error optional error variable. It will be filled only if the function returns false
          * @return true if the set is successful, false otherwise
          */
-        virtual bool setControlProperty(std::string key, std::string value, int joint = -1, ::wbi::Error *error = 0);
+        virtual bool setControlProperty(const std::string key, const std::string value, int joint = -1, ::wbi::Error *error = 0);
+
+        virtual bool getControlProperty(std::string key, std::string &value, int joint = -1, ::wbi::Error *error = 0) const;
+
     };
 }
 

@@ -839,7 +839,7 @@ bool yarpWholeBodyActuators::setControlOffset(const double *value, int joint)
     return result;
 }
 
-bool yarpWholeBodyActuators::setControlProperty(std::string key, std::string value, int joint, ::wbi::Error *error)
+bool yarpWholeBodyActuators::setControlProperty(const std::string key, const std::string value, int joint, ::wbi::Error *error)
 {
     //supported keys:
     //- interaction => {values: stiff, complaint}
@@ -882,6 +882,53 @@ bool yarpWholeBodyActuators::setControlProperty(std::string key, std::string val
             yError("Property key not supported");
             return false; //not supported yet
         }
+    }
+}
+
+bool yarpWholeBodyActuators::getControlProperty(std::string key, std::string &value, int joint, ::wbi::Error *error) const
+{
+    if (key == YarpWholeBodyActuatorsPropertyImpedanceStiffnessKey
+        || key == YarpWholeBodyActuatorsPropertyImpedanceDampingKey) {
+        if (joint > (int)jointIdList.size())
+        {
+            if (error)
+            {
+                error->setError(ErrorDomain, ErrorCodeIndexOutOfRange, "Index out of range");
+            }
+            yError("Control board index out of range");
+            return false;
+        }
+
+        if (joint < 0)
+        {
+            if (error)
+            {
+                error->setError(ErrorDomain, ErrorCodeNotImplementedYet, "Interaction mode for all the robot not supported yet");
+            }
+            yError("Interaction mode for all the robot not supported yet");
+            return false; //not supported yet
+        }
+        else
+        {
+            int bodyPart = controlBoardAxisList[joint].first;
+            int controlBoardAxis = controlBoardAxisList[joint].second;
+            double stiffness = 0;
+            double damping = 0;
+            bool result = iimp[bodyPart]->getImpedance(controlBoardAxis, &stiffness, &damping);
+            if (key == YarpWholeBodyActuatorsPropertyImpedanceStiffnessKey) {
+                value = Value(stiffness).asString();
+            } else {
+                value = Value(damping).asString();
+            }
+            return result;
+        }
+
+    } else {
+        if (error) {
+            error->setError(ErrorDomain, ErrorCodePropertyNotSupported, "Property key not supported");
+        }
+        yError("Property key not supported");
+        return false; //not supported yet
     }
 }
 
