@@ -37,6 +37,9 @@ using namespace yarp::dev;
 const std::string yarpWbi::YarpWholeBodyActuatorsPropertyInteractionModeKey = "yarp.dev.interaction";
 const std::string yarpWbi::YarpWholeBodyActuatorsPropertyInteractionModeStiff = "yarp.dev.interaction.stiff";
 const std::string yarpWbi::YarpWholeBodyActuatorsPropertyInteractionModeCompliant = "yarp.dev.interaction.compliant";
+const std::string yarpWbi::YarpWholeBodyActuatorsPropertyImpedanceStiffnessKey = "yarp.dev.impedance.stiffness";
+const std::string yarpWbi::YarpWholeBodyActuatorsPropertyImpedanceDampingKey = "yarp.dev.impedance.damping";
+
 
 // *********************************************************************************************************************
 // *********************************************************************************************************************
@@ -840,35 +843,50 @@ bool yarpWholeBodyActuators::setControlProperty(std::string key, std::string val
 {
     //supported keys:
     //- interaction => {values: stiff, complaint}
-    if (key != YarpWholeBodyActuatorsPropertyInteractionModeKey)
-    {
-        if (error)
-        {
-            error->setError(ErrorDomain, ErrorCodePropertyNotSupported, "Property key not supported");
-        }
-        yError("Property key not supported");
-        return false; //not supported yet
-    }
+    //- Stiffness => double
+    //- Damping => double
 
-    yarp::dev::InteractionModeEnum interactioMode = yarp::dev::VOCAB_IM_UNKNOWN;
-    if (value == YarpWholeBodyActuatorsPropertyInteractionModeCompliant)
-    {
-        interactioMode = yarp::dev::VOCAB_IM_COMPLIANT;
-    }
-    else if (value == YarpWholeBodyActuatorsPropertyInteractionModeStiff)
-    {
-        interactioMode = yarp::dev::VOCAB_IM_STIFF;
-    }
-    if (interactioMode == yarp::dev::VOCAB_IM_UNKNOWN)
-    {
-        if (error)
+    if (key == YarpWholeBodyActuatorsPropertyInteractionModeKey) {
+        yarp::dev::InteractionModeEnum interactioMode = yarp::dev::VOCAB_IM_UNKNOWN;
+        if (value == YarpWholeBodyActuatorsPropertyInteractionModeCompliant)
         {
-            error->setError(ErrorDomain, ErrorCodeConfigurationNotValid, "Value not supported for Interaction property");
+            interactioMode = yarp::dev::VOCAB_IM_COMPLIANT;
         }
-        yError("Value not supported for Interaction property");
-        return false; //interaction mode not supported
+        else if (value == YarpWholeBodyActuatorsPropertyInteractionModeStiff)
+        {
+            interactioMode = yarp::dev::VOCAB_IM_STIFF;
+        }
+        if (interactioMode == yarp::dev::VOCAB_IM_UNKNOWN)
+        {
+            if (error)
+            {
+                error->setError(ErrorDomain, ErrorCodeConfigurationNotValid, "Value not supported for Interaction property");
+            }
+            yError("Value not supported for Interaction property");
+            return false; //interaction mode not supported
+        }
+        return setInteractionModeSingleJoint(interactioMode, joint, error);
     }
+    else {
+        if (key == YarpWholeBodyActuatorsPropertyImpedanceStiffnessKey) {
+            yarp::os::Value doubleValue(value);
+            return setImpedanceStiffness(doubleValue.asDouble(), joint, error);
 
+        } else if(key == YarpWholeBodyActuatorsPropertyImpedanceDampingKey) {
+            yarp::os::Value doubleValue(value);
+            return setImpedanceDamping(doubleValue.asDouble(), joint, error);
+        } else {
+            if (error) {
+                error->setError(ErrorDomain, ErrorCodePropertyNotSupported, "Property key not supported");
+            }
+            yError("Property key not supported");
+            return false; //not supported yet
+        }
+    }
+}
+
+bool yarpWholeBodyActuators::setInteractionModeSingleJoint(yarp::dev::InteractionModeEnum mode, int joint, ::wbi::Error *error)
+{
     if (joint > (int)jointIdList.size())
     {
         if (error)
@@ -892,8 +910,99 @@ bool yarpWholeBodyActuators::setControlProperty(std::string key, std::string val
     {
         int bodyPart = controlBoardAxisList[joint].first;
         int controlBoardAxis = controlBoardAxisList[joint].second;
-        return iinteraction[bodyPart]->setInteractionMode(controlBoardAxis, interactioMode);
+        return iinteraction[bodyPart]->setInteractionMode(controlBoardAxis, mode);
     }
 
     return false;
+}
+
+bool yarpWholeBodyActuators::setImpedanceStiffness(double stiffness, int joint, wbi::Error *error)
+{
+    if (joint > (int)jointIdList.size())
+    {
+        if (error)
+        {
+            error->setError(ErrorDomain, ErrorCodeIndexOutOfRange, "Index out of range");
+        }
+        yError("Control board index out of range");
+        return false;
+    }
+
+    if (joint < 0)
+    {
+        if (error)
+        {
+            error->setError(ErrorDomain, ErrorCodeNotImplementedYet, "Interaction mode for all the robot not supported yet");
+        }
+        yError("Interaction mode for all the robot not supported yet");
+        return false; //not supported yet
+    }
+    else
+    {
+        int bodyPart = controlBoardAxisList[joint].first;
+        int controlBoardAxis = controlBoardAxisList[joint].second;
+        double oldStiffness = 0; double damping = 0;
+        iimp[bodyPart]->getImpedance(controlBoardAxis, &oldStiffness, &damping);
+        return iimp[bodyPart]->setImpedance(controlBoardAxis, stiffness, damping);
+    }
+}
+
+bool yarpWholeBodyActuators::setImpedanceDamping(double damping, int joint, wbi::Error *error)
+{
+    if (joint > (int)jointIdList.size())
+    {
+        if (error)
+        {
+            error->setError(ErrorDomain, ErrorCodeIndexOutOfRange, "Index out of range");
+        }
+        yError("Control board index out of range");
+        return false;
+    }
+
+    if (joint < 0)
+    {
+        if (error)
+        {
+            error->setError(ErrorDomain, ErrorCodeNotImplementedYet, "Interaction mode for all the robot not supported yet");
+        }
+        yError("Interaction mode for all the robot not supported yet");
+        return false; //not supported yet
+    }
+    else
+    {
+        int bodyPart = controlBoardAxisList[joint].first;
+        int controlBoardAxis = controlBoardAxisList[joint].second;
+        double stiffness = 0; double oldDamping = 0;
+        iimp[bodyPart]->getImpedance(controlBoardAxis, &stiffness, &oldDamping);
+        return iimp[bodyPart]->setImpedance(controlBoardAxis, stiffness, damping);
+    }
+}
+
+bool yarpWholeBodyActuators::setFullImpedance(double stiffness, double damping, int joint, wbi::Error *error)
+{
+    if (joint > (int)jointIdList.size())
+    {
+        if (error)
+        {
+            error->setError(ErrorDomain, ErrorCodeIndexOutOfRange, "Index out of range");
+        }
+        yError("Control board index out of range");
+        return false;
+    }
+
+    if (joint < 0)
+    {
+        if (error)
+        {
+            error->setError(ErrorDomain, ErrorCodeNotImplementedYet, "Interaction mode for all the robot not supported yet");
+        }
+        yError("Interaction mode for all the robot not supported yet");
+        return false; //not supported yet
+    }
+    else
+    {
+        int bodyPart = controlBoardAxisList[joint].first;
+        int controlBoardAxis = controlBoardAxisList[joint].second;
+        return iimp[bodyPart]->setImpedance(controlBoardAxis, stiffness, damping);
+    }
 }

@@ -113,7 +113,6 @@ namespace yarpWbi
          */
         virtual bool getYarpWbiProperties(yarp::os::Property & yarp_wbi_properties);
 
-
         virtual ~yarpWholeBodyInterface();
         virtual bool init();
         virtual bool close();

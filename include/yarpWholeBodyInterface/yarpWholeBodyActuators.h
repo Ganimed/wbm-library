@@ -51,6 +51,9 @@ namespace yarpWbi
     extern const std::string YarpWholeBodyActuatorsPropertyInteractionModeKey; /*!< Control property key for interaction mode */
     extern const std::string YarpWholeBodyActuatorsPropertyInteractionModeStiff; /*<! Stiff interaction mode */
     extern const std::string YarpWholeBodyActuatorsPropertyInteractionModeCompliant; /*<! Compliant interaction mode */
+//    extern const std::string YarpWholeBodyActuatorsPropertyImpedanceKey; /*!< Control property key for setting stiffness and damping to a specified joint */
+    extern const std::string YarpWholeBodyActuatorsPropertyImpedanceStiffnessKey; /*!< Specify the stiffness value (double) */
+    extern const std::string YarpWholeBodyActuatorsPropertyImpedanceDampingKey; /*!< Specify the damping value (double) */
 
     /**
      * Helper structure for representing a controlled joint, containing
@@ -143,7 +146,7 @@ namespace yarpWbi
         wbi::ControlMode yarpToWbiCtrlMode(int yarpCtrlMode);
 
         /** Set the reference speed for the position control of the specified joint(s). */
-        virtual bool setReferenceSpeed(double *rspd, int joint=-1);
+        virtual bool setReferenceSpeed(double *rspd, int joint = -1);
 
         /** Set the proportional, derivative and integrale gain for the current joint(s) controller.
          * If you want to leave some values unchanged simply pass NULL to the corresponding gain
@@ -165,6 +168,11 @@ namespace yarpWbi
          */
         bool setControlModeSingleJoint(wbi::ControlMode controlMode, double *ref, int joint);
 
+        bool setInteractionModeSingleJoint(yarp::dev::InteractionModeEnum mode, int joint, wbi::Error *error);
+
+        bool setImpedanceStiffness(double stiffness, int joint, wbi::Error *error);
+        bool setImpedanceDamping(double damping, int joint, wbi::Error *error);
+        bool setFullImpedance(double stiffness, double damping, int joint, wbi::Error *error);
 
     public:
         /**
