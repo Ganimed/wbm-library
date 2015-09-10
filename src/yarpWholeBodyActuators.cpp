@@ -869,11 +869,13 @@ bool yarpWholeBodyActuators::setControlProperty(const std::string key, const std
     }
     else {
         if (key == YarpWholeBodyActuatorsPropertyImpedanceStiffnessKey) {
-            yarp::os::Value doubleValue(value);
+            yarp::os::Value doubleValue;
+            doubleValue.fromString(value.c_str());
             return setImpedanceStiffness(doubleValue.asDouble(), joint, error);
 
         } else if(key == YarpWholeBodyActuatorsPropertyImpedanceDampingKey) {
-            yarp::os::Value doubleValue(value);
+            yarp::os::Value doubleValue;
+            doubleValue.fromString(value.c_str());
             return setImpedanceDamping(doubleValue.asDouble(), joint, error);
         } else {
             if (error) {
@@ -916,9 +918,9 @@ bool yarpWholeBodyActuators::getControlProperty(std::string key, std::string &va
             double damping = 0;
             bool result = iimp[bodyPart]->getImpedance(controlBoardAxis, &stiffness, &damping);
             if (key == YarpWholeBodyActuatorsPropertyImpedanceStiffnessKey) {
-                value = Value(stiffness).asString();
+                value = Value(stiffness).toString();
             } else {
-                value = Value(damping).asString();
+                value = Value(damping).toString();
             }
             return result;
         }
@@ -990,6 +992,7 @@ bool yarpWholeBodyActuators::setImpedanceStiffness(double stiffness, int joint, 
         int controlBoardAxis = controlBoardAxisList[joint].second;
         double oldStiffness = 0; double damping = 0;
         iimp[bodyPart]->getImpedance(controlBoardAxis, &oldStiffness, &damping);
+        yDebug("Setting stiffness to control board %d, axis %d, value %lf, damp %lf", bodyPart, controlBoardAxis, stiffness, damping);
         return iimp[bodyPart]->setImpedance(controlBoardAxis, stiffness, damping);
     }
 }
@@ -1021,6 +1024,7 @@ bool yarpWholeBodyActuators::setImpedanceDamping(double damping, int joint, wbi:
         int controlBoardAxis = controlBoardAxisList[joint].second;
         double stiffness = 0; double oldDamping = 0;
         iimp[bodyPart]->getImpedance(controlBoardAxis, &stiffness, &oldDamping);
+        yDebug("Setting damping to control board %d, axis %d, value %lf, damp %lf", bodyPart, controlBoardAxis, stiffness, damping);
         return iimp[bodyPart]->setImpedance(controlBoardAxis, stiffness, damping);
     }
 }
