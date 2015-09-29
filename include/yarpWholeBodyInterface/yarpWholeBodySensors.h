@@ -50,7 +50,7 @@ namespace yarpWbi
         ENCODER_SPEED,
         ENCODER_ACCELERATION
     };
-    
+
     /**
      * Struct for holding information about loaded accelerometers
      */
@@ -73,6 +73,12 @@ namespace yarpWbi
 
     /**
      * Class for reading the sensors of a yarp robot.
+     *
+     * You can configure this object with a yarp::os::Property object, that you can
+     * pass to the constructor. Alternativly you can set the Property through the setYarpWbiProperties method,
+     * but in that case you have to set the property before calling the init method.
+     * 
+     *
      */
     class yarpWholeBodySensors: public wbi::iWholeBodySensors
     {
@@ -173,14 +179,16 @@ namespace yarpWbi
         virtual bool readFTsensors(double *ftSens, double *stamps=0, bool wait=true);
         virtual bool readTorqueSensors(double *jointTorques, double *stamps=0, bool wait=true);
         virtual bool readAccelerometers(double *accs, double *stamps=0, bool wait=true);
-        
+
         bool getEncodersPosSpeedAccTimed(const EncoderType st, yarp::dev::IEncodersTimed* ienc, double *encs, double *time);
 
     public:
         /**
-          * @param _name Local name of the interface (used as stem of port names)
-          * @param _yarp_wbi_properties yarp::os::Property object used to configure the interface
-          */
+         *
+         *
+         * @param _name Local name of the interface (used as stem of port names)
+         * @param _yarp_wbi_properties yarp::os::Property object used to configure the interface
+         */
         yarpWholeBodySensors(const char* _name,
                              const yarp::os::Property & _yarp_wbi_properties=yarp::os::Property());
 

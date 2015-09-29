@@ -86,8 +86,21 @@ namespace yarpWbi
         bool reset(const int nrOfControlBoards);
     };
 
-    /*
+    /**
      * Class for communicating with motor control boards of robot supporting a yarp interface.
+     *
+     * You can configure this object with a yarp::os::Property object, that you can
+     * pass to the constructor. Alternativly you can set the Property through the setYarpWbiProperties method,
+     * but in that case you have to set the property before calling the init method.
+     *
+     * The option that this Property object should contain are:
+     *
+     * | Parameter name | Type | Units | Default Value | Required | Description | Notes |
+     * |:--------------:|:------:|:-----:|:-------------:|:--------:|:-----------:|:-----:|
+     * |  robot         | string |  -    |    -         | yes |  Prefix of all the yarp ports of the accessed controlboards. | This parameter does not modify the YARP_ROBOT_NAME variable |
+     *
+     * \todo document the other parameters
+     *
      */
     class yarpWholeBodyActuators : public wbi::iWholeBodyActuators
     {
