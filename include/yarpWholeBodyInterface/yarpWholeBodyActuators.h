@@ -249,6 +249,29 @@ namespace yarpWbi
          */
         virtual bool setControlParam(wbi::ControlParam paramId, const void *value, int joint=-1);
 
+        /**
+         * Set the pids for the specified control mode for a specific joint or a list of joints
+         *
+         * @param pids        pids to be set
+         * @param controlMode control mode for which PIDs must be set
+         * @param joint       joint number, if negative, all joints are considered.
+         *
+         * @return true if operation succeeded, false otherwise.
+         */
+        bool setPIDGains(yarp::dev::Pid *pids, wbi::ControlMode controlMode, int joint = -1);
+
+        /**
+         * Get the pids for the specified control mode for a specific joint or a list of joints
+         *
+         * @param pids        already allocated list (or single) pids
+         * @param controlMode control mode for which PIDs must be set
+         * @param joint       joint number, if negative, all joints are considered.
+         *
+         * @return true if operation succeeded, false otherwise.
+         */
+        bool getPIDGains(yarp::dev::Pid *pids, wbi::ControlMode controlMode, int joint = -1);
+
+
 
         /**
          * Set a generic property to the underlined controllers.

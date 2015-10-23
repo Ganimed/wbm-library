@@ -807,6 +807,66 @@ bool yarpWholeBodyActuators::setPIDGains(const double *pValue, const double *dVa
     return result;
 }
 
+bool yarpWholeBodyActuators::setPIDGains(yarp::dev::Pid *pids, wbi::ControlMode controlMode, int joint)
+{
+    if (!initDone) return false;
+    bool result = true;
+    if (joint < 0) {
+        int i = 0;
+        for (std::vector< std::pair<int,int> >::const_iterator jointPair = controlBoardAxisList.begin();
+             jointPair != controlBoardAxisList.end(); ++jointPair) {
+            result = result && itrq[jointPair->first]->setTorquePid(jointPair->second, pids[i++]);
+        }
+    }
+    else {
+        int bodyPart = controlBoardAxisList[joint].first;
+        int controlBoardJointAxis = controlBoardAxisList[joint].second;
+        switch (controlMode) {
+            case wbi::CTRL_MODE_TORQUE:
+            {
+                result = itrq[bodyPart]->setTorquePid(controlBoardJointAxis, *pids);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    return result;
+}
+
+bool yarpWholeBodyActuators::getPIDGains(yarp::dev::Pid *pids, wbi::ControlMode controlMode, int joint)
+{
+    if (!initDone) return false;
+    bool result = true;
+    if (joint < 0) {
+        int i = 0;
+        for (std::vector< std::pair<int,int> >::const_iterator jointPair = controlBoardAxisList.begin();
+             jointPair != controlBoardAxisList.end(); ++jointPair) {
+            switch (controlMode) {
+                case wbi::CTRL_MODE_TORQUE:
+                    result = result && itrq[jointPair->first]->getTorquePid(jointPair->second, &pids[i++]);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+    else {
+        int bodyPart = controlBoardAxisList[joint].first;
+        int controlBoardJointAxis = controlBoardAxisList[joint].second;
+        switch (controlMode) {
+            case wbi::CTRL_MODE_TORQUE:
+            {
+                result = itrq[bodyPart]->getTorquePid(controlBoardJointAxis, pids);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    return result;
+}
+
 
 bool yarpWholeBodyActuators::setControlOffset(const double *value, int joint)
 {
