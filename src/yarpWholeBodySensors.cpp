@@ -548,7 +548,7 @@ bool yarpWholeBodySensors::openImu(const int numeric_id, const std::string & por
     localPort << "/" << name << "/imu/" <<  wbi_id.toString() << ":i";
     portsIMU[numeric_id] = new BufferedPort<Vector>();
     if(!portsIMU[numeric_id]->open(localPort.str().c_str())) { // open local input port
-        std::cerr << "yarpWholeBodySensors::openImu(): Open of localPort " << localPort << " failed " << std::endl;
+        std::cerr << "yarpWholeBodySensors::openImu(): Open of localPort " << localPort.str() << " failed " << std::endl;
         return false;
     }
     if(!Network::exists(remotePort.c_str())) {       // check remote output port exists
@@ -556,7 +556,7 @@ bool yarpWholeBodySensors::openImu(const int numeric_id, const std::string & por
         return false;
     }
     if(!Network::connect(remotePort.c_str(), localPort.str().c_str(), "udp", true)) {  // connect remote to local port
-        std::cerr << "yarpWholeBodySensors::openImu():  could not connect " << remotePort << " to " << localPort << std::endl;
+        std::cerr << "yarpWholeBodySensors::openImu():  could not connect " << remotePort << " to " << localPort.str() << std::endl;
         return false;
     }
 
@@ -577,7 +577,7 @@ bool yarpWholeBodySensors::openFTsens(const int ft_sens_numeric_id, const std::s
     portsFTsens[ft_sens_numeric_id] = new BufferedPort<Vector>();
     if(!portsFTsens[ft_sens_numeric_id]->open(localPort.str().c_str())) {
         // open local input port
-        std::cerr << "yarpWholeBodySensors::openFTsens(): Open of localPort " << localPort << " failed " << std::endl;
+        std::cerr << "yarpWholeBodySensors::openFTsens(): Open of localPort " << localPort.str() << " failed " << std::endl;
         return false;
     }
     if(!Network::exists(remotePort.c_str())) {            // check remote output port exists
@@ -585,7 +585,7 @@ bool yarpWholeBodySensors::openFTsens(const int ft_sens_numeric_id, const std::s
         return false;
     }
     if(!Network::connect(remotePort.c_str(), localPort.str().c_str(), "udp")) {  // connect remote to local port
-        std::cerr << "yarpWholeBodySensors::openFTsens():  could not connect " << remotePort << " to " << localPort << std::endl;
+        std::cerr << "yarpWholeBodySensors::openFTsens():  could not connect " << remotePort << " to " << localPort.str() << std::endl;
         return false;
     }
 
