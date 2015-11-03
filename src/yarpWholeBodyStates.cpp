@@ -225,17 +225,23 @@ bool yarpWholeBodyStates::configureFloatingBaseStateEstimator()
         return false;
     }
 
-    if(state_opt_bot.check("localWorldReferenceFrame") )
+    if (state_opt_bot.check("localWorldReferenceFrame"))
     {
         yInfo() << "Found localWorldReferenceFrame frame mention in configuration.";
         std::string world_frame = wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("localWorldReferenceFrame").asString().c_str();
         yInfo() << "configuring the use of local estimation of the floating base state using " << world_frame << " as the world frame";
         estimator->use_localFloatingBaseStateEstimator = true;
-        estimator->localFltBaseStateEstimator.init(wholeBodyModel);
-        estimator->localFltBaseStateEstimator.setWorldBaseLinkName(world_frame);
+        if (!estimator->localFltBaseStateEstimator.init(wholeBodyModel)) {
+            yError("Error while initializing LocalBaseStateEstimator");
+            return false;
+        }
+        if (!estimator->localFltBaseStateEstimator.setWorldBaseLinkName(world_frame)) {
+            yError("Error while setting world reference frame: frame not found or invalid");
+            return false;
+        }
     }
 
-    if( state_opt_bot.check("externalFloatingBaseStatePort") )
+    if (state_opt_bot.check("externalFloatingBaseStatePort"))
     {
         // For a complete list of option supported by remoteFltBaseStateEstimator, check
         // the doxygen documentation of the class
@@ -245,10 +251,8 @@ bool yarpWholeBodyStates::configureFloatingBaseStateEstimator()
         prop.put("local",local_port_name.c_str());
 
         estimator->use_remoteFloatingBaseStateEstimator = true;
-        bool ok = estimator->remoteFltBaseStateEstimator.open(prop);
-
-        if( !ok )
-        {
+        if (!estimator->remoteFltBaseStateEstimator.open(prop)) {
+            yError("Error while establishing connection to RemoteBaseStateEstimator");
             return false;
         }
     }

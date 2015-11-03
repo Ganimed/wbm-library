@@ -54,23 +54,14 @@ bool localFloatingBaseStateEstimator::changeDoF(int _dof)
 
 bool localFloatingBaseStateEstimator::setWorldBaseLinkName(std::string linkName)
 {
-    if(wholeBodyModel!=NULL)
-    {
-        wholeBodyModel->getFrameList().idToIndex(linkName.c_str(),robot_reference_frame_link);
-        if( robot_reference_frame_link < 0 )
-        {
-            return false;
-        }
-        else
-        {
-            return true;
-        }
-    }
-    else
+    if(!wholeBodyModel) return false;
+
+    bool found = wholeBodyModel->getFrameList().idToIndex(linkName.c_str(), robot_reference_frame_link);
+    if (!found || robot_reference_frame_link < 0 )
     {
         return false;
     }
-
+    return true;
 }
 
 bool localFloatingBaseStateEstimator::computeBasePosition(double *q_temp, double * base_pos_estimate)
