@@ -196,7 +196,7 @@ bool yarpWholeBodyStates::configureFloatingBaseStateEstimator()
     yarp::os::Bottle & state_opt_bot = wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS");
 
     // handle deprecated parameters
-    if( state_opt_bot.check("WORLD_REFERENCE_FRAME") )
+    if (state_opt_bot.check("WORLD_REFERENCE_FRAME"))
     {
         yWarning("yarpWholeBodyStates: you are using the depreacted WORLD_REFERENCE_FRAME parameter.");
         yWarning("                     please use the new localWorldReferenceFrame parameter instead.");
@@ -208,8 +208,8 @@ bool yarpWholeBodyStates::configureFloatingBaseStateEstimator()
 
 
     // if neither localWorldReferenceFrame or externalFloatingBaseStatePort are defined, give error
-    if( !state_opt_bot.check("localWorldReferenceFrame") &&
-        !state_opt_bot.check("externalFloatingBaseStatePort") )
+    if (!state_opt_bot.check("localWorldReferenceFrame") &&
+        !state_opt_bot.check("externalFloatingBaseStatePort"))
     {
         yError("yarpWholeBodyStates fatal error: you must specify the way of estimate floating base state");
         return false;
@@ -217,8 +217,8 @@ bool yarpWholeBodyStates::configureFloatingBaseStateEstimator()
 
     // if both localWorldReferenceFrame and externalFloatingBaseStatePort are defined, give error
     // because only one is ok
-    if( state_opt_bot.check("localWorldReferenceFrame") &&
-        state_opt_bot.check("externalFloatingBaseStatePort") )
+    if (state_opt_bot.check("localWorldReferenceFrame") &&
+        state_opt_bot.check("externalFloatingBaseStatePort"))
     {
         yError("yarpWholeBodyStates fatal error: you cannot use both local estimation of the world reference frame");
         yError("  specified by localWorldReferenceFrame and remote one, specified by externalFloatingBaseStatePort");
@@ -262,7 +262,7 @@ bool yarpWholeBodyStates::configureFloatingBaseStateEstimator()
 
 bool yarpWholeBodyStates::init()
 {
-    if( initDone ) return false;
+    if (initDone) return false;
 
     std::string robot;
 

@@ -54,10 +54,10 @@ bool localFloatingBaseStateEstimator::changeDoF(int _dof)
 
 bool localFloatingBaseStateEstimator::setWorldBaseLinkName(std::string linkName)
 {
-    if(!wholeBodyModel) return false;
+    if (!wholeBodyModel) return false;
 
     bool found = wholeBodyModel->getFrameList().idToIndex(linkName.c_str(), robot_reference_frame_link);
-    if (!found || robot_reference_frame_link < 0 )
+    if (!found || robot_reference_frame_link < 0)
     {
         return false;
     }
@@ -66,40 +66,32 @@ bool localFloatingBaseStateEstimator::setWorldBaseLinkName(std::string linkName)
 
 bool localFloatingBaseStateEstimator::computeBasePosition(double *q_temp, double * base_pos_estimate)
 {
-  if(wholeBodyModel!=NULL)
-  {
-      wholeBodyModel->computeH(q_temp,wbi::Frame::identity(),robot_reference_frame_link, rootLink_H_ReferenceLink);
+    if (!wholeBodyModel) return false;
 
-      referenceLink_H_rootLink = rootLink_H_ReferenceLink.getInverse();
-      world_H_rootLink = world_H_reference*referenceLink_H_rootLink ;
+    wholeBodyModel->computeH(q_temp,wbi::Frame::identity(),robot_reference_frame_link, rootLink_H_ReferenceLink);
 
-      wbi::serializationFromFrame(world_H_rootLink, base_pos_estimate);
+    referenceLink_H_rootLink = rootLink_H_ReferenceLink.getInverse();
+    world_H_rootLink = world_H_reference*referenceLink_H_rootLink ;
 
-      return true;
-  }
-  else
-        return false;
+    wbi::serializationFromFrame(world_H_rootLink, base_pos_estimate);
+
+    return true;
 }
 bool localFloatingBaseStateEstimator::computeBaseVelocity(double* qj, double* dqj, double* base_vel_estimate)
 {
-    if(wholeBodyModel!=NULL)
-    {
-        complete_jacobian.setZero();
-        Eigen::Map<Eigen::VectorXd> dqjVect(dqj, dof);
-        Eigen::Map<Eigen::VectorXd> baseVelocityWrapper(base_vel_estimate, 6);
-        baseVelocityWrapper.setZero();
+    if (!wholeBodyModel) return false;
 
-        wholeBodyModel->computeJacobian(qj, world_H_rootLink, robot_reference_frame_link, complete_jacobian.data());
-        luDecompositionOfBaseJacobian.compute(complete_jacobian.leftCols<6>());
+    complete_jacobian.setZero();
+    Eigen::Map<Eigen::VectorXd> dqjVect(dqj, dof);
+    Eigen::Map<Eigen::VectorXd> baseVelocityWrapper(base_vel_estimate, 6);
+    baseVelocityWrapper.setZero();
 
-        baseVelocityWrapper =-luDecompositionOfBaseJacobian.solve(complete_jacobian.rightCols(dof) * dqjVect);
+    wholeBodyModel->computeJacobian(qj, world_H_rootLink, robot_reference_frame_link, complete_jacobian.data());
+    luDecompositionOfBaseJacobian.compute(complete_jacobian.leftCols<6>());
 
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    baseVelocityWrapper =-luDecompositionOfBaseJacobian.solve(complete_jacobian.rightCols(dof) * dqjVect);
+
+    return true;
 }
 
 
