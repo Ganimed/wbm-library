@@ -832,7 +832,7 @@
   </link>
   <joint name="torso_roll" type="revolute">
     <origin xyz="0.0270462998093 0.032 -0.0576906" rpy="0 0 0"/>
-    <axis xyz="0.0 0.0 1.0"/>
+    <axis xyz="0.0 0.0 -1.0"/>
     <parent link="torso_1"/>
     <child link="torso_2"/>
     <limit effort="50000" lower="-0.523598775598" upper="0.523598775598" velocity="50000"/>
