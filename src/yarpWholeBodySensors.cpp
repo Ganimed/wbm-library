@@ -15,8 +15,8 @@
  * Public License for more details
  */
 
-#include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
-#include "yarpWholeBodyInterface/yarpWbiUtil.h"
+#include "yarpWholeBodySensors.h"
+#include "yarpWbiUtil.h"
 
 #include <yarp/os/Time.h>
 #include <yarp/os/Stamp.h>

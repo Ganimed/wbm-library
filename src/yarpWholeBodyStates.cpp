@@ -15,9 +15,9 @@
  * Public License for more details
  */
 
-#include "yarpWholeBodyInterface/yarpWholeBodyStates.h"
+#include "yarpWholeBodyStates.h"
 
-#include "yarpWholeBodyInterface/yarpWbiUtil.h"
+#include "yarpWbiUtil.h"
 
 #include <wbi/iWholeBodyModel.h>
 #include <wbi/wbiUtil.h>

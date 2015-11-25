@@ -27,8 +27,8 @@
 #include<Eigen/LU>
 
 
-#include "yarpWholeBodyInterface/yarpWbiUtil.h"
-#include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
+#include "yarpWbiUtil.h"
+#include "yarpWholeBodySensors.h"
 
 #include <map>
 

@@ -33,9 +33,9 @@
 #include<Eigen/LU>
 
 
-#include "yarpWholeBodyInterface/yarpWbiUtil.h"
-#include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
-#include "yarpWholeBodyInterface/floatingBaseEstimators.h"
+#include "yarpWbiUtil.h"
+#include "yarpWholeBodySensors.h"
+#include "floatingBaseEstimators.h"
 
 #include <map>
 

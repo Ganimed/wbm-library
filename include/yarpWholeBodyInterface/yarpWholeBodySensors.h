@@ -28,7 +28,7 @@
 #include <iCub/ctrl/filters.h>
 #include <iCub/iDynTree/TorqueEstimationTree.h>
 #include <iCub/skinDynLib/skinContactList.h>
-#include <yarpWholeBodyInterface/yarpWbiUtil.h>
+#include "yarpWbiUtil.h"
 #include <map>
 
 

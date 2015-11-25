@@ -15,7 +15,7 @@
  * Public License for more details
  */
 
-#include "yarpWholeBodyInterface/floatingBaseEstimators.h"
+#include "floatingBaseEstimators.h"
 
 #include <wbi/wbiUtil.h>
 #include <yarp/os/LockGuard.h>
