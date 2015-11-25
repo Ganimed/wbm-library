@@ -21,7 +21,8 @@
 #include <iCub/skinDynLib/common.h>
 #include <fstream>
 
-#include "yarpWholeBodyInterface/yarpWholeBodyInterface.h"
+#include "yarpWholeBodyInterface.h"
+#include <iCub/ctrl/math.h>
 
 #include <stdio.h>
 #include <math.h>
@@ -29,6 +30,8 @@
 
 #include <iostream>
 #include <typeinfo>
+
+#include <Eigen/Core>
 
 using namespace yarp::os;
 using namespace yarp::sig;

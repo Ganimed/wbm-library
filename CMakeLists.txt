@@ -78,11 +78,15 @@ set_target_properties(${LIBRARY_NAME}  PROPERTIES VERSION ${${VARS_PREFIX}_VERSI
                                        SOVERSION ${${VARS_PREFIX}_VERSION}
                                        PUBLIC_HEADER "${folder_header}")
 
-target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
-                                           "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${${VARS_PREFIX}_INSTALL_INCLUDEDIR}>"
-                                           ${YARP_INCLUDE_DIRS}
-                                           ${iDynTree_INCLUDE_DIRS}
-                                           ${wholeBodyInterface_INCLUDE_DIRS})
+target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>")
+target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/yarpWholeBodyInterface>"
+                                           "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${${VARS_PREFIX}_INSTALL_INCLUDEDIR}>")
+
+target_include_directories(${LIBRARY_NAME} SYSTEM PUBLIC
+                                    ${YARP_INCLUDE_DIRS}
+                                    ${iDynTree_INCLUDE_DIRS}
+                                    ${wholeBodyInterface_INCLUDE_DIRS})
+
 
 target_link_libraries(${LIBRARY_NAME}  ${YARP_LIBRARIES}
                                        ${iDynTree_LIBRARIES}

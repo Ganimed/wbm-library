@@ -19,6 +19,8 @@
 #ifndef WBACTUATORS_YARP_H
 #define WBACTUATORS_YARP_H
 
+#include "yarpWholeBodyInterface/yarpWbiUtil.h"
+
 #include <yarp/dev/ControlBoardInterfaces.h>
 #include <yarp/dev/IVelocityControl2.h>
 #include <yarp/os/RateThread.h>
@@ -28,7 +30,6 @@
 #include <iCub/ctrl/filters.h>
 #include <iCub/iDynTree/TorqueEstimationTree.h>
 #include <iCub/skinDynLib/skinContactList.h>
-#include "yarpWholeBodyInterface/yarpWbiUtil.h"
 #include <map>
 
 namespace yarp {

@@ -18,10 +18,11 @@
 #include <iostream>
 #include <algorithm>
 
-#include "yarpWholeBodyInterface/yarpWbiUtil.h"
+#include "yarpWbiUtil.h"
 
 #include <yarp/os/Log.h>
 #include <yarp/os/LogStream.h>
+#include <kdl_codyco/treeserialization.hpp>
 
 static const std::string WBI_YARP_JOINTS_GROUP = "WBI_YARP_JOINTS";
 const std::string yarpWbi::ErrorDomain = "wbi.yarp.error";

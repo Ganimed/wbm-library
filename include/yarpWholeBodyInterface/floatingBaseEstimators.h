@@ -22,13 +22,13 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/os/Semaphore.h>
 #include <yarp/os/BufferedPort.h>
+#include <yarp/sig/Matrix.h>
 
 #include<Eigen/Core>
 #include<Eigen/LU>
 
 
 #include "yarpWholeBodyInterface/yarpWbiUtil.h"
-#include "yarpWholeBodyInterface/yarpWholeBodySensors.h"
 
 #include <map>
 

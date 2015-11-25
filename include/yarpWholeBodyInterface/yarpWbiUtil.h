@@ -25,9 +25,13 @@
 #include <vector>
 #include <cstdio>
 
-#include <kdl_codyco/treeserialization.hpp>
-
 /* CODE UNDER DEVELOPMENT */
+
+namespace KDL {
+    namespace CoDyCo {
+        class TreeSerialization;
+    }
+}
 
 namespace yarpWbi
 {
