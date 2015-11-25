@@ -19,7 +19,8 @@
 #include <yarp/math/Rand.h>
 #include <yarp/os/ResourceFinder.h>
 
-#include <yarpWholeBodyInterface/yarpWholeBodyInterface.h>
+#include "yarpWholeBodyInterface.h"
+#include "yarpWholeBodyModel.h"
 
 #include <wbi/wbiUtil.h>
 

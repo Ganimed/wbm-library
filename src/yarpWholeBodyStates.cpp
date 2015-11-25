@@ -16,7 +16,7 @@
  */
 
 #include "yarpWholeBodyStates.h"
-
+#include "yarpWholeBodySensors.h"
 #include "yarpWbiUtil.h"
 
 #include <wbi/iWholeBodyModel.h>

@@ -18,6 +18,7 @@
 
 #ifndef WBSTATES_YARP_H
 #define WBSTATES_YARP_H
+#include "yarpWholeBodyInterface/floatingBaseEstimators.h"
 
 #include <yarp/dev/ControlBoardInterfaces.h>
 #include <yarp/dev/IVelocityControl2.h>
@@ -33,9 +34,7 @@
 #include<Eigen/LU>
 
 
-#include "yarpWbiUtil.h"
-#include "yarpWholeBodySensors.h"
-#include "floatingBaseEstimators.h"
+
 
 #include <map>
 
@@ -47,6 +46,7 @@ namespace wbi {
 
 namespace yarpWbi
 {
+    class yarpWholeBodySensors;
 
     /**
      * Thread that estimates the state of the iCub robot.

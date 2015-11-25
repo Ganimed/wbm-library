@@ -19,7 +19,10 @@
 #ifndef WBI_YARP_H
 #define WBI_YARP_H
 
-#include "yarpWbiUtil.h"
+#include "yarpWholeBodyInterface/yarpWbiUtil.h"
+#include "yarpWholeBodyInterface/yarpWholeBodyActuators.h"
+#include "yarpWholeBodyInterface/yarpWholeBodyModel.h"
+#include "yarpWholeBodyInterface/yarpWholeBodyStates.h"
 
 #define INITIAL_TIMESTAMP -1000.0
 
