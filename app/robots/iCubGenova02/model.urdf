@@ -1415,6 +1415,20 @@
     <child link="imu_frame"/>
     <dynamics damping="0.1"/>
   </joint>
+ <link name="l_foot_dh_frame"/>
+  <joint name="l_foot_dh_frame_fixed_joint" type="fixed">
+        <origin xyz="0.0 0 0.004" rpy="0 1.5708 0" />
+        <axis xyz="0 0 0" />
+        <parent link="l_foot" />
+        <child link="l_foot_dh_frame" />
+  </joint>
+  <link name="r_foot_dh_frame"/>
+  <joint name="r_foot_dh_frame_fixed_joint" type="fixed">
+        <origin xyz="0.0 0 0.004" rpy="0 1.5708 0" />
+        <axis xyz="0 0 0" />
+        <parent link="r_foot" />
+        <child link="r_foot_dh_frame" />
+    </joint>
   <gazebo reference="l_leg_ft_sensor">
     <sensor name="l_leg_ft_sensor" type="force_torque">
       <always_on>1</always_on>
@@ -1482,6 +1496,24 @@
       <pose>0.00950000019074 0.133444 0.0093 -1.57079632679 1.57079632679 0.0</pose>
     </sensor>
   </gazebo>
+<gazebo reference="r_arm_ft_sensor">
+  <disableFixedJointLumping>true</disableFixedJointLumping>
+</gazebo>
+  <gazebo reference="l_arm_ft_sensor">
+  <disableFixedJointLumping>true</disableFixedJointLumping>
+</gazebo>
+  <gazebo reference="r_leg_ft_sensor">
+  <disableFixedJointLumping>true</disableFixedJointLumping>
+</gazebo>
+  <gazebo reference="l_leg_ft_sensor">
+  <disableFixedJointLumping>true</disableFixedJointLumping>
+</gazebo>
+  <gazebo reference="r_foot_ft_sensor">
+  <disableFixedJointLumping>true</disableFixedJointLumping>
+</gazebo>
+  <gazebo reference="l_foot_ft_sensor">
+  <disableFixedJointLumping>true</disableFixedJointLumping>
+</gazebo>
   <gazebo>
 	<plugin name="controlboard_torso" filename="libgazebo_yarp_controlboard.so">
 		<yarpConfigurationFile>model://iCubGenova02/conf/gazebo_iCubGenova02_torso.ini</yarpConfigurationFile>
