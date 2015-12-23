@@ -35,6 +35,8 @@ namespace KDL {
 
 namespace yarpWbi
 {
+    extern const double Rad2Deg; /*<! Radians to degrees conversion */
+
     extern const std::string ErrorDomain;
 
     enum ErrorCode

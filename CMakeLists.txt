@@ -24,11 +24,7 @@ option(COMPILE_AS_SHARED_LIBRARY "Compile ${PROJECT_NAME} as a shared library" T
 option(YARPWHOLEBODYINTERFACE_ENABLE_TESTS "Enable unit testing" FALSE)
 
 
-add_definitions(-DIDYNTREE_USES_ICUB)
-
-
 find_package(YARP 2.3.63.7 REQUIRED)
-find_package(ICUB REQUIRED)
 find_package(iDynTree 0.3.6 REQUIRED)
 find_package(wholeBodyInterface 0.2.3 REQUIRED)
 

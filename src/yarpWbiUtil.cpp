@@ -23,6 +23,7 @@
 #include <yarp/os/Log.h>
 #include <yarp/os/LogStream.h>
 #include <kdl_codyco/treeserialization.hpp>
+#include <cmath>
 
 static const std::string WBI_YARP_JOINTS_GROUP = "WBI_YARP_JOINTS";
 const std::string yarpWbi::ErrorDomain = "wbi.yarp.error";
@@ -30,6 +31,8 @@ const std::string yarpWbi::ErrorDomain = "wbi.yarp.error";
 
 namespace yarpWbi
 {
+    const double Rad2Deg = 180.0 / M_PI;
+
 
 bool openPolyDriver(const std::string &localName,
                     const std::string &robotName,

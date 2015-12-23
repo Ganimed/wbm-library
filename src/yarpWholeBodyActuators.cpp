@@ -30,7 +30,6 @@ using namespace yarpWbi;
 using namespace yarp::os;
 using namespace yarp::dev;
 
-
 #define WAIT_TIME 0.001         ///< waiting time in seconds before retrying to perform an operation that has failed
 #define DEFAULT_REF_SPEED 10.0  ///< default reference joint speed for the joint position control
 
@@ -477,13 +476,13 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
         switch(currentCtrlModes[joint])
         {
             case CTRL_MODE_POS:
-                ret_value = ipos[bodyPart]->positionMove(controlBoardAxis, CTRL_RAD2DEG*(*ref));
+                ret_value = ipos[bodyPart]->positionMove(controlBoardAxis, yarpWbi::Rad2Deg * (*ref));
                 break;
             case CTRL_MODE_DIRECT_POSITION:
-                ret_value = ipositionDirect[bodyPart]->setPosition(controlBoardAxis, CTRL_RAD2DEG*(*ref));
+                ret_value = ipositionDirect[bodyPart]->setPosition(controlBoardAxis, yarpWbi::Rad2Deg * (*ref));
                 break;
             case CTRL_MODE_VEL:
-                ret_value = ivel[bodyPart]->velocityMove(controlBoardAxis, CTRL_RAD2DEG*(*ref));
+                ret_value = ivel[bodyPart]->velocityMove(controlBoardAxis, yarpWbi::Rad2Deg * (*ref));
                 break;
             case CTRL_MODE_TORQUE:
             {
@@ -519,7 +518,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                 {
                      int wbi_id = controlledJointsForControlBoard.positionControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
                      int yarp_controlboard_axis =  controlledJointsForControlBoard.positionControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
-                     buf_references[yarp_controlboard_axis] = CTRL_RAD2DEG*ref[wbi_id];
+                     buf_references[yarp_controlboard_axis] = yarpWbi::Rad2Deg * ref[wbi_id];
                 }
                 ok = ipos[wbi_controlboard_id]->positionMove(buf_references);
                 if(!ok)
@@ -536,7 +535,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                 {
                     int wbi_id = controlledJointsForControlBoard.positionControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
                     int yarp_controlboard_axis =  controlledJointsForControlBoard.positionControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
-                    ok = ipos[wbi_controlboard_id]->positionMove(yarp_controlboard_axis,CTRL_RAD2DEG*ref[wbi_id]);
+                    ok = ipos[wbi_controlboard_id]->positionMove(yarp_controlboard_axis,yarpWbi::Rad2Deg*ref[wbi_id]);
                 }
             }
         }
@@ -554,7 +553,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                 {
                     int wbi_id = controlledJointsForControlBoard.positionDirectedControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
                     int yarp_controlboard_axis =  controlledJointsForControlBoard.positionDirectedControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
-                    buf_references[yarp_controlboard_axis] = CTRL_RAD2DEG*ref[wbi_id];
+                    buf_references[yarp_controlboard_axis] = yarpWbi::Rad2Deg*ref[wbi_id];
                 }
                 ok = ipositionDirect[wbi_controlboard_id]->setPositions(buf_references);
                 if(!ok)
@@ -571,7 +570,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                 {
                     int wbi_id = controlledJointsForControlBoard.positionDirectedControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
                     int yarp_controlboard_axis =  controlledJointsForControlBoard.positionDirectedControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
-                    ok = ipositionDirect[wbi_controlboard_id]->setPosition(yarp_controlboard_axis,CTRL_RAD2DEG*ref[wbi_id]);
+                    ok = ipositionDirect[wbi_controlboard_id]->setPosition(yarp_controlboard_axis,yarpWbi::Rad2Deg*ref[wbi_id]);
                 }
             }
         }
@@ -589,7 +588,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                 {
                     int wbi_id = controlledJointsForControlBoard.velocityControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
                     int yarp_controlboard_axis =  controlledJointsForControlBoard.velocityControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
-                    buf_references[yarp_controlboard_axis] = CTRL_RAD2DEG*ref[wbi_id];
+                    buf_references[yarp_controlboard_axis] = yarpWbi::Rad2Deg*ref[wbi_id];
                 }
                 ok = ivel[wbi_controlboard_id]->velocityMove(buf_references);
                 if(!ok)
@@ -607,7 +606,7 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                     {
                         int wbi_id = controlledJointsForControlBoard.velocityControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
                         int yarp_controlboard_axis =  controlledJointsForControlBoard.velocityControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
-                        buf_references[controlBoard_jnt] = CTRL_RAD2DEG*ref[wbi_id];
+                        buf_references[controlBoard_jnt] = yarpWbi::Rad2Deg*ref[wbi_id];
                         buf_controlledJoints[controlBoard_jnt] = yarp_controlboard_axis;
                     }
                     ok = ivel[wbi_controlboard_id]->velocityMove(nrOfVelocityControlledJointsInControlBoard, buf_controlledJoints, buf_references);
@@ -725,7 +724,7 @@ bool yarpWholeBodyActuators::setReferenceSpeed(double *rspd, int joint)
     {
         int bodyPart = controlBoardAxisList[joint].first;
         int controlBoardJointAxis = controlBoardAxisList[joint].second;
-        return ipos[bodyPart]->setRefSpeed(controlBoardJointAxis, CTRL_RAD2DEG*(*rspd));
+        return ipos[bodyPart]->setRefSpeed(controlBoardJointAxis, yarpWbi::Rad2Deg*(*rspd));
     }
 
     bool ok = true;
@@ -734,7 +733,7 @@ bool yarpWholeBodyActuators::setReferenceSpeed(double *rspd, int joint)
         int bodyPart = controlBoardAxisList[jnt].first;
         int controlBoardJointAxis = controlBoardAxisList[jnt].second;
 
-        ok = ok && ipos[bodyPart]->setRefSpeed(controlBoardJointAxis, CTRL_RAD2DEG*rspd[jnt]);
+        ok = ok && ipos[bodyPart]->setRefSpeed(controlBoardJointAxis, yarpWbi::Rad2Deg*rspd[jnt]);
     }
 
     return ok;

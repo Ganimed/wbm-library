@@ -22,7 +22,7 @@
 #include <fstream>
 
 #include "yarpWholeBodyInterface.h"
-#include <iCub/ctrl/math.h>
+#include "yarpWbiUtil.h"
 
 #include <stdio.h>
 #include <math.h>
@@ -155,7 +155,7 @@ int main(int argc, char * argv[])
 
     for (int temp = 0;temp<8;temp++)
     {
-      Vector refSpeed(dof, CTRL_DEG2RAD*10.0);//, qd = q;
+      Vector refSpeed(dof, yarpWbi::Rad2Deg*10.0);//, qd = q;
 
       float posd;
       if(temp%2==0)
@@ -171,7 +171,7 @@ int main(int argc, char * argv[])
       {
 	for (int ctr = 0; ctr <13;ctr++)
 	{
-	  qd(ctr) += posd*CTRL_DEG2RAD;
+	  qd(ctr) += posd*yarpWbi::Rad2Deg;
 	}
       }
       else
@@ -181,16 +181,16 @@ int main(int argc, char * argv[])
 
 	for (int ctr = 0; ctr<4;ctr++)
 	{
-	  qd(tempJVectPlus[ctr]) += posd*CTRL_DEG2RAD;
+	  qd(tempJVectPlus[ctr]) += posd*yarpWbi::Rad2Deg;
 	}
 	for (int ctr = 0; ctr<2;ctr++)
 	{
-	  qd(tempJVectMinus[ctr]) -= posd*CTRL_DEG2RAD;
+	  qd(tempJVectMinus[ctr]) -= posd*yarpWbi::Rad2Deg;
 	}
 
       }
-      printf("Q:   %s\n", (CTRL_RAD2DEG*q).toString(1).c_str());
-      printf("Qd:  %s\n", (CTRL_RAD2DEG*qd).toString(1).c_str());
+      printf("Q:   %s\n", (yarpWbi::Rad2Deg*q).toString(1).c_str());
+      printf("Qd:  %s\n", (yarpWbi::Rad2Deg*qd).toString(1).c_str());
       icub->setControlParam(CTRL_PARAM_REF_VEL, refSpeed.data());
       icub->setControlReference(qd.data());
       int j = 0;
@@ -207,7 +207,7 @@ int main(int argc, char * argv[])
 // 	  icub->getEstimates(ESTIMATE_JOINT_POS, q.data());
 // 	  icub->getEstimates(ESTIMATE_JOINT_VEL, dq.data());
 // 	  icub->getEstimates(ESTIMATE_JOINT_ACC,d2q.data());
-// 	    printf("(Q, dq, d2q):   %.2f \t %.2f \t %.2f\n", CTRL_RAD2DEG*q(j), CTRL_RAD2DEG*dq(j), CTRL_RAD2DEG*d2q(j));
+// 	    printf("(Q, dq, d2q):   %.2f \t %.2f \t %.2f\n", yarpWbi::Rad2Deg*q(j), yarpWbi::Rad2Deg*dq(j), yarpWbi::Rad2Deg*d2q(j));
 
 	    icub->getEstimates(ESTIMATE_BASE_POS,basePos.data());
 	    printf("BasePos: (%2.6f %2.6f %2.6f)\n\n",basePos(0),basePos(1),basePos(2));
@@ -224,9 +224,9 @@ int main(int argc, char * argv[])
 //    printf("Test finished. Press return to exit.");
    getchar();
 
-//    printf("Q:   %s\n", (CTRL_RAD2DEG*q).toString(1).c_str());
+//    printf("Q:   %s\n", (yarpWbi::Rad2Deg*q).toString(1).c_str());
 
-//    qd -= CTRL_DEG2RAD*15.0;
+//    qd -= yarpWbi::Rad2Deg*15.0;
 //    icub->setControlMode(CTRL_MODE_POS);
 //    icub->setControlReference(qd.data());
 
@@ -234,10 +234,10 @@ int main(int argc, char * argv[])
    printf("Test finished. Press return to exit.");
    getchar();
 
-   Vector refSpeedFinal(dof, CTRL_DEG2RAD*25.0);//, qd = q;
-//   qd += 15.0*CTRL_DEG2RAD;
-//   printf("Q:   %s\n", (CTRL_RAD2DEG*q).toString(1).c_str());
-//   printf("Qd:  %s\n", (CTRL_RAD2DEG*qd).toString(1).c_str());
+   Vector refSpeedFinal(dof, yarpWbi::Rad2Deg*25.0);//, qd = q;
+//   qd += 15.0*yarpWbi::Rad2Deg;
+//   printf("Q:   %s\n", (yarpWbi::Rad2Deg*q).toString(1).c_str());
+//   printf("Qd:  %s\n", (yarpWbi::Rad2Deg*qd).toString(1).c_str());
    icub->setControlParam(CTRL_PARAM_REF_VEL, refSpeedFinal.data());
 
    icub->setControlReference(qInit.data());
