@@ -155,7 +155,7 @@ int main(int argc, char * argv[])
 
     for (int temp = 0;temp<8;temp++)
     {
-      Vector refSpeed(dof, yarpWbi::Rad2Deg*10.0);//, qd = q;
+      Vector refSpeed(dof, yarpWbi::Deg2Rad*10.0);//, qd = q;
 
       float posd;
       if(temp%2==0)
@@ -171,7 +171,7 @@ int main(int argc, char * argv[])
       {
 	for (int ctr = 0; ctr <13;ctr++)
 	{
-	  qd(ctr) += posd*yarpWbi::Rad2Deg;
+	  qd(ctr) += posd*yarpWbi::Deg2Rad;
 	}
       }
       else
@@ -181,11 +181,11 @@ int main(int argc, char * argv[])
 
 	for (int ctr = 0; ctr<4;ctr++)
 	{
-	  qd(tempJVectPlus[ctr]) += posd*yarpWbi::Rad2Deg;
+	  qd(tempJVectPlus[ctr]) += posd*yarpWbi::Deg2Rad;
 	}
 	for (int ctr = 0; ctr<2;ctr++)
 	{
-	  qd(tempJVectMinus[ctr]) -= posd*yarpWbi::Rad2Deg;
+	  qd(tempJVectMinus[ctr]) -= posd*yarpWbi::Deg2Rad;
 	}
 
       }
@@ -234,7 +234,7 @@ int main(int argc, char * argv[])
    printf("Test finished. Press return to exit.");
    getchar();
 
-   Vector refSpeedFinal(dof, yarpWbi::Rad2Deg*25.0);//, qd = q;
+   Vector refSpeedFinal(dof, yarpWbi::Deg2Rad*25.0);//, qd = q;
 //   qd += 15.0*yarpWbi::Rad2Deg;
 //   printf("Q:   %s\n", (yarpWbi::Rad2Deg*q).toString(1).c_str());
 //   printf("Qd:  %s\n", (yarpWbi::Rad2Deg*qd).toString(1).c_str());

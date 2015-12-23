@@ -669,7 +669,7 @@ bool yarpWholeBodySensors::readEncoders(const EncoderType st, double *data, doub
             for(int axis=0; axis < (int)qLastRead[*ctrlBoard].size(); axis++ )
             {
                 //std::cout << "read dataTemp : " << dataTemp[axis] << std::endl;
-                qLastRead[*ctrlBoard][axis] = yarpWbi::Rad2Deg*dataTemp[axis];
+                qLastRead[*ctrlBoard][axis] = yarpWbi::Deg2Rad*dataTemp[axis];
                 qStampLastRead[*ctrlBoard][axis] = tTemp[axis];
             }
         }
@@ -875,7 +875,7 @@ bool yarpWholeBodySensors::readEncoder(const EncoderType st, const int encoder_n
           for(int axis=0; axis < (int)qLastRead[encoderCtrlBoard].size(); axis++ )
           {
                 //std::cout << "read dataTemp : " << dataTemp[axis] << std::endl;
-                qLastRead[encoderCtrlBoard][axis] = yarpWbi::Rad2Deg*dataTemp[axis];
+                qLastRead[encoderCtrlBoard][axis] = yarpWbi::Deg2Rad*dataTemp[axis];
                 qStampLastRead[encoderCtrlBoard][axis] = tTemp[axis];
           }
     }

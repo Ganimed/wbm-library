@@ -32,6 +32,7 @@ const std::string yarpWbi::ErrorDomain = "wbi.yarp.error";
 namespace yarpWbi
 {
     const double Rad2Deg = 180.0 / M_PI;
+    const double Deg2Rad = M_PI / 180.0;
 
 
 bool openPolyDriver(const std::string &localName,

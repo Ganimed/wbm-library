@@ -371,8 +371,8 @@ bool yarpWholeBodyModel::getJointLimitFromControlBoard(double *qMin, double *qMa
             bool res = ilim[controlBoardId]->getLimits(index, qMin, qMax);
             if(res)
             {
-                *qMin = (*qMin) * yarpWbi::Rad2Deg;   // convert from deg to rad
-                *qMax = (*qMax) * yarpWbi::Rad2Deg;   // convert from deg to rad
+                *qMin = (*qMin) * yarpWbi::Deg2Rad;   // convert from deg to rad
+                *qMax = (*qMax) * yarpWbi::Deg2Rad;   // convert from deg to rad
             }
             return res;
 }
