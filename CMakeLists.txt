@@ -48,6 +48,9 @@ source_group("Header Files" FILES ${folder_header})
 
 add_definitions(-Wall)
 
+# import math symbols from standard cmath
+add_definitions(-D_USE_MATH_DEFINES)
+
 option(YARPWBI_ENABLE_RPATH "Enable RPATH for the library" TRUE)
 mark_as_advanced(YARPWBI_ENABLE_RPATH)
 
