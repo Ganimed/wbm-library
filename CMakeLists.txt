@@ -81,7 +81,7 @@ target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOU
 target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/yarpWholeBodyInterface>"
                                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${${VARS_PREFIX}_INSTALL_INCLUDEDIR}>")
 
-target_include_directories(${LIBRARY_NAME} SYSTEM PUBLIC
+target_include_directories(${LIBRARY_NAME} PUBLIC
                                     ${YARP_INCLUDE_DIRS}
                                     ${iDynTree_INCLUDE_DIRS}
                                     ${wholeBodyInterface_INCLUDE_DIRS})
