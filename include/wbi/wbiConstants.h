@@ -62,7 +62,8 @@ namespace wbi
         // CARTESIAN SPACE SENSORS
         SENSOR_IMU,             // 13d inertial measurement unit (4d: axis-angle orientation[rad], 3d: linear acc: ddp[m/s^2], 3d: angular vel: dw[rad/s], magnetometer[] )
         SENSOR_FORCE_TORQUE,    // 6-axis force/torque
-        SENSOR_ACCELEROMETER    // 3d linear acceleration
+        SENSOR_ACCELEROMETER,    // 3d linear acceleration
+        SENSOR_GYROSCOPE
     };
     const int SENSOR_TYPE_SIZE = 9; //number of elements in SensorType enum
     // Legacy value (deprecated)
@@ -110,6 +111,7 @@ namespace wbi
         ESTIMATE_FORCE_TORQUE_SENSOR,       // 6-axis force/torque sensor
         ESTIMATE_IMU,                       // Same of sensor IMU, but filtered
         ESTIMATE_ACCELERATION,              // 3d linear acceleration
+        ESTIMATE_ANGVELOCITY,               // 3d angular velocity
         ESTIMATE_BASE_POS,                  // position of the base of the robot
         ESTIMATE_BASE_VEL,                  // velocity of the base of the robot
         ESTIMATE_BASE_ACC,                  // acceleration of the base of the robot
