@@ -75,7 +75,7 @@ namespace wbi {
          * @param pos 3d position of the point expressed w.r.t the specified frame.
          * @return True if the operation succeeded, false otherwise (invalid input parameters).
          */
-        virtual bool computeH(double *q, const Frame &xBase, int frameId, Frame &H) = 0;
+        virtual bool computeH(double *q, const Frame &xBase, int frameId, Frame &H, double *pos=0) = 0;
 
         /**
          * Compute the Jacobian of a specified frame of the robot.
