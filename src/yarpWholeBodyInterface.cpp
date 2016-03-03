@@ -290,9 +290,9 @@ bool yarpWholeBodyInterface::getJointLimits(double* qMin, double* qMax,
     return modelInt->getJointLimits(qMin, qMax, joint);
 }
 bool yarpWholeBodyInterface::computeH(double* q, const wbi::Frame& xB,
-    int linkId, wbi::Frame& H)
+    int linkId, wbi::Frame& H, double *pos)
 {
-    return modelInt->computeH(q, xB, linkId, H);
+    return modelInt->computeH(q, xB, linkId, H, pos);
 }
 bool yarpWholeBodyInterface::computeJacobian(double* q, const wbi::Frame& xB,
     int linkId, double* J,
@@ -307,9 +307,9 @@ bool yarpWholeBodyInterface::computeDJdq(double* q, const wbi::Frame& xB,
     return modelInt->computeDJdq(q, xB, dq, dxB, linkId, dJdq, pos);
 }
 bool yarpWholeBodyInterface::forwardKinematics(double* q, const wbi::Frame& xB,
-    int linkId, double* x)
+    int linkId, double* x, double *pos)
 {
-    return modelInt->forwardKinematics(q, xB, linkId, x);
+    return modelInt->forwardKinematics(q, xB, linkId, x, pos);
 }
 bool yarpWholeBodyInterface::inverseDynamics(double* q, const wbi::Frame& xB,
     double* dq, double* dxB,
