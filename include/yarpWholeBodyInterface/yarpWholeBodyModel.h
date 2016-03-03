@@ -97,6 +97,11 @@ namespace yarpWbi
         yarp::sig::Matrix reduced_floating_base_mass_matrix;
         yarp::sig::Vector six_elem_buffer;
         yarp::sig::Vector three_elem_buffer;
+        yarp::sig::Matrix homMatrixBuffer;
+        yarp::sig::Matrix adjMatrixBuffer;
+        yarp::sig::Matrix HresultBuffer;
+        yarp::sig::Matrix reducedJacobianBuffer;
+   
 
         // *** Variables needed for opening IControlLimits interfaces
         bool getLimitsFromControlBoard;
@@ -132,6 +137,21 @@ namespace yarpWbi
 
         bool getJointLimitFromControlBoard(double *qMin, double *qMax, int joint);
 
+        /**
+         * Helper function: convert a pos offset 3D vector in a 4x4 homogeneours
+         * matrix that transforms from the offset frame to the one specified)
+         * ( specifiedFrame_H_frameWithOffset ).
+         */
+        void posToHomMatrix(double * posIn, yarp::sig::Matrix & homMatrix);
+
+        /**
+         * Helper function: convert a pos offset 3D vector in a 6x6 homogeneours
+         * matrix that transforms from the (frameWithoutOffset,world) frame to the
+         * (frameWithOffset,world) . [We mean (position,orientation)].
+         */
+        void posToAdjMatrix(double * posIn, const yarp::sig::Matrix & world_R_frame, yarp::sig::Matrix & adjMatrix);
+
+
 
     public:
          /**
@@ -161,80 +181,103 @@ namespace yarpWbi
         virtual bool getYarpWbiProperties(yarp::os::Property & yarp_wbi_properties);
 
 
-        inline virtual int getDoFs(){ return dof; }
+        /** @return The number of degrees of freedom of the robot model. */
+        virtual int getDoFs();
 
-        /** Remove the specified joint form the robot model. The joint is considered blocked
-          * at its last known value (values of the joint angles are stored whenever a method of
-          * iWholeBodyModel is called). If no previous value of the joint angle is known, zero is assumed.
-          * @param j Id of the joint to remove
-          * @return True if the joint was found and removed, false otherwise. */
+        /** Remove the specified joint from the robot model. The joint is considered blocked
+         * at its last known value (values of the joint angles are stored whenever a method of
+         * iWholeBodyModel is called). If no previous value of the joint angle is known, zero is assumed.
+         * @param j Id of the joint to remove
+         * @return True if the joint was found and removed, false otherwise. */
         virtual bool removeJoint(const wbi::ID &j);
         virtual bool addJoint(const wbi::ID &j);
         virtual int addJoints(const wbi::IDList &j);
+
         virtual const wbi::IDList& getJointList();
 
+        /** Get the upper and lower limits of the joint position(s).
+         * @param qMin Output lower limit(s) (rad).
+         * @param qMax Output upper limit(s) (rad).
+         * @param joint Id of the joint, -1 for getting the limits of all the joints.
+         * @return True if the operation succeeded, false otherwise. */
         virtual bool getJointLimits(double *qMin, double *qMax, int joint=-1);
 
         /** Compute rototranslation matrix from root reference frame to reference frame associated to the specified link.
-          * @param q Joint angles
-          * @param xBase Rototranslation from world frame to robot base frame
-          * @param linkId Id of the link that is the target of the rototranslation
-          * @param H Output 4x4 rototranslation matrix (stored by rows)
-          * @return True if the operation succeeded, false otherwise (invalid input parameters) */
-        virtual bool computeH(double *q, const wbi::Frame &xBase, int linkId, wbi::Frame &H);
+         * @param q Joint angles (rad).
+         * @param xBase Rototranslation from world frame to robot base frame.
+         * @param frameId Id of the link that is the target of the rototranslation.
+         * @param H Output 4x4 rototranslation matrix (stored by rows).
+         * @param pos 3d position of the point expressed w.r.t the specified frame.
+         * @return True if the operation succeeded, false otherwise (invalid input parameters).
+         */
+        virtual bool computeH(double *q, const wbi::Frame &xBase, int frameId, wbi::Frame &H, double *pos=0);
 
-        /** Compute the Jacobian of the specified point of the robot.
-          * @param q Joint angles
-          * @param xBase Rototranslation from world frame to robot base frame
-          * @param linkId Id of the link
-          * @param J Output 6xN Jacobian matrix (stored by rows), where N=number of joints
-          * @param pos 3d position of the point expressed w.r.t the link reference frame
-          * @return True if the operation succeeded, false otherwise (invalid input parameters)
-          * @note If linkId==COM_LINK_ID then the angular part of J is related to the angular velocity of the
-          *       whole multi-body system. This Jacobian premultiplied by the whole robot's 6D inertia
-          *       matrix is equal to the Jacobian of the angular momentum of the whole robot. */
-        virtual bool computeJacobian(double *q, const wbi::Frame &xBase, int linkId, double *J, double *pos=0);
+        /**
+         * Compute the Jacobian of a specified frame of the robot.
+         * The first three rows are the jacobian of the velocity of the frame origin
+         * (unless a offset is specified with the pos parameter).
+         * The bottom three rows are the jacobian of the angular velocity of the frame, expressed in the world frame.
+         * @param q Joint angles (rad).
+         * @param xBase Rototranslation from world frame to robot base frame.
+         * @param frameId Id of the frame.
+         * @param J Output 6xN Jacobian matrix (stored by rows), where N=number of joints.
+         * @param pos 3d position of the point expressed w.r.t the specified frame.
+         *        If pos is not specified (0, default) then the origin of frame is assumed.
+         * @return True if the operation succeeded, false otherwise (invalid input parameters).
+         * @note If frameId==COM_LINK_ID then the angular part of J is related to the angular velocity of the
+         *       whole multi-body system. This Jacobian premultiplied by the whole robot's 6D inertia
+         *       matrix is equal to the Jacobian of the angular momentum of the whole robot.
+         *       If frameId is COM_LINK_ID, the position offset (pos argument) is ignored.
+         */
+        virtual bool computeJacobian(double *q, const wbi::Frame &xBase, int frameId, double *J, double *pos=0);
+        
+        /**
+         * Given a frame on the robot , compute the product between the time derivative of its
+         * Jacobian and the joint velocity vector. The origin of the specified frame can be modified with the pos parameter.
+         * @param q Joint angles (rad).
+         * @param xBase Rototranslation from world frame to robot base frame.
+         * @param dq Joint velocities (rad/s).
+         * @param frameId Id of the link.
+         * @param dJdq Output 6-dim vector containing the product \f$\dot{J}\dot{q}\f$.
+         * @param pos 3d position of the point expressed w.r.t the specified frame.
+         *        If pos is not specified (0, default) then the origin of frame is assumed.
+         *        If frameId is COM_LINK_ID, the position offset (pos argument) is ignored.
+         *        WARNING : in the computation of the DJdq with a pos, a term is missing, so
+         *                  the result is not 100% correct.
+         * @return True if the operation succeeded, false otherwise (invalid input parameters) */
+        virtual bool computeDJdq(double *q, const wbi::Frame &xBase, double *dq, double *dxB, int frameId, double *dJdq, double *pos=0);
 
-        /** Given a point on the robot, compute the product between the time derivative of its
-          * Jacobian and the joint velocity vector.
-          * @param q Joint angles
-          * @param xBase Rototranslation from world frame to robot base frame
-          * @param dq Joint velocities
-          * @param linkID ID of the link
-          * @param dJdq Output 6-dim vector containing the product dJ*dq
-          * @param pos 3d position of the point expressed w.r.t the link reference frame
-          * @return True if the operation succeeded, false otherwise (invalid input parameters)
-          * \note If linkId==COM_LINK_ID only the first three elements of dJdq (the linear part) are computed,
-          *          the angular part is zero
-          */
-        virtual bool computeDJdq(double *q, const wbi::Frame &xBase, double *dq, double *dxB, int linkID, double *dJdq, double *pos=0);
+        /**
+         * Compute the forward kinematics of the specified frame.
+         * The frame is specified with the id of a frame in the robot, plus an linear offset
+         * of the frame origin.
+         * @param q Joint angles (rad).
+         * @param xBase Rototranslation from world frame to robot base frame
+         * @param frameId Id of the frame.
+         * @param x Output 7-dim pose vector (3 for pos, 4 for orientation expressed in axis/angle).
+         * @param pos 3d position of the point expressed w.r.t the specified frame.
+         * @return True if the operation succeeded, false otherwise. */
+        virtual bool forwardKinematics(double *q, const wbi::Frame &xBase, int frameId, double *x, double *pos=0);
 
-        /** Compute the forward kinematics of the specified joint.
-          * @param q Joint angles.
-          * @param xBase Rototranslation from world frame to robot base frame
-          * @param linkId Id of the link.
-          * @param x Output 7-dim pose vector (3 for pos, 4 for orientation expressed in axis/angle).
-          * @return True if the operation succeeded, false otherwise. */
-        virtual bool forwardKinematics(double *q, const wbi::Frame &xBase, int linkId, double *x);
-
-        /** Compute the inverse dynamics.
-          * @param q Joint angles.
-          * @param xBase Rototranslation from world frame to robot base frame
-          * @param dq Joint velocities.
-          * @param dxB Velocity of the robot base, 3 values for linear velocity and 3 values for angular velocity.
-          * @param ddq Joint accelerations.
-          * @param ddxB Acceleration of the robot base, 3 values for linear acceleration and 3 values for angular acceleration.
-          * @param g gravity acceleration expressed in world frame (3 values)
-          * @param tau Output joint torques.
+        /**
+         * Compute the inverse dynamics.
+         * @param q Joint angles (rad).
+         * @param xBase Rototranslation from world frame to robot base frame
+         * @param dq Joint velocities (rad/s).
+         * @param dxB Velocity of the robot base in world reference frame, 3 values for linear and 3 for angular velocity.
+         * @param ddq Joint accelerations (rad/s^2).
+         * @param ddxB Acceleration of the robot base in world reference frame, 3 values for linear and 3 for angular acceleration.
+         * @param g gravity acceleration expressed in world frame (3 values)
+         * @param tau Output generalized forces at the joints and base (N+6 dimensional, with N=number of joints).
          * @return True if the operation succeeded, false otherwise. */
         virtual bool inverseDynamics(double *q, const wbi::Frame &xBase, double *dq, double *dxB, double *ddq, double *ddxB, double *g, double *tau);
 
-        /** Compute the floating base Mass Matrix.
+        /**
+         * Compute the floating base Mass Matrix.
          * @param q Joint angles (rad).
          * @param xBase Rototranslation from world frame to robot base frame
          * @param M Output N+6xN+6 mass matrix, with N=number of joints.
-         * @return True if the operation succeeded, false otherwise.
-         */
+         * @return True if the operation succeeded, false otherwise. */
         virtual bool computeMassMatrix(double *q, const wbi::Frame &xBase, double *M);
 
         /** Compute the generalized bias forces (gravity+Coriolis+centrifugal) terms.
@@ -245,7 +288,8 @@ namespace yarpWbi
          * @param g gravity acceleration expressed in world frame (3 values)
          * @param h Output N+6-dim vector containing all generalized bias forces (gravity+Coriolis+centrifugal), with N=number of joints.
          * @return True if the operation succeeded, false otherwise. */
-        virtual bool computeGeneralizedBiasForces(double *q, const wbi::Frame &xBase, double *dq, double *dxB, double*g, double *h);
+
+        virtual bool computeGeneralizedBiasForces(double *q, const wbi::Frame &xBase, double *dq, double *dxB, double* g, double *h);
 
         /** Compute the 6 element centroidal momentum, as defined in:
          * Centroidal dynamics of a humanoid robot - DE Orin, A Goswami, SH Lee - Autonomous Robots 35 (2-3), 161-176
@@ -257,7 +301,14 @@ namespace yarpWbi
          * @return True if the operation succeeded, false otherwise. */
         virtual bool computeCentroidalMomentum(double *q, const wbi::Frame &xBase, double *dq, double *dxB, double *h);
 
-        virtual const wbi::IDList & getFrameList();
+        /**
+         * Get the list of available frames.
+         * This is useful to get information on the frames
+         * for which the different methods of iWholeBodyModel can
+         * be called.
+         * @return the list of available frames.
+         */
+        virtual const wbi::IDList& getFrameList();
 
     };
 }

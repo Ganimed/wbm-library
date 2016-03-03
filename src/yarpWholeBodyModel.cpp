@@ -32,6 +32,11 @@
 
 #include <Eigen/Core>
 
+#include <iDynTree/Core/Transform.h>
+#include <iDynTree/Core/Position.h>
+
+#include <iDynTree/yarp/YARPConversions.h>
+
 using namespace std;
 using namespace wbi;
 using namespace yarpWbi;
@@ -54,6 +59,8 @@ yarpWholeBodyModel::yarpWholeBodyModel(const char* _name,
       p_model(0),
       six_elem_buffer(6,0.0),
       three_elem_buffer(3,0.0),
+      homMatrixBuffer(4,4,0.0),
+      adjMatrixBuffer(6,6,0.0),
       getLimitsFromControlBoard(false)
 {
 }
@@ -238,6 +245,10 @@ bool yarpWholeBodyModel::getYarpWbiProperties(yarp::os::Property & yarp_wbi_prop
     return true;
 }
 
+int yarpWholeBodyModel::getDoFs()
+{
+    return dof;
+}
 
 bool yarpWholeBodyModel::addJoint(const wbi::ID &j)
 {
@@ -363,6 +374,29 @@ bool yarpWholeBodyModel::convertGeneralizedTorques(yarp::sig::Vector idyntree_ba
     return true;
 }
 
+void posToHomMatrix(double * pos, yarp::sig::Matrix & homMatrix)
+{
+    iDynTree::Position pos_idyn(pos,3);
+    iDynTree::Transform frameWithoutOffset_H_frameWithOffset(iDynTree::Rotation::Identity(),pos_idyn);
+
+    toYarp(frameWithoutOffset_H_frameWithOffset.asHomogeneousTransform(),homMatrix);
+    return;
+}
+
+void posToAdjMatrix(double * pos, const yarp::sig::Matrix & world_R_frame, yarp::sig::Matrix & adjMatrix)
+{
+    iDynTree::Position pos_idyn_frame(pos,3);
+    iDynTree::Rotation world_R_frame_idyn;
+    toiDynTree(world_R_frame,world_R_frame_idyn);
+    iDynTree::Position pos_world = world_R_frame_idyn*pos_idyn_frame;
+
+    iDynTree::Transform frameWithoutOffset_world_H_frameWithOffset_world(iDynTree::Rotation::Identity(),pos_idyn);
+
+    toYarp(frameWithoutOffset_world_H_frameWithOffset_world.inverse().asAdjointTransform(),adjMatrix);
+}
+
+
+
 bool yarpWholeBodyModel::getJointLimitFromControlBoard(double *qMin, double *qMax, int joint)
 {
             int controlBoardId = controlBoardAxisList[joint].first;
@@ -429,7 +463,7 @@ bool yarpWholeBodyModel::getJointLimits(double *qMin, double *qMax, int joint)
 }
 
 
-bool yarpWholeBodyModel::computeH(double *q, const Frame &xBase, int linkId, Frame &H)
+bool yarpWholeBodyModel::computeH(double *q, const Frame &xBase, int linkId, Frame &H, double *pos=0)
 {
     if( (linkId < 0 || linkId >= p_model->getNrOfLinks()) && linkId != COM_LINK_ID ) return false;
 
@@ -439,10 +473,18 @@ bool yarpWholeBodyModel::computeH(double *q, const Frame &xBase, int linkId, Fra
     p_model->setWorldBasePose(world_base_transformation);
     p_model->setAng(all_q);
 
-    Matrix H_result;
+    Matrix H_result, H_result_buf(4,4);
     H_result.zero();
     if( linkId != COM_LINK_ID ) {
         H_result = p_model->getPosition(linkId);
+        // Handle pos argument
+        if(pos)
+        {
+            posToHomMatrix(pos,homMatrixBuffer);
+            H_result_buf = H_result;
+            H_result = H_result_buf*homMatrixBuffer;
+        }
+        
         if( H_result.cols() != 4 || H_result.rows() != 4 ) { return false; }
     } else {
        H_result = Matrix(4,4);
@@ -493,6 +535,20 @@ bool yarpWholeBodyModel::computeJacobian(double *q, const Frame &xBase, int link
         i++;
     }
     reduced_jacobian.setSubmatrix(complete_jacobian.submatrix(0,5,0,5),0,0);
+
+    if( pos )
+    {
+        Matrix world_H_frameWithoutOffset = p_model->getPosition(linkId);
+        Matrix world_R_frameWithoutOffset = world_H_frameWithoutOffset.submatrix(0,2,0,2);
+
+        reducedJacobianBuffer = reduced_jacobian;
+
+        posToAdjMatrix(pos,world_R_frameWithoutOffset,adjMatrixBuffer);
+
+        reduced_jacobian = adjMatrixBuffer*reducedJacobianBuffer;
+    }
+
+
     memcpy(J,reduced_jacobian.data(),sizeof(double)*6*dof_jacobian);
 
     return true;
@@ -528,6 +584,19 @@ bool yarpWholeBodyModel::computeDJdq(double *q, const Frame &xBase, double *dq, 
 
     if( linkID != COM_LINK_ID ) {
         ret = p_model->getAcc(linkID,six_elem_buffer);
+
+        if( pos )
+        {
+            Matrix world_H_frameWithoutOffset = p_model->getPosition(linkId);
+            Matrix world_R_frameWithoutOffset = world_H_frameWithoutOffset.submatrix(0,2,0,2);
+
+            Vector retBuffer = ret;
+
+            posToAdjMatrix(pos,world_R_frameWithoutOffset,adjMatrixBuffer);
+
+            ret = adjMatrixBuffer*retBuffer;
+        }
+
     } else {
         // Only the linear part of DJdq is supported for the COM
         ret = p_model->getAccCOM(three_elem_buffer);
@@ -561,10 +630,19 @@ bool yarpWholeBodyModel::forwardKinematics(double *q, const Frame &xB, int linkI
     p_model->setWorldBasePose(world_base_transformation);
     p_model->setAng(all_q);
 
-    Matrix H_result;
+    Matrix H_result, H_result_buf;
 
     if( linkId != COM_LINK_ID ) {
         H_result = p_model->getPosition(linkId);
+
+        // Handle pos argument
+        if(pos)
+        {
+            posToHomMatrix(pos,homMatrixBuffer);
+            H_result_buf = H_result;
+            H_result = H_result_buf*homMatrixBuffer;
+        }
+
         if( H_result.cols() != 4 || H_result.rows() != 4 ) { return false; }
     } else {
        H_result = Matrix(4,4);
