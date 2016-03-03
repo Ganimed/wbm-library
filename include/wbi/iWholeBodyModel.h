@@ -26,6 +26,13 @@ namespace wbi {
 
     /**
      * Interface to the kinematic/dynamic model of the robot.
+     *
+     * All the quantities follow the convention defined in http://wiki.icub.org/codyco/dox/html/dynamics_notation.html .
+     *
+     * For all the methods for which a frame needs to be specified, the frame can be specified using a
+     * frameId, i.e. an signed integer . A list of all the frames available in the model can be obtained using
+     * the getFrameList() method. An additional offset for the frame origin can be specified with the pos argument.
+     * The pos argument is always defined to be a 3D vector expressed in the specified frame orientation.
      */
     class iWholeBodyModel
     {
@@ -65,41 +72,58 @@ namespace wbi {
          * @param xBase Rototranslation from world frame to robot base frame.
          * @param frameId Id of the link that is the target of the rototranslation.
          * @param H Output 4x4 rototranslation matrix (stored by rows).
-         * @return True if the operation succeeded, false otherwise (invalid input parameters). */
+         * @param pos 3d position of the point expressed w.r.t the specified frame.
+         * @return True if the operation succeeded, false otherwise (invalid input parameters).
+         */
         virtual bool computeH(double *q, const Frame &xBase, int frameId, Frame &H) = 0;
 
-        /** Compute the Jacobian of the specified point of the robot.
+        /**
+         * Compute the Jacobian of a specified frame of the robot.
+         * The first three rows are the jacobian of the velocity of the frame origin
+         * (unless a offset is specified with the pos parameter).
+         * The bottom three rows are the jacobian of the angular velocity of the frame, expressed in the world frame.
          * @param q Joint angles (rad).
          * @param xBase Rototranslation from world frame to robot base frame.
          * @param frameId Id of the frame.
          * @param J Output 6xN Jacobian matrix (stored by rows), where N=number of joints.
-         * @param pos 3d position of the point expressed w.r.t the link reference frame.
+         * @param pos 3d position of the point expressed w.r.t the specified frame.
+         *        If pos is not specified (0, default) then the origin of frame is assumed.
          * @return True if the operation succeeded, false otherwise (invalid input parameters).
          * @note If frameId==COM_LINK_ID then the angular part of J is related to the angular velocity of the
          *       whole multi-body system. This Jacobian premultiplied by the whole robot's 6D inertia
-         *       matrix is equal to the Jacobian of the angular momentum of the whole robot. */
+         *       matrix is equal to the Jacobian of the angular momentum of the whole robot.
+         *       If frameId is COM_LINK_ID, the position offset (pos argument) is ignored.
+         */
         virtual bool computeJacobian(double *q, const Frame &xBase, int frameId, double *J, double *pos=0) = 0;
 
-        /** Given a point on the robot, compute the product between the time derivative of its
-         * Jacobian and the joint velocity vector.
+        /**
+         * Given a frame on the robot , compute the product between the time derivative of its
+         * Jacobian and the joint velocity vector. The origin of the specified frame can be modified with the pos parameter.
          * @param q Joint angles (rad).
          * @param xBase Rototranslation from world frame to robot base frame.
          * @param dq Joint velocities (rad/s).
          * @param frameId Id of the link.
          * @param dJdq Output 6-dim vector containing the product \f$\dot{J}\dot{q}\f$.
-         * @param pos 3d position of the point expressed w.r.t the link reference frame.
+         * @param pos 3d position of the point expressed w.r.t the specified frame.
+         *        If pos is not specified (0, default) then the origin of frame is assumed.
+         *        If frameId is COM_LINK_ID, the position offset (pos argument) is ignored.
          * @return True if the operation succeeded, false otherwise (invalid input parameters) */
         virtual bool computeDJdq(double *q, const Frame &xBase, double *dq, double *dxB, int frameId, double *dJdq, double *pos=0) = 0;
 
-        /** Compute the forward kinematics of the specified frame.
+        /**
+         * Compute the forward kinematics of the specified frame.
+         * The frame is specified with the id of a frame in the robot, plus an linear offset
+         * of the frame origin.
          * @param q Joint angles (rad).
          * @param xBase Rototranslation from world frame to robot base frame
          * @param frameId Id of the frame.
          * @param x Output 7-dim pose vector (3 for pos, 4 for orientation expressed in axis/angle).
+         * @param pos 3d position of the point expressed w.r.t the specified frame.
          * @return True if the operation succeeded, false otherwise. */
-        virtual bool forwardKinematics(double *q, const Frame &xBase, int frameId, double *x) = 0;
+        virtual bool forwardKinematics(double *q, const Frame &xBase, int frameId, double *x, double *pos=0) = 0;
 
-        /** Compute the inverse dynamics.
+        /**
+         * Compute the inverse dynamics.
          * @param q Joint angles (rad).
          * @param xBase Rototranslation from world frame to robot base frame
          * @param dq Joint velocities (rad/s).
@@ -111,7 +135,8 @@ namespace wbi {
          * @return True if the operation succeeded, false otherwise. */
         virtual bool inverseDynamics(double *q, const Frame &xBase, double *dq, double *dxB, double *ddq, double *ddxB, double *g, double *tau) = 0;
 
-        /** Compute the floating base Mass Matrix.
+        /**
+         * Compute the floating base Mass Matrix.
          * @param q Joint angles (rad).
          * @param xBase Rototranslation from world frame to robot base frame
          * @param M Output N+6xN+6 mass matrix, with N=number of joints.
