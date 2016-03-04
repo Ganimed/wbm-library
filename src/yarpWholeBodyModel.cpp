@@ -503,8 +503,6 @@ bool yarpWholeBodyModel::computeJacobian(double *q, const Frame &xBase, int link
 {
     if( (linkId < 0 || linkId >= p_model->getNrOfLinks()) && linkId != COM_LINK_ID ) return false;
 
-    if( pos != 0 ) return false; //not implemented yet
-
     bool ret_val;
 
     int dof_jacobian = dof+6;
@@ -557,7 +555,6 @@ bool yarpWholeBodyModel::computeJacobian(double *q, const Frame &xBase, int link
 bool yarpWholeBodyModel::computeDJdq(double *q, const Frame &xBase, double *dq, double *dxB, int linkID, double *dJdq, double *pos)
 {
     if ((linkID < 0 || linkID >= p_model->getNrOfLinks()) && linkID != COM_LINK_ID) return false;
-    if (pos != 0) return false; //not implemented yet
 
     //joints
     convertQ(q, all_q);
