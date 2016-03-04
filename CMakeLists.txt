@@ -11,7 +11,7 @@ PROJECT(${PROJECTNAME})
 
 set (${PROJECTNAME}_VERSION_MAJOR 0)
 set (${PROJECTNAME}_VERSION_MINOR 2)
-set (${PROJECTNAME}_VERSION_PATCH 3)
+set (${PROJECTNAME}_VERSION_PATCH 4)
 
 set (${PROJECTNAME}_VERSION ${${PROJECTNAME}_VERSION_MAJOR}.${${PROJECTNAME}_VERSION_MINOR}.${${PROJECTNAME}_VERSION_PATCH})
 
@@ -61,7 +61,7 @@ SET(folder_header include/wbi/wbi.h
                   include/wbi/iWholeBodyActuators.h
                   include/wbi/wholeBodyInterface.h
                   include/wbi/Error.h)
-                  
+
 include_directories(include/wbi)
 
 SOURCE_GROUP("Source Files" FILES ${folder_source})
@@ -91,8 +91,8 @@ SET_TARGET_PROPERTIES(${LIBRARYNAME} PROPERTIES
   COMPILE_FLAGS "${CMAKE_CXX_FLAGS_ADD}"
   PUBLIC_HEADER "${folder_header}"
   )
-  
-  
+
+
 if(${CMAKE_MINIMUM_REQUIRED_VERSION} VERSION_GREATER "2.8.12")
     message(AUTHOR_WARNING "CMAKE_MINIMUM_REQUIRED_VERSION is now ${CMAKE_MINIMUM_REQUIRED_VERSION}. This check can be removed.")
 endif()
