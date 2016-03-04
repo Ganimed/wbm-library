@@ -193,7 +193,6 @@ int main(int argc, char * argv[])
       printf("Qd:  %s\n", (yarpWbi::Rad2Deg*qd).toString(1).c_str());
       icub->setControlParam(CTRL_PARAM_REF_VEL, refSpeed.data());
       icub->setControlReference(qd.data());
-      int j = 0;
       Eigen::Matrix<double,6,Dynamic,RowMajor> jacob;
       jacob.resize(6,dof+6); //13 because in this test we only have right and left arm plus torso
 

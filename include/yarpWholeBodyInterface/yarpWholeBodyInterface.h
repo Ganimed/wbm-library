@@ -138,10 +138,10 @@ namespace yarpWbi
         virtual const wbi::IDList& getJointList();
         virtual const wbi::IDList& getFrameList();
         virtual bool getJointLimits(double *qMin, double *qMax, int joint=-1);
-        virtual bool computeH(double *q, const wbi::Frame &xB, int linkId, wbi::Frame &H);
+        virtual bool computeH(double *q, const wbi::Frame &xB, int linkId, wbi::Frame &H, double *pos);
         virtual bool computeJacobian(double *q, const wbi::Frame &xB, int linkId, double *J, double *pos=0);
         virtual bool computeDJdq(double *q, const wbi::Frame &xB, double *dq, double *dxB, int linkId, double *dJdq, double *pos=0);
-        virtual bool forwardKinematics(double *q, const wbi::Frame &xB, int linkId, double *x);
+        virtual bool forwardKinematics(double *q, const wbi::Frame &xB, int linkId, double *x, double *pos);
         virtual bool inverseDynamics(double *q, const wbi::Frame &xB, double *dq, double *dxB, double *ddq, double *ddxB, double *g, double *tau);
         virtual bool computeMassMatrix(double *q, const wbi::Frame &xB, double *M);
         virtual bool computeGeneralizedBiasForces(double *q, const wbi::Frame &xB, double *dq, double *dxB, double *g, double *h);
