@@ -126,8 +126,6 @@ namespace yarpWbi
         bool convertBaseAcceleration(const double *ddxB, yarp::sig::Vector & a_six_elems_b);
 
 
-        bool convertQ(const double *q_input, yarp::sig::Vector & q_complete_output);
-        bool convertQ(const yarp::sig::Vector & q_complete_input, double *q_output);
         bool convertDQ(const double *dq_input, yarp::sig::Vector & dq_complete_output);
         bool convertDDQ(const double *ddq_input, yarp::sig::Vector & ddq_complete_output);
 
@@ -150,8 +148,6 @@ namespace yarpWbi
          * (frameWithOffset,world) . [We mean (position,orientation)].
          */
         void posToAdjMatrix(double * posIn, const yarp::sig::Matrix & world_R_frame, yarp::sig::Matrix & adjMatrix);
-
-
 
     public:
          /**
@@ -309,6 +305,33 @@ namespace yarpWbi
          * @return the list of available frames.
          */
         virtual const wbi::IDList& getFrameList();
+        
+        /**
+         *  Given a vector of joint positions 'all_q' of size ‘NrOfDOFs’ as defined in a DynTree object (which differs from the concept of DOF in yarpWholeBodyModel, namely ‘dof’), this method converts @param q_input of size 'dof' into its equivalent @param all_q of size 'NrOfDOFs'.
+         *
+         *  @param q_input           Pointer to joints configuration array of size 'dof'.
+         *  @param q_complete_output Output Vector of size NrOfDOFs for a DynTree object.
+         *
+         *  @return true if successful, false otherwise.
+         */
+        bool convertQ(const double *q_input, yarp::sig::Vector & q_complete_output);
+        
+        /**
+         *  Given a vector all_q of size ‘NrOfDOFs’ as defined in a DynTree object (which differs from the concept of DOF in yarpWholeBodyModel, namely ‘dof’), this method converts a vector all_q of size NrOfDOFs into its equivalent vector of size dof.
+         *
+         *  @param q_complete_input Vector of joints configuration of size NrOfDOFs for a DynTree object.
+         *  @param q_output         Pointer to array of joints configuration of size 'dof' for an object of type yarpWholeBodyModel.
+         *
+         *  @return True if successful, false otherwise.
+         */
+        bool convertQ(const yarp::sig::Vector & q_complete_input, double *q_output);
+        
+        /**
+         *  Provides access to the DynTree model of the robot created by yarpWholeBodyModel.
+         *
+         *  @return Pointer to DynTree model of the robot.
+         */
+        iCub::iDynTree::DynTree * getRobotModel();
 
     };
 }

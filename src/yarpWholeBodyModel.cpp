@@ -864,6 +864,10 @@ const wbi::IDList & yarpWholeBodyModel::getFrameList()
     return frameIdList;
 }
 
+iCub::iDynTree::DynTree * yarpWholeBodyModel::getRobotModel()
+{
+    return this->p_model;
+}
 
 
 
