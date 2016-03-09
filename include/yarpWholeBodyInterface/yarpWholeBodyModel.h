@@ -307,7 +307,7 @@ namespace yarpWbi
         virtual const wbi::IDList& getFrameList();
         
         /**
-         *  Given a vector of joint positions 'all_q' of size ‘NrOfDOFs’ as defined in a DynTree object (which differs from the concept of DOF in yarpWholeBodyModel, namely ‘dof’), this method converts @param q_input of size 'dof' into its equivalent @param all_q of size 'NrOfDOFs'.
+         *  Given a vector of joint positions 'all_q' of size ‘NrOfDOFs’ as defined in a DynTree object (which differs from the concept of DOF in yarpWholeBodyModel, namely ‘dof’), this method converts q_input of size 'dof' into its equivalent all_q of size 'NrOfDOFs'.
          *
          *  @param q_input           Pointer to joints configuration array of size 'dof'.
          *  @param q_complete_output Output Vector of size NrOfDOFs for a DynTree object.
