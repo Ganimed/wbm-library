@@ -30,10 +30,10 @@
 
 #include <yarp/os/ResourceFinder.h>
 
-#include <Eigen/Core>
-
 #include <iDynTree/Core/Transform.h>
 #include <iDynTree/Core/Position.h>
+
+#include <iCub/iDynTree/DynTree.h>
 
 #include <iDynTree/yarp/YARPConversions.h>
 

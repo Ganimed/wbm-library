@@ -32,13 +32,20 @@
 
 #include <iCub/ctrl/adaptWinPolyEstimator.h>
 #include <iCub/ctrl/filters.h>
-#include <iCub/iDynTree/TorqueEstimationTree.h>
 #include <iCub/skinDynLib/skinContactList.h>
 #include <map>
 
 namespace wbi {
     class ID;
     class IDList;
+}
+
+namespace iCub
+{
+namespace iDynTree
+{
+class DynTree;
+}
 }
 
 

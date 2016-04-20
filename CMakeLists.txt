@@ -27,6 +27,7 @@ option(YARPWHOLEBODYINTERFACE_ENABLE_TESTS "Enable unit testing" FALSE)
 find_package(YARP 2.3.63.7 REQUIRED)
 find_package(iDynTree 0.3.11 REQUIRED)
 find_package(wholeBodyInterface 0.2.4 REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 SET(folder_source src/yarpWbiUtil.cpp
                   src/yarpWholeBodyInterface.cpp
@@ -84,13 +85,14 @@ target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOU
 target_include_directories(${LIBRARY_NAME} PUBLIC
                                     ${YARP_INCLUDE_DIRS}
                                     ${iDynTree_INCLUDE_DIRS}
-                                    ${wholeBodyInterface_INCLUDE_DIRS})
+                                    ${wholeBodyInterface_INCLUDE_DIRS}
+                                    ${EIGEN3_INCLUDE_DIR})
 
 
-target_link_libraries(${LIBRARY_NAME}  ${YARP_LIBRARIES}
-                                       ${iDynTree_LIBRARIES}
-                                       ${wholeBodyInterface_LIBRARIES}
-                                       ${paramHelp_LIBRARIES})
+target_link_libraries(${LIBRARY_NAME} LINK_PUBLIC ${YARP_LIBRARIES}
+                                                  ${wholeBodyInterface_LIBRARIES}
+                                      LINK_PRIVATE ${iDynTree_LIBRARIES}
+                                                   ${paramHelp_LIBRARIES})
 
 install(TARGETS ${LIBRARY_NAME}
         EXPORT  ${PROJECT_NAME}
