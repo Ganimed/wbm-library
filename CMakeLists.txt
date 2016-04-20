@@ -26,6 +26,7 @@ option(YARPWHOLEBODYINTERFACE_ENABLE_TESTS "Enable unit testing" FALSE)
 
 find_package(YARP 2.3.63.7 REQUIRED)
 find_package(iDynTree 0.3.11 REQUIRED)
+find_package(ICUB REQUIRED)
 find_package(wholeBodyInterface 0.2.4 REQUIRED)
 find_package(Eigen3 REQUIRED)
 
@@ -86,7 +87,9 @@ target_include_directories(${LIBRARY_NAME} PUBLIC
                                     ${YARP_INCLUDE_DIRS}
                                     ${iDynTree_INCLUDE_DIRS}
                                     ${wholeBodyInterface_INCLUDE_DIRS}
-                                    ${EIGEN3_INCLUDE_DIR})
+                                    ${EIGEN3_INCLUDE_DIR}
+                                    ${skinDynLib_INCLUDE_DIRS}
+                                    ${ctrlLib_INCLUDE_DIRS})
 
 
 target_link_libraries(${LIBRARY_NAME} LINK_PUBLIC ${YARP_LIBRARIES}
