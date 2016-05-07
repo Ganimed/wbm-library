@@ -377,4 +377,60 @@ bool loadIdListFromConfig(std::string requested_list,
 
     return ret;
 }
+
+std::string stringFromInt(int num)
+{
+    std::stringstream numStream;
+    numStream << num;
+    return numStream.str();
+}
+
+
+bool pidFromBottleDescription(const yarp::os::Bottle &bottle,
+                              yarp::dev::Pid &pid)
+{
+    for (int i = 1; i < bottle.size(); ++i) {
+        if (!bottle.get(i).isList()) continue;
+        yarp::os::Bottle *gains = bottle.get(i).asList();
+        if (gains->size() == 2 && gains->get(0).isString() && gains->get(1).isDouble()) {
+            std::string gainType = gains->get(0).asString();
+            double value = gains->get(1).asDouble();
+
+            if (gainType == "kp") {
+                pid.setKp(value);
+            } else if (gainType == "kd") {
+                pid.setKd(value);
+            } else if (gainType == "ki") {
+                pid.setKi(value);
+            } else if (gainType == "stic_up") {
+                pid.setStictionValues(value, pid.stiction_down_val);
+            } else if (gainType == "stic_down") {
+                pid.setStictionValues(pid.stiction_up_val, value);
+            }
+        }
+    }
+    return true;
+}
+
+
+bool motorTorqueParametersFromBottleDescription(const yarp::os::Bottle &bottle,
+                                                yarp::dev::MotorTorqueParameters& motorParameters)
+{
+    for (int i = 1; i < bottle.size(); ++i) {
+        if (!bottle.get(i).isList()) continue;
+        yarp::os::Bottle *gains = bottle.get(i).asList();
+        if (gains->size() == 2 && gains->get(0).isString() && gains->get(1).isDouble()) {
+            std::string gainType = gains->get(0).asString();
+            double value = gains->get(1).asDouble();
+
+            if (gainType == "bmef") {
+                motorParameters.bemf = value;
+            } else if (gainType == "ktau") {
+                motorParameters.ktau = value;
+            }
+        }
+    }
+    return true;
+}
+
 }

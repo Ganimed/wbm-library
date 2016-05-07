@@ -133,6 +133,56 @@ namespace yarpWbi
                               wbi::IDList & requestedIdList,
                               std::string list_group = "WBI_ID_LISTS", bool verbose=false);
 
+
+    /**
+     * Get string representation of the specified integer
+     *
+     * @param num the number to be converted to string
+     * @return a string representation of the specified number
+     */
+    std::string stringFromInt(int num);
+
+
+    /**
+     * Fill the pid object fields with the content coming from the
+     * specified bottle.
+     * @note: If some fields are not specified, their values are left untouched
+     *
+     * The parameters that can be set are (@see http://www.yarp.it/classyarp_1_1dev_1_1Pid.html for their description)
+     *
+     *     - kp
+     *     - kd
+     *     - ki
+     *     - stic_up
+     *     - stic_down
+     *
+     * @param[in] bottle bottle representation of the PID object
+     * @param[out] pid    pid object with the fields filled by its bottle representation
+     *
+     * @return true if succeded. False otherwise
+     */
+    bool pidFromBottleDescription(const yarp::os::Bottle &bottle,
+                                  yarp::dev::Pid &pid);
+
+    /**
+     * Fill the motor torque parameters object fields
+     * with the content coming from the specified bottle.
+     * @note: If some fields are not specified, their values are left untouched
+     *
+     * The parameters that can be set are (@see http://www.yarp.it/classyarp_1_1dev_1_1MotorTorqueParameters.html for their description)
+     *
+     *     - bmef
+     *     - ktau
+     *
+     * @param[in] bottle          bottle representation of the motor parameters object
+     * @param[out] motorParameters object with the fields filled by its bottle representation
+     *
+     * @return true if succeded. False otherwise
+     */
+    bool motorTorqueParametersFromBottleDescription(const yarp::os::Bottle &bottle,
+                                                    yarp::dev::MotorTorqueParameters& motorParameters);
+
+
 } // end namespace yarpWbi
 
 #endif

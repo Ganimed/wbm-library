@@ -263,15 +263,33 @@ namespace yarpWbi
         /**
          * Get the pids for the specified control mode for a specific joint or a list of joints
          *
-         * @param pids        already allocated list (or single) pids
-         * @param controlMode control mode for which PIDs must be set
-         * @param joint       joint number, if negative, all joints are considered.
+         * @param[out] pids        already allocated list (or single) pids
+         * @param[in] controlMode control mode for which PIDs must be set
+         * @param[in] joint       joint number, if negative, all joints are considered.
          *
          * @return true if operation succeeded, false otherwise.
          */
         bool getPIDGains(yarp::dev::Pid *pids, wbi::ControlMode controlMode, int joint = -1);
 
+        /**
+         * Set the motor torque parameters for a specific joint or a list of joints
+         *
+         * @param[in] pids        parameters to be set
+         * @param[in] joint       joint number, if negative, all joints are considered.
+         *
+         * @return true if operation succeeded, false otherwise.
+         */
+        bool setMotorTorqueParameters(const yarp::dev::MotorTorqueParameters *motorParameters, const int joint = -1);
 
+        /**
+         * Get the motor torque parameters for a specific joint or a list of joints
+         *
+         * @param[out] pids        already allocated list (or single) motor parameters
+         * @param[in] joint       joint number, if negative, all joints are considered.
+         *
+         * @return true if operation succeeded, false otherwise.
+         */
+        bool getMotorTorqueParameters(yarp::dev::MotorTorqueParameters *motorParameters, const int joint = -1);
 
         /**
          * Set a generic property to the underlined controllers.
