@@ -11,7 +11,7 @@ set(INCLUDE_DIRS yarpWholeBodyInterface)
 
 set(${VARS_PREFIX}_MAJOR_VERSION 0)
 set(${VARS_PREFIX}_MINOR_VERSION 3)
-set(${VARS_PREFIX}_PATCH_VERSION 0)
+set(${VARS_PREFIX}_PATCH_VERSION 1)
 set(${VARS_PREFIX}_VERSION ${${VARS_PREFIX}_MAJOR_VERSION}.${${VARS_PREFIX}_MINOR_VERSION}.${${VARS_PREFIX}_PATCH_VERSION})
 
 find_package(YCM REQUIRED)
@@ -112,7 +112,7 @@ if(YARPWBI_USES_KDL)
                                                 COMPATIBILITY SameMajorVersion
                                                 TARGETS_PROPERTY ${VARS_PREFIX}_TARGETS
                                                 NO_CHECK_REQUIRED_COMPONENTS_MACRO)
-                                                
+
     if(YARPWHOLEBODYINTERFACE_ENABLE_TESTS)
         #enable testing
         #include(CTest)

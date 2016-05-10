@@ -147,7 +147,7 @@ namespace yarpWbi
 
         /** Constructor.
          */
-        yarpWholeBodyEstimator(int period_in_ms, yarpWbi::yarpWholeBodySensors *_sensors);
+        yarpWholeBodyEstimator(int period_in_ms, double cutOffFrequencyTorqueInHz, yarpWbi::yarpWholeBodySensors *_sensors);
 
         bool lockAndSetEstimationParameter(const wbi::EstimateType et,
                                            const wbi::EstimationParameter ep,
@@ -194,9 +194,15 @@ namespace yarpWbi
      * | estimateBaseState | - | - | - | No | Necessary for estimation of root roto translation and velocity. If not present these estimates will always return 0  |
      * | externalFloatingBaseStatePort     | string | - | - | - | If present, reads the floating base state (position, velocities and acceleration from an external port, using the format described in remoteFloatingBaseStateEstimator class. | Not compatible with localWorldReferenceFrame option  |
      * | localWorldReferenceFrame | string | - | - | No | If present, specifies the default frame for computation of the world-to-root rototranslation.  | Not compatible with the externalFloatingBaseStatePort |
-     *
+     * | cutOffFrequencyTorqueInHz  | double | Hz | 3.0 | No | Specify the cutoff frequency of the first order filter used to filter joint torque measurements, motor torque measurements and pwm | |
      * Furthermore for accessing joint sensors, the property should contain all the information used
      * for configuring a a yarpWholeBodyActuators object.
+     *
+     * # FILTERS
+     *
+     * For historical reasons, the yarpWholeBodyStates filters the readed torques and pwm with a first order filter,
+     * while joint velocities and joint acceleration are the one returned directly by the controlboard.
+     *
      */
     class yarpWholeBodyStates : public wbi::iWholeBodyStates
     {

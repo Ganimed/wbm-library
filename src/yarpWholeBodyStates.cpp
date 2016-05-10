@@ -305,9 +305,34 @@ bool yarpWholeBodyStates::init()
                 << ", setting estimator thread period to default value of " << estimatorPeriod_in_ms << " milliseconds";
     }
 
+    double cutOffFrequencyTorqueInHz = 3.0;
+    if( wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("cutOffFrequencyTorqueInHz") &&
+        wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("cutOffFrequencyTorqueInHz").isDouble() )
+    {
+        double cutOffFrequencyTorqueInHzFromConfig = wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("cutOffFrequencyTorqueInHz").asDouble();
+        if( cutOffFrequencyTorqueInHzFromConfig >= 0.0 )
+        {
+            cutOffFrequencyTorqueInHz = cutOffFrequencyTorqueInHzFromConfig;
+            yInfo() << "yarpWholeBodyStates : cutOffFrequencyTorqueInHz option found"
+                << ", setting torque filters cutoff frequencies to " << cutOffFrequencyTorqueInHz << " Hz";
+        }
+        else
+        {
+            yInfo() << "yarpWholeBodyStates : cutOffFrequencyTorqueInHz option found but invalid (<0.0)"
+                << ", setting torque filters cutoff frequencies to default value of " << cutOffFrequencyTorqueInHz << " Hz";
+        }
+    }
+    else
+    {
+        yInfo() << "yarpWholeBodyStates : cutOffFrequencyTorqueInHz option not found"
+                << ", setting torque filters cutoff frequencies to default value of " << cutOffFrequencyTorqueInHz << " Hz";
+    }
+
+
+
 
     sensors = new yarpWholeBodySensors(name.c_str(), wbi_yarp_properties);              // sensor interface
-    estimator = new yarpWholeBodyEstimator(estimatorPeriod_in_ms, sensors);  // estimation thread
+    estimator = new yarpWholeBodyEstimator(estimatorPeriod_in_ms, cutOffFrequencyTorqueInHz, sensors);  // estimation thread
 
 
     if( wbi_yarp_properties.check("readSpeedAccFromControlBoard") )
@@ -677,7 +702,7 @@ int yarpWholeBodyStates::lockAndGetSensorNumber(const SensorType st)
 //                                         YARP WHOLE BODY ESTIMATOR
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, yarpWholeBodySensors *_sensors)
+yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, double cutOffFrequencyTorqueInHz, yarpWholeBodySensors *_sensors)
 : RateThread(_period_in_milliseconds),
   sensors(_sensors),
   dqFilt(0),
@@ -706,9 +731,9 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, yarp
     dTauMFiltTh         = 0.2;
 
     ///< Cut frequencies
-    tauJCutFrequency    =   3.0;
-    tauMCutFrequency    =   3.0;
-    pwmCutFrequency     =   3.0;
+    tauJCutFrequency    =   cutOffFrequencyTorqueInHz;
+    tauMCutFrequency    =   cutOffFrequencyTorqueInHz;
+    pwmCutFrequency     =   cutOffFrequencyTorqueInHz;
 
 }
 
@@ -733,7 +758,7 @@ bool yarpWholeBodyEstimator::threadInit()
     int dof = estimates.lastQ.length();
     // Update dof in base estimator
     localFltBaseStateEstimator.changeDoF(dof);
-    
+
     run();
 
     return ok;
