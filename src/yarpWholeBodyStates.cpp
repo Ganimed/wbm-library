@@ -342,14 +342,14 @@ bool yarpWholeBodyStates::init()
         else
         {
             yInfo() << "yarpWholeBodyStates : cutOffFrequencyVelocitiesInHz option found but invalid (< 0.0)"
-            << ", disabling velocities filters ";
+            << ", disabling velocities filters";
             cutOffFrequencyVelocitiesInHz = -1;
         }
     }
     else
     {
         yInfo() << "yarpWholeBodyStates : cutOffFrequencyVelocitiesInHz option not found"
-        << ", disabling velocities filters ";
+        << ", disabling velocities filters";
         cutOffFrequencyVelocitiesInHz = -1;
     }
 
@@ -1126,5 +1126,6 @@ bool yarpWholeBodyEstimator::setPwmCutFrequency(double fc)
 bool yarpWholeBodyEstimator::setVelocitiesCutFrequency(double fc)
 {
     velocitiesCutFrequency = fc;
+    if (!velocitiesFilt) return true;
     return velocitiesFilt->setCutFrequency(velocitiesCutFrequency > 0 ? velocitiesCutFrequency : 3);
 }
