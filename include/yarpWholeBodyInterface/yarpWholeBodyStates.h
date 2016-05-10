@@ -64,6 +64,7 @@ namespace yarpWbi
         iCub::ctrl::FirstOrderLowPassFilter *tauJFilt;  ///< low pass filter for joint torque
         iCub::ctrl::FirstOrderLowPassFilter *tauMFilt;  ///< low pass filter for motor torque
         iCub::ctrl::FirstOrderLowPassFilter *pwmFilt;   ///< low pass filter for motor PWM
+        iCub::ctrl::FirstOrderLowPassFilter *velocitiesFilt;   ///< low pass filter for joint velocities
 
         int dqFiltWL, d2qFiltWL;                    // window lengths of adaptive window filters
         double dqFiltTh, d2qFiltTh;                 // threshold of adaptive window filters
@@ -72,6 +73,7 @@ namespace yarpWbi
         double tauJCutFrequency;
         double tauMCutFrequency;
         double pwmCutFrequency;
+        double velocitiesCutFrequency;
 
         yarp::sig::Vector           q, dq, d2q, qStamps;         // last joint position estimation
         yarp::sig::Vector           tauJ, tauJStamps;
@@ -96,6 +98,15 @@ namespace yarpWbi
         /** Set the cut frequency of the motor PWM low pass filter. */
         bool setPwmCutFrequency(double fc);
 
+    public:
+        /**
+         * Set the cut frequency of the velocities low pass filter.
+         *
+         * @param fc the new cutoff frequency. If negative the filter is disabled
+         *
+         * @return true if succeded, false otherwise.
+         */
+        bool setVelocitiesCutFrequency(double fc);
 
 
     public:

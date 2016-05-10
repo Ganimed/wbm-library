@@ -328,11 +328,38 @@ bool yarpWholeBodyStates::init()
                 << ", setting torque filters cutoff frequencies to default value of " << cutOffFrequencyTorqueInHz << " Hz";
     }
 
+    double cutOffFrequencyVelocitiesInHz = 3.0;
+    if (wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("cutOffFrequencyVelocitiesInHz") &&
+       wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("cutOffFrequencyVelocitiesInHz").isDouble() )
+    {
+        double cutOffFrequencyVelocitiesInHzFromConfig = wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("cutOffFrequencyVelocitiesInHz").asDouble();
+        if (cutOffFrequencyVelocitiesInHzFromConfig >= 0.0)
+        {
+            cutOffFrequencyVelocitiesInHz = cutOffFrequencyVelocitiesInHzFromConfig;
+            yInfo() << "yarpWholeBodyStates : cutOffFrequencyVelocitiesInHz option found"
+            << ", setting velocities filters cutoff frequencies to " << cutOffFrequencyVelocitiesInHz << " Hz";
+        }
+        else
+        {
+            yInfo() << "yarpWholeBodyStates : cutOffFrequencyVelocitiesInHz option found but invalid (< 0.0)"
+            << ", disabling velocities filters ";
+            cutOffFrequencyVelocitiesInHz = -1;
+        }
+    }
+    else
+    {
+        yInfo() << "yarpWholeBodyStates : cutOffFrequencyVelocitiesInHz option not found"
+        << ", disabling velocities filters ";
+        cutOffFrequencyVelocitiesInHz = -1;
+    }
 
 
 
     sensors = new yarpWholeBodySensors(name.c_str(), wbi_yarp_properties);              // sensor interface
     estimator = new yarpWholeBodyEstimator(estimatorPeriod_in_ms, cutOffFrequencyTorqueInHz, sensors);  // estimation thread
+    if (cutOffFrequencyVelocitiesInHz > 0) {
+        estimator->setVelocitiesCutFrequency(cutOffFrequencyVelocitiesInHz);
+    }
 
 
     if( wbi_yarp_properties.check("readSpeedAccFromControlBoard") )
@@ -711,6 +738,8 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, doub
   dTauMFilt(0),
   tauJFilt(0),
   tauMFilt(0),
+  velocitiesFilt(0),
+  velocitiesCutFrequency(-1),
   motor_quantites_estimation_enabled(false),
   estimateBaseState(false),
   use_localFloatingBaseStateEstimator(false),
@@ -754,6 +783,8 @@ bool yarpWholeBodyEstimator::threadInit()
     tauJFilt    = new FirstOrderLowPassFilter(tauJCutFrequency, getRate()*1e-3, estimates.lastTauJ);
     tauMFilt    = new FirstOrderLowPassFilter(tauMCutFrequency, getRate()*1e-3, estimates.lastTauJ);
     pwmFilt     = new FirstOrderLowPassFilter(pwmCutFrequency, getRate()*1e-3, estimates.lastPwm);
+    velocitiesFilt = new FirstOrderLowPassFilter(velocitiesCutFrequency > 0 ? velocitiesCutFrequency : 3, getRate()*1e-3, estimates.lastDq);
+
 
     int dof = estimates.lastQ.length();
     // Update dof in base estimator
@@ -793,8 +824,13 @@ void yarpWholeBodyEstimator::run()
                 sensors->readSensors(SENSOR_ENCODER_SPEED, dq.data(), 0, false);
                 sensors->readSensors(SENSOR_ENCODER_ACCELERATION, d2q.data(), 0, false);
 
-                estimates.lastDq = dq;
+                if (velocitiesCutFrequency > 0) {
+                    estimates.lastDq = velocitiesFilt->filt(dq);
+                } else {
+                    estimates.lastDq = dq;
+                }
                 estimates.lastD2q = d2q;
+
             }
             else
             {
@@ -892,9 +928,7 @@ void yarpWholeBodyEstimator::threadRelease()
     if(tauJFilt!=0)  { delete tauJFilt; tauJFilt=0; }  ///< low pass filter for joint torque
     if(tauMFilt!=0)  { delete tauMFilt; tauMFilt=0; }  ///< low pass filter for motor torque
     if(pwmFilt!=0)   { delete pwmFilt; pwmFilt=0;   }
-
-
-    return;
+    if(velocitiesFilt!=0) { delete velocitiesFilt; velocitiesFilt=0; }
 }
 
 void yarpWholeBodyEstimator::lockAndResizeAll(int n)
@@ -1087,4 +1121,10 @@ bool yarpWholeBodyEstimator::setTauMCutFrequency(double fc)
 bool yarpWholeBodyEstimator::setPwmCutFrequency(double fc)
 {
     return pwmFilt->setCutFrequency(fc);
+}
+
+bool yarpWholeBodyEstimator::setVelocitiesCutFrequency(double fc)
+{
+    velocitiesCutFrequency = fc;
+    return velocitiesFilt->setCutFrequency(velocitiesCutFrequency > 0 ? velocitiesCutFrequency : 3);
 }
