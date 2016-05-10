@@ -97,16 +97,16 @@ namespace yarpWbi
         bool setTauMCutFrequency(double fc);
         /** Set the cut frequency of the motor PWM low pass filter. */
         bool setPwmCutFrequency(double fc);
-
-    public:
         /**
          * Set the cut frequency of the velocities low pass filter.
          *
-         * @param fc the new cutoff frequency. If negative the filter is disabled
+         * @param fc the new cutoff frequency.
          *
          * @return true if succeded, false otherwise.
          */
         bool setVelocitiesCutFrequency(double fc);
+    public:
+
 
 
     public:
@@ -158,7 +158,7 @@ namespace yarpWbi
 
         /** Constructor.
          */
-        yarpWholeBodyEstimator(int period_in_ms, double cutOffFrequencyTorqueInHz, yarpWbi::yarpWholeBodySensors *_sensors);
+        yarpWholeBodyEstimator(int period_in_ms, double cutOffFrequencyTorqueInHz, double cutOffFrequencyVelocitiesInHz, yarpWbi::yarpWholeBodySensors *_sensors);
 
         bool lockAndSetEstimationParameter(const wbi::EstimateType et,
                                            const wbi::EstimationParameter ep,

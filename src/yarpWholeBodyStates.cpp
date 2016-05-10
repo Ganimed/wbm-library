@@ -356,10 +356,7 @@ bool yarpWholeBodyStates::init()
 
 
     sensors = new yarpWholeBodySensors(name.c_str(), wbi_yarp_properties);              // sensor interface
-    estimator = new yarpWholeBodyEstimator(estimatorPeriod_in_ms, cutOffFrequencyTorqueInHz, sensors);  // estimation thread
-    if (cutOffFrequencyVelocitiesInHz > 0) {
-        estimator->setVelocitiesCutFrequency(cutOffFrequencyVelocitiesInHz);
-    }
+    estimator = new yarpWholeBodyEstimator(estimatorPeriod_in_ms, cutOffFrequencyTorqueInHz, cutOffFrequencyVelocitiesInHz, sensors);  // estimation thread
 
 
     if( wbi_yarp_properties.check("readSpeedAccFromControlBoard") )
@@ -729,7 +726,7 @@ int yarpWholeBodyStates::lockAndGetSensorNumber(const SensorType st)
 //                                         YARP WHOLE BODY ESTIMATOR
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, double cutOffFrequencyTorqueInHz, yarpWholeBodySensors *_sensors)
+yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, double cutOffFrequencyTorqueInHz, double cutOffFrequencyVelocitiesInHz, yarpWholeBodySensors *_sensors)
 : RateThread(_period_in_milliseconds),
   sensors(_sensors),
   dqFilt(0),
@@ -739,7 +736,7 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, doub
   tauJFilt(0),
   tauMFilt(0),
   velocitiesFilt(0),
-  velocitiesCutFrequency(-1),
+  velocitiesCutFrequency(cutOffFrequencyVelocitiesInHz),
   motor_quantites_estimation_enabled(false),
   estimateBaseState(false),
   use_localFloatingBaseStateEstimator(false),
@@ -949,7 +946,7 @@ void yarpWholeBodyEstimator::resizeAll(int n)
     pwm.resize(n);
     pwmStamps.resize(n);
     estimates.lastQ.resize(n);
-    estimates.lastDq.resize(n);
+    estimates.lastDq.resize(n); estimates.lastDq.zero();
     estimates.lastD2q.resize(n);
     estimates.lastTauJ.resize(n);
     estimates.lastTauM.resize(n);
@@ -1126,6 +1123,5 @@ bool yarpWholeBodyEstimator::setPwmCutFrequency(double fc)
 bool yarpWholeBodyEstimator::setVelocitiesCutFrequency(double fc)
 {
     velocitiesCutFrequency = fc;
-    if (!velocitiesFilt) return true;
     return velocitiesFilt->setCutFrequency(velocitiesCutFrequency > 0 ? velocitiesCutFrequency : 3);
 }
