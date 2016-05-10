@@ -206,13 +206,16 @@ namespace yarpWbi
      * | externalFloatingBaseStatePort     | string | - | - | - | If present, reads the floating base state (position, velocities and acceleration from an external port, using the format described in remoteFloatingBaseStateEstimator class. | Not compatible with localWorldReferenceFrame option  |
      * | localWorldReferenceFrame | string | - | - | No | If present, specifies the default frame for computation of the world-to-root rototranslation.  | Not compatible with the externalFloatingBaseStatePort |
      * | cutOffFrequencyTorqueInHz  | double | Hz | 3.0 | No | Specify the cutoff frequency of the first order filter used to filter joint torque measurements, motor torque measurements and pwm | |
+     * | cutOffFrequencyVelocitiesInHz | double | Hz | (If not present, no filter is used) | No | If present, specify the cutoff frequency of the first order filter used to filter joint velocities measurements. If not present, no filter is used. | | 
+     * 
      * Furthermore for accessing joint sensors, the property should contain all the information used
      * for configuring a a yarpWholeBodyActuators object.
      *
      * # FILTERS
      *
-     * For historical reasons, the yarpWholeBodyStates filters the readed torques and pwm with a first order filter,
-     * while joint velocities and joint acceleration are the one returned directly by the controlboard.
+     * For historical reasons, the yarpWholeBodyStates always filters the readed torques and pwm with a first order filter,
+     * while the joint velocities are filtered only if the cutOffFrequencyVelocitiesInHz is present in the config file, 
+     * and joint acceleration are the one returned directly by the controlboard.
      *
      */
     class yarpWholeBodyStates : public wbi::iWholeBodyStates
