@@ -83,7 +83,6 @@ bool yarpWholeBodyStates::loadCouplingsFromConfigurationFile()
     Bottle couplings_bot = wbi_yarp_properties.findGroup("WBI_YARP_JOINTS_MOTOR_KINEMATIC_COUPLINGS");
     if( couplings_bot.isNull() )
     {
-        std::cerr << "[WARN] yarpWholeBodyStates::loadCouplingsFromConfigurationFile : WBI_YARP_JOINTS_MOTOR_KINEMATIC_COUPLINGS group not found in configuration file" << std::endl;
         return false;
     }
 
@@ -305,9 +304,58 @@ bool yarpWholeBodyStates::init()
                 << ", setting estimator thread period to default value of " << estimatorPeriod_in_ms << " milliseconds";
     }
 
+    double cutOffFrequencyTorqueInHz = 3.0;
+    if( wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("cutOffFrequencyTorqueInHz") &&
+        wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("cutOffFrequencyTorqueInHz").isDouble() )
+    {
+        double cutOffFrequencyTorqueInHzFromConfig = wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("cutOffFrequencyTorqueInHz").asDouble();
+        if( cutOffFrequencyTorqueInHzFromConfig >= 0.0 )
+        {
+            cutOffFrequencyTorqueInHz = cutOffFrequencyTorqueInHzFromConfig;
+            yInfo() << "yarpWholeBodyStates : cutOffFrequencyTorqueInHz option found"
+                << ", setting torque filters cutoff frequencies to " << cutOffFrequencyTorqueInHz << " Hz";
+        }
+        else
+        {
+            yInfo() << "yarpWholeBodyStates : cutOffFrequencyTorqueInHz option found but invalid (<0.0)"
+                << ", setting torque filters cutoff frequencies to default value of " << cutOffFrequencyTorqueInHz << " Hz";
+        }
+    }
+    else
+    {
+        yInfo() << "yarpWholeBodyStates : cutOffFrequencyTorqueInHz option not found"
+                << ", setting torque filters cutoff frequencies to default value of " << cutOffFrequencyTorqueInHz << " Hz";
+    }
+
+    double cutOffFrequencyVelocitiesInHz = 3.0;
+    if (wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("cutOffFrequencyVelocitiesInHz") &&
+       wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("cutOffFrequencyVelocitiesInHz").isDouble() )
+    {
+        double cutOffFrequencyVelocitiesInHzFromConfig = wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").find("cutOffFrequencyVelocitiesInHz").asDouble();
+        if (cutOffFrequencyVelocitiesInHzFromConfig >= 0.0)
+        {
+            cutOffFrequencyVelocitiesInHz = cutOffFrequencyVelocitiesInHzFromConfig;
+            yInfo() << "yarpWholeBodyStates : cutOffFrequencyVelocitiesInHz option found"
+            << ", setting velocities filters cutoff frequencies to " << cutOffFrequencyVelocitiesInHz << " Hz";
+        }
+        else
+        {
+            yInfo() << "yarpWholeBodyStates : cutOffFrequencyVelocitiesInHz option found but invalid (< 0.0)"
+            << ", disabling velocities filters";
+            cutOffFrequencyVelocitiesInHz = -1;
+        }
+    }
+    else
+    {
+        yInfo() << "yarpWholeBodyStates : cutOffFrequencyVelocitiesInHz option not found"
+        << ", disabling velocities filters";
+        cutOffFrequencyVelocitiesInHz = -1;
+    }
+
+
 
     sensors = new yarpWholeBodySensors(name.c_str(), wbi_yarp_properties);              // sensor interface
-    estimator = new yarpWholeBodyEstimator(estimatorPeriod_in_ms, sensors);  // estimation thread
+    estimator = new yarpWholeBodyEstimator(estimatorPeriod_in_ms, cutOffFrequencyTorqueInHz, cutOffFrequencyVelocitiesInHz, sensors);  // estimation thread
 
 
     if( wbi_yarp_properties.check("readSpeedAccFromControlBoard") )
@@ -677,7 +725,7 @@ int yarpWholeBodyStates::lockAndGetSensorNumber(const SensorType st)
 //                                         YARP WHOLE BODY ESTIMATOR
 // *********************************************************************************************************************
 // *********************************************************************************************************************
-yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, yarpWholeBodySensors *_sensors)
+yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, double cutOffFrequencyTorqueInHz, double cutOffFrequencyVelocitiesInHz, yarpWholeBodySensors *_sensors)
 : RateThread(_period_in_milliseconds),
   sensors(_sensors),
   dqFilt(0),
@@ -686,6 +734,8 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, yarp
   dTauMFilt(0),
   tauJFilt(0),
   tauMFilt(0),
+  velocitiesFilt(0),
+  velocitiesCutFrequency(cutOffFrequencyVelocitiesInHz),
   motor_quantites_estimation_enabled(false),
   estimateBaseState(false),
   use_localFloatingBaseStateEstimator(false),
@@ -706,9 +756,9 @@ yarpWholeBodyEstimator::yarpWholeBodyEstimator(int _period_in_milliseconds, yarp
     dTauMFiltTh         = 0.2;
 
     ///< Cut frequencies
-    tauJCutFrequency    =   3.0;
-    tauMCutFrequency    =   3.0;
-    pwmCutFrequency     =   3.0;
+    tauJCutFrequency    =   cutOffFrequencyTorqueInHz;
+    tauMCutFrequency    =   cutOffFrequencyTorqueInHz;
+    pwmCutFrequency     =   cutOffFrequencyTorqueInHz;
 
 }
 
@@ -729,11 +779,13 @@ bool yarpWholeBodyEstimator::threadInit()
     tauJFilt    = new FirstOrderLowPassFilter(tauJCutFrequency, getRate()*1e-3, estimates.lastTauJ);
     tauMFilt    = new FirstOrderLowPassFilter(tauMCutFrequency, getRate()*1e-3, estimates.lastTauJ);
     pwmFilt     = new FirstOrderLowPassFilter(pwmCutFrequency, getRate()*1e-3, estimates.lastPwm);
+    velocitiesFilt = new FirstOrderLowPassFilter(velocitiesCutFrequency > 0 ? velocitiesCutFrequency : 3, getRate()*1e-3, estimates.lastDq);
+
 
     int dof = estimates.lastQ.length();
     // Update dof in base estimator
     localFltBaseStateEstimator.changeDoF(dof);
-    
+
     run();
 
     return ok;
@@ -768,8 +820,13 @@ void yarpWholeBodyEstimator::run()
                 sensors->readSensors(SENSOR_ENCODER_SPEED, dq.data(), 0, false);
                 sensors->readSensors(SENSOR_ENCODER_ACCELERATION, d2q.data(), 0, false);
 
-                estimates.lastDq = dq;
+                if (velocitiesCutFrequency > 0) {
+                    estimates.lastDq = velocitiesFilt->filt(dq);
+                } else {
+                    estimates.lastDq = dq;
+                }
                 estimates.lastD2q = d2q;
+
             }
             else
             {
@@ -867,9 +924,7 @@ void yarpWholeBodyEstimator::threadRelease()
     if(tauJFilt!=0)  { delete tauJFilt; tauJFilt=0; }  ///< low pass filter for joint torque
     if(tauMFilt!=0)  { delete tauMFilt; tauMFilt=0; }  ///< low pass filter for motor torque
     if(pwmFilt!=0)   { delete pwmFilt; pwmFilt=0;   }
-
-
-    return;
+    if(velocitiesFilt!=0) { delete velocitiesFilt; velocitiesFilt=0; }
 }
 
 void yarpWholeBodyEstimator::lockAndResizeAll(int n)
@@ -890,7 +945,7 @@ void yarpWholeBodyEstimator::resizeAll(int n)
     pwm.resize(n);
     pwmStamps.resize(n);
     estimates.lastQ.resize(n);
-    estimates.lastDq.resize(n);
+    estimates.lastDq.resize(n); estimates.lastDq.zero();
     estimates.lastD2q.resize(n);
     estimates.lastTauJ.resize(n);
     estimates.lastTauM.resize(n);
@@ -1062,4 +1117,10 @@ bool yarpWholeBodyEstimator::setTauMCutFrequency(double fc)
 bool yarpWholeBodyEstimator::setPwmCutFrequency(double fc)
 {
     return pwmFilt->setCutFrequency(fc);
+}
+
+bool yarpWholeBodyEstimator::setVelocitiesCutFrequency(double fc)
+{
+    velocitiesCutFrequency = fc;
+    return velocitiesFilt->setCutFrequency(velocitiesCutFrequency > 0 ? velocitiesCutFrequency : 3);
 }

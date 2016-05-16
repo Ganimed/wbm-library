@@ -64,6 +64,7 @@ namespace yarpWbi
         iCub::ctrl::FirstOrderLowPassFilter *tauJFilt;  ///< low pass filter for joint torque
         iCub::ctrl::FirstOrderLowPassFilter *tauMFilt;  ///< low pass filter for motor torque
         iCub::ctrl::FirstOrderLowPassFilter *pwmFilt;   ///< low pass filter for motor PWM
+        iCub::ctrl::FirstOrderLowPassFilter *velocitiesFilt;   ///< low pass filter for joint velocities
 
         int dqFiltWL, d2qFiltWL;                    // window lengths of adaptive window filters
         double dqFiltTh, d2qFiltTh;                 // threshold of adaptive window filters
@@ -72,6 +73,7 @@ namespace yarpWbi
         double tauJCutFrequency;
         double tauMCutFrequency;
         double pwmCutFrequency;
+        double velocitiesCutFrequency;
 
         yarp::sig::Vector           q, dq, d2q, qStamps;         // last joint position estimation
         yarp::sig::Vector           tauJ, tauJStamps;
@@ -95,6 +97,15 @@ namespace yarpWbi
         bool setTauMCutFrequency(double fc);
         /** Set the cut frequency of the motor PWM low pass filter. */
         bool setPwmCutFrequency(double fc);
+        /**
+         * Set the cut frequency of the velocities low pass filter.
+         *
+         * @param fc the new cutoff frequency.
+         *
+         * @return true if succeded, false otherwise.
+         */
+        bool setVelocitiesCutFrequency(double fc);
+    public:
 
 
 
@@ -147,7 +158,7 @@ namespace yarpWbi
 
         /** Constructor.
          */
-        yarpWholeBodyEstimator(int period_in_ms, yarpWbi::yarpWholeBodySensors *_sensors);
+        yarpWholeBodyEstimator(int period_in_ms, double cutOffFrequencyTorqueInHz, double cutOffFrequencyVelocitiesInHz, yarpWbi::yarpWholeBodySensors *_sensors);
 
         bool lockAndSetEstimationParameter(const wbi::EstimateType et,
                                            const wbi::EstimationParameter ep,
@@ -194,9 +205,18 @@ namespace yarpWbi
      * | estimateBaseState | - | - | - | No | Necessary for estimation of root roto translation and velocity. If not present these estimates will always return 0  |
      * | externalFloatingBaseStatePort     | string | - | - | - | If present, reads the floating base state (position, velocities and acceleration from an external port, using the format described in remoteFloatingBaseStateEstimator class. | Not compatible with localWorldReferenceFrame option  |
      * | localWorldReferenceFrame | string | - | - | No | If present, specifies the default frame for computation of the world-to-root rototranslation.  | Not compatible with the externalFloatingBaseStatePort |
-     *
+     * | cutOffFrequencyTorqueInHz  | double | Hz | 3.0 | No | Specify the cutoff frequency of the first order filter used to filter joint torque measurements, motor torque measurements and pwm | |
+     * | cutOffFrequencyVelocitiesInHz | double | Hz | (If not present, no filter is used) | No | If present, specify the cutoff frequency of the first order filter used to filter joint velocities measurements. If not present, no filter is used. | | 
+     * 
      * Furthermore for accessing joint sensors, the property should contain all the information used
      * for configuring a a yarpWholeBodyActuators object.
+     *
+     * # FILTERS
+     *
+     * For historical reasons, the yarpWholeBodyStates always filters the readed torques and pwm with a first order filter,
+     * while the joint velocities are filtered only if the cutOffFrequencyVelocitiesInHz is present in the config file, 
+     * and joint acceleration are the one returned directly by the controlboard.
+     *
      */
     class yarpWholeBodyStates : public wbi::iWholeBodyStates
     {

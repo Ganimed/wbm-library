@@ -812,12 +812,17 @@ bool yarpWholeBodyActuators::setPIDGains(yarp::dev::Pid *pids, wbi::ControlMode 
     bool result = true;
     if (joint < 0) {
         int i = 0;
-        for (std::vector< std::pair<int,int> >::const_iterator jointPair = controlBoardAxisList.begin();
-             jointPair != controlBoardAxisList.end(); ++jointPair) {
-            result = result && itrq[jointPair->first]->setTorquePid(jointPair->second, pids[i++]);
+        switch (controlMode) {
+            case wbi::CTRL_MODE_TORQUE:
+                for (std::vector< std::pair<int,int> >::const_iterator jointPair = controlBoardAxisList.begin();
+                     jointPair != controlBoardAxisList.end(); ++jointPair) {
+                    result = result && itrq[jointPair->first]->setTorquePid(jointPair->second, pids[i++]);
+                }
+                break;
+            default:
+                break;
         }
-    }
-    else {
+    } else {
         int bodyPart = controlBoardAxisList[joint].first;
         int controlBoardJointAxis = controlBoardAxisList[joint].second;
         switch (controlMode) {
@@ -839,18 +844,18 @@ bool yarpWholeBodyActuators::getPIDGains(yarp::dev::Pid *pids, wbi::ControlMode 
     bool result = true;
     if (joint < 0) {
         int i = 0;
-        for (std::vector< std::pair<int,int> >::const_iterator jointPair = controlBoardAxisList.begin();
-             jointPair != controlBoardAxisList.end(); ++jointPair) {
-            switch (controlMode) {
-                case wbi::CTRL_MODE_TORQUE:
+        switch (controlMode) {
+            case wbi::CTRL_MODE_TORQUE:
+                for (std::vector< std::pair<int,int> >::const_iterator jointPair = controlBoardAxisList.begin();
+                     jointPair != controlBoardAxisList.end(); ++jointPair) {
                     result = result && itrq[jointPair->first]->getTorquePid(jointPair->second, &pids[i++]);
-                    break;
-                default:
-                    break;
-            }
+                }
+                break;
+            default:
+                break;
+
         }
-    }
-    else {
+    } else {
         int bodyPart = controlBoardAxisList[joint].first;
         int controlBoardJointAxis = controlBoardAxisList[joint].second;
         switch (controlMode) {
@@ -866,6 +871,45 @@ bool yarpWholeBodyActuators::getPIDGains(yarp::dev::Pid *pids, wbi::ControlMode 
     return result;
 }
 
+bool yarpWholeBodyActuators::setMotorTorqueParameters(const yarp::dev::MotorTorqueParameters *motorParameters, int joint)
+{
+    if (!initDone) return false;
+    bool result = true;
+    if (joint < 0) {
+        int i = 0;
+        for (std::vector< std::pair<int,int> >::const_iterator jointPair = controlBoardAxisList.begin();
+             jointPair != controlBoardAxisList.end(); ++jointPair) {
+            result = result && itrq[jointPair->first]->setMotorTorqueParams(jointPair->second, motorParameters[i++]);
+        }
+    }
+    else {
+        int bodyPart = controlBoardAxisList[joint].first;
+        int controlBoardJointAxis = controlBoardAxisList[joint].second;
+        result = itrq[bodyPart]->setMotorTorqueParams(controlBoardJointAxis, *motorParameters);
+    }
+    return result;
+}
+
+bool yarpWholeBodyActuators::getMotorTorqueParameters(yarp::dev::MotorTorqueParameters *motorParameters, int joint)
+{
+    if (!initDone) return false;
+    bool result = true;
+    if (joint < 0) {
+        int i = 0;
+        for (std::vector< std::pair<int,int> >::const_iterator jointPair = controlBoardAxisList.begin();
+             jointPair != controlBoardAxisList.end(); ++jointPair) {
+            result = result && itrq[jointPair->first]->getMotorTorqueParams(jointPair->second, &motorParameters[i++]);
+        }
+    }
+    else {
+        int bodyPart = controlBoardAxisList[joint].first;
+        int controlBoardJointAxis = controlBoardAxisList[joint].second;
+
+        result = itrq[bodyPart]->getMotorTorqueParams(controlBoardJointAxis, motorParameters);
+
+    }
+    return result;
+}
 
 bool yarpWholeBodyActuators::setControlOffset(const double *value, int joint)
 {
