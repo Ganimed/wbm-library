@@ -324,7 +324,7 @@ bool yarpWholeBodyStates::init()
     // handle legacy parameter
     if( wbi_yarp_properties.findGroup("WBI_STATE_OPTIONS").check("estimateBasePosAndVel") )
     {
-        yWarning("yarpWholeBodyStates: you are using the depreacted estimateBasePosAndVel parameter.");
+        yWarning("yarpWholeBodyStates: you are using the deprecated estimateBasePosAndVel parameter.");
         yWarning("                     please use the new estimateBaseState parameter instead.");
         yarp::os::Bottle keyAndValue;
         keyAndValue.addString("estimateBaseState");
