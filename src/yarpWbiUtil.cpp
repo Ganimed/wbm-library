@@ -433,4 +433,38 @@ bool motorTorqueParametersFromBottleDescription(const yarp::os::Bottle &bottle,
     return true;
 }
 
+    bool idListFromParsedConfigurationOption(const yarp::os::Property& wbiConfigProp,
+                                             const yarp::os::Value& listSpecification,
+                                             wbi::IDList& idList) {
+        // There are two ways of specifying the list throuth the mask parameter:
+        // either the specified parameter is a list (in the sense of YARP configuration file list,
+        // so something like (joint1,joint2,joint3) ) and it that case it is
+        // considered to by directly the list of joints to load, or otherwise
+        // the wbi list is just a string, and it is considered the name of the list
+        // in the yarpWholeBodyInterface.ini file
+
+        // Reset the idList
+        idList.removeAllIDs();
+
+        if (listSpecification.isList()) {
+            // If the list param is a (YARP) list, load the IDList from it
+            for (int jnt = 0; jnt < listSpecification.asList()->size(); jnt++)
+            {
+                yarp::os::ConstString subElementName = listSpecification.asList()->get(jnt).asString();
+                wbi::IDList sublist;
+                if (yarpWbi::loadIdListFromConfig(subElementName, wbiConfigProp, sublist)) {
+                    idList.addIDList(sublist);
+                } else {
+                    idList.addID(wbi::ID(subElementName.c_str()));
+                }
+            }
+        } else if (listSpecification.isString()) {
+            // Otherwise consider the list to be a
+            if (!yarpWbi::loadIdListFromConfig(listSpecification.asString(), wbiConfigProp, idList)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

@@ -183,6 +183,26 @@ namespace yarpWbi
                                                     yarp::dev::MotorTorqueParameters& motorParameters);
 
 
+    /**
+     * Load the used wbi::IDList from the WBI configuration and the list parameter
+     *
+     *  Currently the following format for the listSpecification parameter is supported:
+     *  - a single element representing the name of a list
+     *  - a yarp bottle (aka list) which can contains either joint names and/or list name (mixed together)
+     *  @note: a single indirection is allowed, i.e. the following is not allowed
+     * (LIST_1, joint_1, (joint_2), joint_3)
+     *
+     * @param[in] wbiConfigProp         wbi configuration file
+     * @param[in] listSpecification     the description of list to be loaded.
+     * @param[out] idList               output list of joint loaded
+     *
+     * @return true if loading the list was successful, false otherwise.
+     */
+    bool idListFromParsedConfigurationOption(const yarp::os::Property& wbiConfigProp,
+                                             const yarp::os::Value& listSpecification,
+                                             wbi::IDList& idList);
+
+
 } // end namespace yarpWbi
 
 #endif
