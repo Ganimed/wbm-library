@@ -67,11 +67,10 @@ namespace wbi {
          * @return True if the operation succeeded, false otherwise. */
         virtual bool getJointLimits(double *qMin, double *qMax, int joint=-1) = 0;
 
-        /** Compute rototranslation matrix from root reference frame to reference frame associated to the specified link.
+        /** Compute homogeneous transformation matrix from root reference frame to reference frame associated to the specified link.
          * @param q Joint angles (rad).
-         * @param xBase Rototranslation from world frame to robot base frame.
-         * @param frameId Id of the link that is the target of the rototranslation.
-         * @param H Output 4x4 rototranslation matrix (stored by rows).
+         * @param xBase homogeneous transformation that applied on a 4d homogeneous position vector expressed in the base frame transforms it in the world frame (world_H_base).         * @param frameId Id of the link that is the target of the homogeneous transformation.
+         * @param H Output 4x4 homogeneous transformation matrix (stored by rows).
          * @param pos 3d position of the point expressed w.r.t the specified frame.
          * @return True if the operation succeeded, false otherwise (invalid input parameters).
          */
@@ -83,8 +82,7 @@ namespace wbi {
          * (unless a offset is specified with the pos parameter).
          * The bottom three rows are the jacobian of the angular velocity of the frame, expressed in the world frame.
          * @param q Joint angles (rad).
-         * @param xBase Rototranslation from world frame to robot base frame.
-         * @param frameId Id of the frame.
+         * @param xBase homogeneous transformation that applied on a 4d homogeneous position vector expressed in the base frame transforms it in the world frame (world_H_base).         * @param frameId Id of the frame.
          * @param J Output 6xN Jacobian matrix (stored by rows), where N=number of joints.
          * @param pos 3d position of the point expressed w.r.t the specified frame.
          *        If pos is not specified (0, default) then the origin of frame is assumed.
@@ -100,8 +98,7 @@ namespace wbi {
          * Given a frame on the robot , compute the product between the time derivative of its
          * Jacobian and the joint velocity vector. The origin of the specified frame can be modified with the pos parameter.
          * @param q Joint angles (rad).
-         * @param xBase Rototranslation from world frame to robot base frame.
-         * @param dq Joint velocities (rad/s).
+         * @param xBase homogeneous transformation that applied on a 4d homogeneous position vector expressed in the base frame transforms it in the world frame (world_H_base).         * @param dq Joint velocities (rad/s).
          * @param frameId Id of the link.
          * @param dJdq Output 6-dim vector containing the product \f$\dot{J}\dot{q}\f$.
          * @param pos 3d position of the point expressed w.r.t the specified frame.
@@ -115,8 +112,7 @@ namespace wbi {
          * The frame is specified with the id of a frame in the robot, plus an linear offset
          * of the frame origin.
          * @param q Joint angles (rad).
-         * @param xBase Rototranslation from world frame to robot base frame
-         * @param frameId Id of the frame.
+         * @param xBase homogeneous transformation that applied on a 4d homogeneous position vector expressed in the base frame transforms it in the world frame (world_H_base).         * @param frameId Id of the frame.
          * @param x Output 7-dim pose vector (3 for pos, 4 for orientation expressed in axis/angle).
          * @param pos 3d position of the point expressed w.r.t the specified frame.
          * @return True if the operation succeeded, false otherwise. */
@@ -125,8 +121,7 @@ namespace wbi {
         /**
          * Compute the inverse dynamics.
          * @param q Joint angles (rad).
-         * @param xBase Rototranslation from world frame to robot base frame
-         * @param dq Joint velocities (rad/s).
+         * @param xBase homogeneous transformation that applied on a 4d homogeneous position vector expressed in the base frame transforms it in the world frame (world_H_base).         * @param dq Joint velocities (rad/s).
          * @param dxB Velocity of the robot base in world reference frame, 3 values for linear and 3 for angular velocity.
          * @param ddq Joint accelerations (rad/s^2).
          * @param ddxB Acceleration of the robot base in world reference frame, 3 values for linear and 3 for angular acceleration.
@@ -138,15 +133,14 @@ namespace wbi {
         /**
          * Compute the floating base Mass Matrix.
          * @param q Joint angles (rad).
-         * @param xBase Rototranslation from world frame to robot base frame
+         * @param xBase homogeneous transformation that applied on 4d homegenous position vector expressed in the base frame transforms it in the world frame (world_H_base).
          * @param M Output N+6xN+6 mass matrix, with N=number of joints.
          * @return True if the operation succeeded, false otherwise. */
         virtual bool computeMassMatrix(double *q, const Frame &xBase, double *M) = 0;
 
         /** Compute the generalized bias forces (gravity+Coriolis+centrifugal) terms.
          * @param q Joint angles (rad).
-         * @param xBase Rototranslation from world frame to robot base frame
-         * @param dq Joint velocities (rad/s).
+         * @param xBase homogeneous transformation that applied on a 4d homogeneous position vector expressed in the base frame transforms it in the world frame (world_H_base).         * @param dq Joint velocities (rad/s).
          * @param dxB Velocity of the robot base in world reference frame, 3 values for linear and 3 for angular velocity.
          * @param g gravity acceleration expressed in world frame (3 values)
          * @param h Output N+6-dim vector containing all generalized bias forces (gravity+Coriolis+centrifugal), with N=number of joints.
@@ -157,7 +151,7 @@ namespace wbi {
         /** Compute the 6 element centroidal momentum, as defined in:
          * Centroidal dynamics of a humanoid robot - DE Orin, A Goswami, SH Lee - Autonomous Robots 35 (2-3), 161-176
          * @param q Joint angles (in radians)
-         * @param xBase Rototranslation from world frame to robot base frame (\f${}^w H_b \f$)
+         * @param xBase homogeneous transformation that applied on a 4d homogeneous position vector expressed in the base frame transforms it in the world frame (world_H_base).
          * @param dq Joint velocities (rad/s).
          * @param dxB Velocity of the robot base in world reference frame, 3 values for linear and 3 for angular velocity
          * @param h output 6-element vector containg the centroidal momentum (3 value for linear momentum and 3 for angular momentum)
