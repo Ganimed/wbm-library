@@ -199,22 +199,22 @@ namespace yarpWbi
      * or computing it internally by assuming that a frame is always fixed with respect to the inertial/world .
      * You can specify this frame that is always fixed using the `localWorldReferenceFrame` option.
      *
-     * | Parameter name | Type | Units | Default Value | Required | Description | Notes |
-     * |:--------------:|:------:|:-----:|:-------------:|:--------:|:-----------:|:-----:|
-     * | estimatorPeriod       | double | milliseconds | 10 | No | Period (in milliseconds) of the estimator thread | For undeliyng limitations of the yarp::os::RateThread class, this period should not be lower of 1.0 ms . |
-     * | estimateBaseState | - | - | - | No | Necessary for estimation of root roto translation and velocity. If not present these estimates will always return 0  |
+     * | Parameter name | Type | Units  | Default Value | Required | Description | Notes |
+     * |:--------------:|:----:|:------:|:-------------:|:--------:|:-----------:|:-----:|
+     * | estimatorPeriod| double | milliseconds | 10 | No | Period (in milliseconds) of the estimator thread | For undeliyng limitations of the yarp::os::RateThread class, this period should not be lower of 1.0 ms . |
+     * | estimateBaseState | -   | -            | -  | No | Necessary for estimation of root roto translation and velocity. If not present these estimates will always return 0  | | 
      * | externalFloatingBaseStatePort     | string | - | - | - | If present, reads the floating base state (position, velocities and acceleration from an external port, using the format described in remoteFloatingBaseStateEstimator class. | Not compatible with localWorldReferenceFrame option  |
      * | localWorldReferenceFrame | string | - | - | No | If present, specifies the default frame for computation of the world-to-root rototranslation.  | Not compatible with the externalFloatingBaseStatePort |
      * | cutOffFrequencyTorqueInHz  | double | Hz | 3.0 | No | Specify the cutoff frequency of the first order filter used to filter joint torque measurements, motor torque measurements and pwm | |
-     * | cutOffFrequencyVelocitiesInHz | double | Hz | (If not present, no filter is used) | No | If present, specify the cutoff frequency of the first order filter used to filter joint velocities measurements. If not present, no filter is used. | | 
-     * 
+     * | cutOffFrequencyVelocitiesInHz | double | Hz | (If not present, no filter is used) | No | If present, specify the cutoff frequency of the first order filter used to filter joint velocities measurements. If not present, no filter is used. | |
+     *
      * Furthermore for accessing joint sensors, the property should contain all the information used
      * for configuring a a yarpWholeBodyActuators object.
      *
      * # FILTERS
      *
      * For historical reasons, the yarpWholeBodyStates always filters the readed torques and pwm with a first order filter,
-     * while the joint velocities are filtered only if the cutOffFrequencyVelocitiesInHz is present in the config file, 
+     * while the joint velocities are filtered only if the cutOffFrequencyVelocitiesInHz is present in the config file,
      * and joint acceleration are the one returned directly by the controlboard.
      *
      */
