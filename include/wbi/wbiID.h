@@ -149,6 +149,17 @@ namespace wbi
          * Provide a human readable represent of the list
          */
         std::string toString() const;
+
+        /**
+         * return the ID at the specified index
+         *
+         * @note throw  out_of_range exception if index is out of range,
+         * i.e. it has the same signature of std::vector::at
+         * @param index the specified index
+         *
+         * @return the object at the specified index
+         */
+        const wbi::ID& at(unsigned index) const;
         
         /**
          * Clear all IDs

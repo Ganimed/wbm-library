@@ -174,6 +174,12 @@ std::string IDList::toString() const
     }
     return s.str();
 }
+
+const wbi::ID& IDList::at(unsigned index) const
+{
+    if (index >= size()) throw std::out_of_range("IDList out of range");
+    return storage[index];
+}
     
 void IDList::removeAllIDs()
 {
