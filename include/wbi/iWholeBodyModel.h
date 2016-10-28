@@ -140,13 +140,23 @@ namespace wbi {
 
         /** Compute the generalized bias forces (gravity+Coriolis+centrifugal) terms.
          * @param q Joint angles (rad).
-         * @param xBase homogeneous transformation that applied on a 4d homogeneous position vector expressed in the base frame transforms it in the world frame (world_H_base).         * @param dq Joint velocities (rad/s).
+         * @param xBase homogeneous transformation that applied on a 4d homogeneous position vector expressed in the base frame transforms it in the world frame (world_H_base).         
+         * @param dq Joint velocities (rad/s).
          * @param dxB Velocity of the robot base in world reference frame, 3 values for linear and 3 for angular velocity.
          * @param g gravity acceleration expressed in world frame (3 values)
          * @param h Output N+6-dim vector containing all generalized bias forces (gravity+Coriolis+centrifugal), with N=number of joints.
          * @return True if the operation succeeded, false otherwise. */
 
         virtual bool computeGeneralizedBiasForces(double *q, const Frame &xBase, double *dq, double *dxB, double* g, double *h) = 0;
+
+        /** Compute the gravity bias forces terms.
+         * @param q Joint angles (rad).
+         * @param xBase homogeneous transformation that applied on a 4d homogeneous position vector expressed in the base frame transforms it in the world frame (world_H_base).
+         * @param g gravity acceleration expressed in world frame (3 values)
+         * @param h Output N+6-dim vector containing the gravity bias forces, with N=number of joints.
+         * @return True if the operation succeeded, false otherwise. */
+
+        virtual bool computeGravityBiasForces(double *q, const Frame &xBase, double* g, double *h) = 0;
 
         /** Compute the 6 element centroidal momentum, as defined in:
          * Centroidal dynamics of a humanoid robot - DE Orin, A Goswami, SH Lee - Autonomous Robots 35 (2-3), 161-176
