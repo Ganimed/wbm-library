@@ -294,6 +294,8 @@ namespace yarpWbi
 
         virtual bool computeGeneralizedBiasForces(double *q, const wbi::Frame &xBase, double *dq, double *dxB, double* g, double *h);
 
+        virtual bool computeGravityBiasForces(double *q, const wbi::Frame &xBase, double* g, double *h);
+
         /** Compute the 6 element centroidal momentum, as defined in:
          * Centroidal dynamics of a humanoid robot - DE Orin, A Goswami, SH Lee - Autonomous Robots 35 (2-3), 161-176
          * @param q Joint angles (in radians)

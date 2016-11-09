@@ -235,7 +235,7 @@ bool yarpWholeBodyStates::configureFloatingBaseStateEstimator()
             return false;
         }
         if (!estimator->localFltBaseStateEstimator.setWorldBaseLinkName(world_frame)) {
-            yError("Error while setting world reference frame: frame not found or invalid");
+            yError() << "Error while setting world reference frame (" << world_frame << "): frame not found or invalid";
             return false;
         }
     }

@@ -54,7 +54,10 @@ bool localFloatingBaseStateEstimator::changeDoF(int _dof)
 
 bool localFloatingBaseStateEstimator::setWorldBaseLinkName(std::string linkName)
 {
-    if (!wholeBodyModel) return false;
+    if (!wholeBodyModel) {
+        yError("setWorldBaseLinkName: Model not yet created");
+        return false;
+    }
 
     bool found = wholeBodyModel->getFrameList().idToIndex(linkName.c_str(), robot_reference_frame_link);
     if (!found || robot_reference_frame_link < 0)

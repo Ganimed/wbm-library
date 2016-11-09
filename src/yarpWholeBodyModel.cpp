@@ -281,6 +281,12 @@ bool yarpWholeBodyModel::convertBasePose(const Frame &xBase, yarp::sig::Matrix &
 
 bool yarpWholeBodyModel::convertBaseVelocity(const double *dxB, yarp::sig::Vector & v_b, yarp::sig::Vector & omega_b)
 {
+    if (!dxB) {
+        //shortcut to zero the vectors
+        v_b.zero();
+        omega_b.zero();
+        return true;
+    }
     v_b[0] = dxB[0];
     v_b[1] = dxB[1];
     v_b[2] = dxB[2];
@@ -325,6 +331,12 @@ bool yarpWholeBodyModel::convertBaseAcceleration(const double *ddxB, yarp::sig::
 
 bool yarpWholeBodyModel::convertQ(const double *_q_input, yarp::sig::Vector & q_complete_output)
 {
+    if (!_q_input) {
+        //shortcut to zero vector
+        q_complete_output.zero();
+        return true;
+    }
+
     for(int wbi_joint_numeric_id=0; wbi_joint_numeric_id < this->dof; wbi_joint_numeric_id++ )
     {
             double tmp;
@@ -822,6 +834,10 @@ bool yarpWholeBodyModel::computeGeneralizedBiasForces(double *q, const Frame &xB
     return true;
 }
 
+bool yarpWholeBodyModel::computeGravityBiasForces(double *q, const wbi::Frame &xBase, double* g, double *h)
+{
+    return this->computeGeneralizedBiasForces(q, xBase, 0, 0, g, h);
+}
 
 bool yarpWholeBodyModel::computeCentroidalMomentum(double *q, const Frame &xBase, double *dq, double *dxB, double *h)
 {

@@ -11,7 +11,7 @@ set(INCLUDE_DIRS yarpWholeBodyInterface)
 
 set(${VARS_PREFIX}_MAJOR_VERSION 0)
 set(${VARS_PREFIX}_MINOR_VERSION 3)
-set(${VARS_PREFIX}_PATCH_VERSION 2)
+set(${VARS_PREFIX}_PATCH_VERSION 3)
 set(${VARS_PREFIX}_VERSION ${${VARS_PREFIX}_MAJOR_VERSION}.${${VARS_PREFIX}_MINOR_VERSION}.${${VARS_PREFIX}_PATCH_VERSION})
 
 find_package(YCM REQUIRED)
@@ -27,7 +27,7 @@ find_package(YARP 2.3.63.7 REQUIRED)
 if(YARPWBI_USES_KDL)
     find_package(iDynTree 0.3.11 REQUIRED)
     find_package(ICUB REQUIRED)
-    find_package(wholeBodyInterface 0.2.4 REQUIRED)
+    find_package(wholeBodyInterface 0.2.6 REQUIRED)
     find_package(Eigen3 REQUIRED)
 
     SET(folder_source src/yarpWbiUtil.cpp
