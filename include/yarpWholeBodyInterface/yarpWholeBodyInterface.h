@@ -146,6 +146,7 @@ namespace yarpWbi
         virtual bool computeMassMatrix(double *q, const wbi::Frame &xB, double *M);
         virtual bool computeGeneralizedBiasForces(double *q, const wbi::Frame &xB, double *dq, double *dxB, double *g, double *h);
         virtual bool computeCentroidalMomentum(double *q, const wbi::Frame &xB, double *dq, double *dxB, double *h);
+        virtual bool computeGravityBiasForces(double *q, const wbi::Frame &xBase, double* g, double *h);
 
     };
 

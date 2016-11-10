@@ -336,3 +336,8 @@ bool yarpWholeBodyInterface::computeCentroidalMomentum(double* q,
 {
     return modelInt->computeCentroidalMomentum(q, xB, dq, dxB, h);
 }
+
+bool yarpWholeBodyInterface::computeGravityBiasForces(double *q, const wbi::Frame &xBase, double* g, double *h)
+{
+    return modelInt->computeGravityBiasForces(q, xBase, g, h);
+}
