@@ -46,9 +46,9 @@ yarpWholeBodyInterface::yarpWholeBodyInterface(
 {
     actuatorInt = new yarpWholeBodyActuators((_name + string("actuator")).c_str(),
         _yarp_wbi_properties);
-    modelInt = new yarpWholeBodyModel((_name + string("model")).c_str(),
+    modelInt = new yarpWholeBodyModelV1((_name + string("model")).c_str(),
         _yarp_wbi_properties);
-    modelForStateInt = new yarpWholeBodyModel((_name + string("model")).c_str(),
+    modelForStateInt = new yarpWholeBodyModelV1((_name + string("model")).c_str(),
         _yarp_wbi_properties);
     stateInt = new yarpWholeBodyStates((_name + string("state")).c_str(),
         _yarp_wbi_properties, modelForStateInt);
@@ -60,7 +60,7 @@ yarpWholeBodyActuators* yarpWholeBodyInterface::wholeBodyActuator()
 {
     return actuatorInt;
 }
-yarpWholeBodyModel* yarpWholeBodyInterface::wholeBodyModel()
+yarpWholeBodyModelV1* yarpWholeBodyInterface::wholeBodyModel()
 {
     return modelInt;
 }
@@ -101,11 +101,11 @@ bool yarpWholeBodyInterface::init()
     if (ok)
         ok = modelInt->init();
     if (!ok)
-        printf("[ERR] Error while initializing yarpWholeBodyModel interface.\n");
+        printf("[ERR] Error while initializing yarpWholeBodyModelV1 interface.\n");
     if (ok)
         ok = modelForStateInt->init();
     if (!ok)
-        printf("[ERR] Error while initializing yarpWholeBodyModel interface.\n");
+        printf("[ERR] Error while initializing yarpWholeBodyModelV1 interface.\n");
     if (ok)
         ok = stateInt->init();
     if (!ok)

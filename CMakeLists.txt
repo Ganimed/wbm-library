@@ -18,9 +18,9 @@ find_package(YCM REQUIRED)
 include(YCMDefaultDirs)
 ycm_default_dirs(${VARS_PREFIX})
 
-option(BUILD_SHARED_LIBS "Compile the library as a shared library")
+option(BUILD_SHARED_LIBS "Compile the library as a shared library" TRUE)
 option(YARPWBI_USES_KDL "Compile the parts of yarp-wholebodyinterface that depend on KDL" TRUE)
-option(YARPWHOLEBODYINTERFACE_ENABLE_TESTS "Enable unit testing" FALSE)
+option(YARPWBI_ENABLE_TESTS "Enable unit testing" FALSE)
 
 find_package(YARP 2.3.63.7 REQUIRED)
 
@@ -30,22 +30,24 @@ if(YARPWBI_USES_KDL)
     find_package(wholeBodyInterface 0.2.6 REQUIRED)
     find_package(Eigen3 REQUIRED)
 
-    SET(folder_source src/yarpWbiUtil.cpp
-                    src/yarpWholeBodyInterface.cpp
-                    src/yarpWholeBodyModel.cpp
-                    src/yarpWholeBodyStates.cpp
-                    src/floatingBaseEstimators.cpp
-                    src/yarpWholeBodyActuators.cpp
-                    src/yarpWholeBodySensors.cpp
-                    src/PIDList.cpp)
-    SET(folder_header include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
-                    include/yarpWholeBodyInterface/yarpWholeBodyModel.h
-                    include/yarpWholeBodyInterface/yarpWholeBodyStates.h
-                    include/yarpWholeBodyInterface/yarpWholeBodyActuators.h
-                    include/yarpWholeBodyInterface/yarpWholeBodySensors.h
-                    include/yarpWholeBodyInterface/floatingBaseEstimators.h
-                    include/yarpWholeBodyInterface/yarpWbiUtil.h
-                    include/yarpWholeBodyInterface/PIDList.h)
+    set(folder_source src/yarpWbiUtil.cpp
+                      src/yarpWholeBodyInterface.cpp
+                      src/yarpWholeBodyModelV1.cpp
+                      src/yarpWholeBodyStates.cpp
+                      src/floatingBaseEstimators.cpp
+                      src/yarpWholeBodyActuators.cpp
+                      src/yarpWholeBodySensors.cpp
+                      src/PIDList.cpp)
+
+    set(folder_header include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
+                      include/yarpWholeBodyInterface/yarpWholeBodyModelV1.h
+                      include/yarpWholeBodyInterface/yarpWholeBodyModel.h
+                      include/yarpWholeBodyInterface/yarpWholeBodyStates.h
+                      include/yarpWholeBodyInterface/yarpWholeBodyActuators.h
+                      include/yarpWholeBodyInterface/yarpWholeBodySensors.h
+                      include/yarpWholeBodyInterface/floatingBaseEstimators.h
+                      include/yarpWholeBodyInterface/yarpWbiUtil.h
+                      include/yarpWholeBodyInterface/PIDList.h)
 
     source_group("Source Files" FILES ${folder_source})
     source_group("Header Files" FILES ${folder_header})
@@ -109,7 +111,7 @@ if(YARPWBI_USES_KDL)
                                                 TARGETS_PROPERTY ${VARS_PREFIX}_TARGETS
                                                 NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 
-    if(YARPWHOLEBODYINTERFACE_ENABLE_TESTS)
+    if(YARPWBI_ENABLE_TESTS)
         #enable testing
         #include(CTest)
         enable_testing()
