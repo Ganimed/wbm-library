@@ -18,8 +18,8 @@ find_package(YCM REQUIRED)
 include(YCMDefaultDirs)
 ycm_default_dirs(${VARS_PREFIX})
 
+option(BUILD_SHARED_LIBS "Compile the library as a shared library")
 option(YARPWBI_USES_KDL "Compile the parts of yarp-wholebodyinterface that depend on KDL" TRUE)
-option(COMPILE_AS_SHARED_LIBRARY "Compile ${PROJECT_NAME} as a shared library" TRUE)
 option(YARPWHOLEBODYINTERFACE_ENABLE_TESTS "Enable unit testing" FALSE)
 
 find_package(YARP 2.3.63.7 REQUIRED)
@@ -60,13 +60,7 @@ if(YARPWBI_USES_KDL)
 
     if(MSVC)
         message(STATUS "Building ${PROJECT_NAME} as a shared library is not currently supported on Windows")
-        set(COMPILE_AS_SHARED_LIBRARY FALSE)
-    endif()
-
-    if(COMPILE_AS_SHARED_LIBRARY)
-        set(LIB_TYPE SHARED)
-    else()
-        set(LIB_TYPE STATIC)
+        set(BUILD_SHARED_LIBS  FALSE)
     endif()
 
     include(AddInstallRPATHSupport)
@@ -75,7 +69,7 @@ if(YARPWBI_USES_KDL)
                             DEPENDS YARPWBI_ENABLE_RPATH
                             USE_LINK_PATH)
 
-    add_library(${LIBRARY_NAME}  ${LIB_TYPE} ${folder_source} ${folder_header})
+    add_library(${LIBRARY_NAME} ${folder_source} ${folder_header})
 
     set_target_properties(${LIBRARY_NAME}  PROPERTIES VERSION ${${VARS_PREFIX}_VERSION}
                                         SOVERSION ${${VARS_PREFIX}_VERSION}
