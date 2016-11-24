@@ -19,6 +19,7 @@ include(YCMDefaultDirs)
 ycm_default_dirs(${VARS_PREFIX})
 
 option(BUILD_SHARED_LIBS "Compile the library as a shared library" TRUE)
+mark_as_advanced(BUILD_SHARED_LIBS)
 option(YARPWBI_USES_KDL "Compile the parts of yarp-wholebodyinterface that depend on KDL" TRUE)
 option(YARPWBI_ENABLE_TESTS "Enable unit testing" FALSE)
 
