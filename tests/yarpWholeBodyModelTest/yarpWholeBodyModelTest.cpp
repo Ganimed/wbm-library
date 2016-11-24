@@ -287,7 +287,7 @@ int main(int argc, char * argv[])
     // TEST WHOLE BODY MODEL
     std::string localName = "wbiTest";
     std::string robotName = "icub";
-    std::cout << "Creating yarpWholeBodyModelV1 with robotName " << robotName << " and localName " << localName << std::endl;
+    std::cout << "Creating yarpWholeBodyModel with robotName " << robotName << " and localName " << localName << std::endl;
 
     //--------------------------WHOLE BODY INTERFACE--------------------------
     yarp::os::ResourceFinder rf;
@@ -306,7 +306,7 @@ int main(int argc, char * argv[])
     Rand::init();
     for(int i = 0; i < n_checks; i++ ) {
         if( i % 100 == 0 ) { std::cout << "wholeBodyModelIcub inverse dynamics : test " << i << std::endl; }
-        iWholeBodyModel *icub = new yarpWholeBodyModelV1(localName.c_str(), yarpWbiOptions);
+        iWholeBodyModel *icub = new yarpWholeBodyModel(localName.c_str(), yarpWbiOptions);
         if( ! checkInverseDynamicsAndMassMatrixConsistency(icub,RobotDynamicModelJoints,TOL,true) ) {
             return EXIT_FAILURE;
         }

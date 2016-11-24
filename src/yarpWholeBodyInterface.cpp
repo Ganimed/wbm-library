@@ -46,9 +46,9 @@ yarpWholeBodyInterface::yarpWholeBodyInterface(
 {
     actuatorInt = new yarpWholeBodyActuators((_name + string("actuator")).c_str(),
         _yarp_wbi_properties);
-    modelInt = new yarpWholeBodyModelV1((_name + string("model")).c_str(),
+    modelInt = new yarpWholeBodyModel((_name + string("model")).c_str(),
         _yarp_wbi_properties);
-    modelForStateInt = new yarpWholeBodyModelV1((_name + string("model")).c_str(),
+    modelForStateInt = new yarpWholeBodyModel((_name + string("model")).c_str(),
         _yarp_wbi_properties);
     stateInt = new yarpWholeBodyStates((_name + string("state")).c_str(),
         _yarp_wbi_properties, modelForStateInt);
@@ -60,7 +60,7 @@ yarpWholeBodyActuators* yarpWholeBodyInterface::wholeBodyActuator()
 {
     return actuatorInt;
 }
-yarpWholeBodyModelV1* yarpWholeBodyInterface::wholeBodyModel()
+yarpWholeBodyModel* yarpWholeBodyInterface::wholeBodyModel()
 {
     return modelInt;
 }

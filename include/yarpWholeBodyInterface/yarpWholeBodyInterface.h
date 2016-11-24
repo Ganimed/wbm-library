@@ -66,9 +66,9 @@ namespace yarpWbi
 
     protected:
         yarpWholeBodyActuators  *actuatorInt;
-        yarpWholeBodyModelV1      *modelInt;
+        yarpWholeBodyModel      *modelInt;
         yarpWholeBodyStates     *stateInt;
-        yarpWholeBodyModelV1      *modelForStateInt;
+        yarpWholeBodyModel      *modelForStateInt;
 
         wbi::IDList empty_id_list;
 
@@ -85,7 +85,7 @@ namespace yarpWbi
         /** gets the model implementation
          * @return the wholeBodyModel implementation
          */
-        yarpWholeBodyModelV1* wholeBodyModel();
+        yarpWholeBodyModel* wholeBodyModel();
 
         /** gets the state implementation
          * @return the wholeBodyStates implementation
