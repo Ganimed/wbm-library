@@ -26,19 +26,6 @@
 
 #define INITIAL_TIMESTAMP -1000.0
 
-/* CODE UNDER DEVELOPMENT */
-
-namespace wbi {
-    class ID;
-    class IDList;
-}
-
-namespace yarpWbi {
-    class yarpWholeBodyActuators;
-    class yarpWholeBodyModelV1;
-    class yarpWholeBodyStates;
-}
-
 namespace yarpWbi
 {
 
