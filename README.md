@@ -3,7 +3,7 @@ yarpWholeBodyInterface [![Build Status](https://travis-ci.org/robotology/yarp-wh
 
 Implementation of the [wholeBodyInterface](https://github.com/robotology-playground/wholeBodyInterface) for YARP based robots.
 
-![wbi](https://cloud.githubusercontent.com/assets/2189180/10883851/f02b2398-8174-11e5-8f2b-d159998848a5.png)
+![wbi_diagram](https://cloud.githubusercontent.com/assets/2189180/20674985/18f73be0-b58b-11e6-989f-57abf6678d9b.png)
 
 ## Installation
 
