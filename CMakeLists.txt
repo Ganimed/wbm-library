@@ -11,7 +11,7 @@ set(INCLUDE_DIRS yarpWholeBodyInterface)
 
 set(${VARS_PREFIX}_MAJOR_VERSION 0)
 set(${VARS_PREFIX}_MINOR_VERSION 3)
-set(${VARS_PREFIX}_PATCH_VERSION 4)
+set(${VARS_PREFIX}_PATCH_VERSION 5)
 set(${VARS_PREFIX}_VERSION ${${VARS_PREFIX}_MAJOR_VERSION}.${${VARS_PREFIX}_MINOR_VERSION}.${${VARS_PREFIX}_PATCH_VERSION})
 
 find_package(YCM REQUIRED)
@@ -26,7 +26,7 @@ option(YARPWBI_ENABLE_TESTS "Enable unit testing" FALSE)
 find_package(YARP 2.3.63.7 REQUIRED)
 
 if(YARPWBI_USES_KDL)
-    find_package(iDynTree 0.3.11 REQUIRED)
+    find_package(iDynTree 0.3.14 REQUIRED)
     find_package(ICUB REQUIRED)
     find_package(wholeBodyInterface 0.2.6 REQUIRED)
     find_package(Eigen3 REQUIRED)
@@ -34,6 +34,7 @@ if(YARPWBI_USES_KDL)
     set(folder_source src/yarpWbiUtil.cpp
                       src/yarpWholeBodyInterface.cpp
                       src/yarpWholeBodyModelV1.cpp
+                      src/yarpWholeBodyModelV2.cpp
                       src/yarpWholeBodyStates.cpp
                       src/floatingBaseEstimators.cpp
                       src/yarpWholeBodyActuators.cpp
@@ -42,6 +43,7 @@ if(YARPWBI_USES_KDL)
 
     set(folder_header include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
                       include/yarpWholeBodyInterface/yarpWholeBodyModelV1.h
+                      include/yarpWholeBodyInterface/yarpWholeBodyModelV2.h
                       include/yarpWholeBodyInterface/yarpWholeBodyModel.h
                       include/yarpWholeBodyInterface/yarpWholeBodyStates.h
                       include/yarpWholeBodyInterface/yarpWholeBodyActuators.h
