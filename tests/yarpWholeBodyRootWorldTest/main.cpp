@@ -56,7 +56,7 @@ int main(int argc, char * argv[])
     if(options.check("robot")) {
       robotName = options.find("robot").asString();
     } else {
-      robotName = "icubGazeboSim";
+      robotName = "icubSim";
     }
     /*
     bool use_urdf = false;
