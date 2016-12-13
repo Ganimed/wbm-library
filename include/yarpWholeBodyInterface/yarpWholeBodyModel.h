@@ -18,11 +18,11 @@
 #ifndef YARPWBI_WHOLEBODYMODEL_H
 #define YARPWBI_WHOLEBODYMODEL_H
 
-#include <yarpWholeBodyInterface/yarpWholeBodyModelV1.h>
+#include <yarpWholeBodyInterface/yarpWholeBodyModelV2.h>
 
 namespace yarpWbi
 {
-    typedef yarpWholeBodyModelV1 yarpWholeBodyModel;
+    typedef yarpWholeBodyModelV2 yarpWholeBodyModel;
 }
 
 #endif
