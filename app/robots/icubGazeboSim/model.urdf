@@ -30,6 +30,22 @@
             <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
         </inertial>
     </link>
+    <!-- LINKS FOR ICUB BALANCING ON A CHAIR -->
+    <link name="l_upper_leg_contact">
+        <inertial>
+            <mass value="0" />
+            <origin xyz="0 0 0" rpy="0 -0 0" />
+            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+        </inertial>
+    </link>
+    <link name="r_upper_leg_contact">
+        <inertial>
+            <mass value="0" />
+            <origin xyz="0 0 0" rpy="0 -0 0" />
+            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+        </inertial>
+    </link>
+    <!-- *********************************** -->
     <link name="codyco_balancing_world">
         <inertial>
             <mass value="0" />
@@ -847,6 +863,20 @@
         <parent link="chest" />
         <child link="chest_skin_frame" />
     </joint>
+    <!-- JOINTS FOR ICUB BALANCING ON A CHAIR -->
+    <joint name="l_upper_leg_frame_fixed_joint" type="fixed">
+        <origin xyz="-0.0596 -0.0700 -0.0009" rpy="-1.5810 -0.2157 -1.5231" />
+        <axis xyz="0 0 0" />
+        <parent link="l_upper_leg" />
+        <child link="l_upper_leg_contact" />
+    </joint>
+    <joint name="r_upper_leg_frame_fixed_joint" type="fixed">
+        <origin xyz="-0.0596 -0.0694 -0.0008" rpy="-1.5606 0.2124 -1.5229" />
+        <axis xyz="0 0 0" />
+        <parent link="r_upper_leg" />
+        <child link="r_upper_leg_contact" />
+    </joint>
+    <!-- ************************************ -->
     <joint name="codyco_balancing_world_fixed_joint" type="fixed">
         <origin xyz="-1.24246e-32 -2.65687e-65 0.004" rpy="3.14159 -0 0" />
         <axis xyz="0 0 0" />
