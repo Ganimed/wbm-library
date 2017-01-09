@@ -1131,7 +1131,7 @@
   </link>
   <joint name="r_wrist_prosup" type="revolute">
     <origin xyz="-0.0384624299027 0.0224999 -0.00522316819403" rpy="0 0 0"/>
-    <axis xyz="-0.965925843882 2.22044604925e-16 0.258818979447"/>
+    <axis xyz="0.965925843882 -2.22044604925e-16 -0.258818979447"/>
     <parent link="r_elbow_1"/>
     <child link="r_forearm"/>
     <limit effort="50000" lower="-1.0471975512" upper="1.0471975512" velocity="50000"/>
