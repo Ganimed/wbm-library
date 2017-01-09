@@ -697,40 +697,24 @@ The coordinate frame called base_link is rigidly attached to the robot root body
   </joint>
  <!-- ************ MODIFIED TO FIT THE FT SENSORS
  REQUIREMENTS FOR WHOLEBODYDYNAMICS3 ************ -->
- <!-- <gazebo reference="r_leg_ft_joint"> -->
  	<sensor name="r_leg_ft_sensor" type="force_torque">
 		<parent joint="RAnkLat"/>
         	<force_torque>
-          		<!-- <frame>sensor</frame> -->
           		<frame>child</frame>
           		<measure_direction>child_to_parent</measure_direction>
         	</force_torque>
                 <always_on>1</always_on>
-         	<!-- <visualize>1</visualize> -->
           	<update_rate>1000</update_rate>
-        	<!-- <pose frame=''>0.005 0 -0.107 0 -0 0</pose> -->
-        	<!-- <plugin name='RAnkSag_FT_plugin' filename='libgazebo_yarp_forcetorque.so'>
-          		<yarpConfigurationFile>model://bigman_urdf/conf/bigman/bigman_gazebo_right_leg_ft.ini</yarpConfigurationFile>
-        	</plugin> -->
       	</sensor>
- <!-- </gazebo> -->
-<!-- <gazebo reference="l_leg_ft_joint"> -->
  	<sensor name="l_leg_ft_sensor" type="force_torque">
         	<parent joint="LAnkLat"/>
 		<force_torque>
-          		<!-- <frame>sensor</frame>  -->
           		<frame>child</frame>
           		<measure_direction>child_to_parent</measure_direction>
         	</force_torque>
         	<always_on>1</always_on>  	
-         	<!-- <visualize>1</visualize> -->
         	<update_rate>1000</update_rate> 	
-        	<!-- <pose frame=''>0.005 0 -0.107 0 -0 0</pose>  -->
-        	<!-- <plugin name='LAnkSag_FT_plugin' filename='libgazebo_yarp_forcetorque.so'>
-          		<yarpConfigurationFile>model://bigman_urdf/conf/bigman/bigman_gazebo_left_leg_ft.ini</yarpConfigurationFile>
-        	</plugin> -->
       	</sensor>
-<!-- </gazebo> -->
   <!-- IMU -->
   <link name="imu_link">
     <inertial>
