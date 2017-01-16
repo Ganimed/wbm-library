@@ -61,7 +61,6 @@ using namespace iCub::skinDynLib;
 yarpWholeBodyModelV2::yarpWholeBodyModelV2(const char* _name,
                                        const yarp::os::Property & _wbi_yarp_conf)
         : initDone(false),
-          dof(0),
           wbi_yarp_properties(_wbi_yarp_conf),
           getLimitsFromControlBoard(false)
 {
@@ -243,6 +242,7 @@ bool yarpWholeBodyModelV2::getYarpWbiProperties(yarp::os::Property & yarp_wbi_pr
 
 int yarpWholeBodyModelV2::getDoFs()
 {
+    int dof = jointIdList.size();
     return dof;
 }
 

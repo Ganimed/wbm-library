@@ -71,7 +71,6 @@ namespace yarpWbi
         wbi::IDList jointIdList;
         wbi::IDList frameIdList;
         bool initDone;
-        int dof;
         yarp::os::Property wbi_yarp_properties;
 
         // iDynTree class actually used for all computations
