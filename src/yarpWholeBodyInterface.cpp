@@ -101,11 +101,11 @@ bool yarpWholeBodyInterface::init()
     if (ok)
         ok = modelInt->init();
     if (!ok)
-        printf("[ERR] Error while initializing yarpWholeBodyModelV1 interface.\n");
+        printf("[ERR] Error while initializing yarpWholeBodyModel interface.\n");
     if (ok)
         ok = modelForStateInt->init();
     if (!ok)
-        printf("[ERR] Error while initializing yarpWholeBodyModelV1 interface.\n");
+        printf("[ERR] Error while initializing yarpWholeBodyModel for state interface.\n");
     if (ok)
         ok = stateInt->init();
     if (!ok)
