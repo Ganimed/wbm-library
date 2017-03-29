@@ -1109,7 +1109,7 @@
     </joint>
     <joint name="r_wrist_prosup" type="revolute">
         <origin xyz="0.015 0 0" rpy="1.5708 -0 -1.5708" />
-        <axis xyz="-0 -1 -6.12323e-17" />
+        <axis xyz="0 1 6.12323e-17" />
         <parent link="r_elbow_1" />
         <child link="r_forearm" />
         <dynamics damping="1" friction="0" />
