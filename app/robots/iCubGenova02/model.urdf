@@ -232,7 +232,7 @@
   </joint>
   <link name="r_upper_leg_contact"/>
   <joint name="r_upper_leg_contact_fixed_joint" type="fixed">
-    <origin xyz="0.0003 0.0146 -0.0512571" rpy="0 0 1.57079632679"/>
+    <origin xyz="0.0003 0.0146 -0.0512571" rpy="0 0 -1.57079632679"/>
     <parent link="r_upper_leg"/>
     <child link="r_upper_leg_contact"/>
     <dynamics damping="0.1"/>
@@ -611,7 +611,7 @@
   </joint>
   <link name="l_upper_leg_contact"/>
   <joint name="l_upper_leg_contact_fixed_joint" type="fixed">
-    <origin xyz="-0.0003 0.0146 -0.0512571" rpy="0 0 1.57079632679"/>
+    <origin xyz="-0.0003 0.0146 -0.0512571" rpy="0 0 -1.57079632679"/>
     <parent link="l_upper_leg"/>
     <child link="l_upper_leg_contact"/>
     <dynamics damping="0.1"/>
