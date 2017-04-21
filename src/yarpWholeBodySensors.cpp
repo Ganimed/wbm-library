@@ -709,7 +709,12 @@ bool yarpWholeBodySensors::readPwms(double *pwm, double *stamps, bool wait)
     {
         // read data
         double waiting_time = 0;
-        while( !(update=iopl[*ctrlBoard]->getOutputs(pwmTemp)) && wait)
+
+#ifndef YARPWBI_YARP_HAS_LEGACY_IOPENLOOP
+        while( !(update=((IPWMControl*)iopl[*ctrlBoard])->getDutyCycles(pwmTemp)) && wait)
+#else
+        while( !(update=((IOpenLoopControl*)iopl[*ctrlBoard])->getOutputs(pwmTemp)) && wait)
+#endif
         {
             Time::delay(WAIT_TIME);
 
@@ -901,7 +906,11 @@ bool yarpWholeBodySensors::readPwm(const int pwm_numeric_id, double *pwm, double
 
     // read pwm sensors
     double waiting_time = 0.0;
-    while( !(update=iopl[pwmCtrlBoard]->getOutputs(pwmLastRead[pwmCtrlBoard].data())) && wait)
+#ifndef YARPWBI_YARP_HAS_LEGACY_IOPENLOOP
+    while( !(update=((IPWMControl*)iopl[pwmCtrlBoard])->getDutyCycles(pwmLastRead[pwmCtrlBoard].data())) && wait)
+#else
+    while( !(update=((IOpenLoopControl*)iopl[pwmCtrlBoard])->getOutputs(pwmLastRead[pwmCtrlBoard].data())) && wait)
+#endif
     {
         Time::delay(WAIT_TIME);
 
