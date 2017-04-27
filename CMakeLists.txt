@@ -24,9 +24,6 @@ option(YARPWBI_USES_KDL "Compile the parts of yarp-wholebodyinterface that depen
 option(YARPWBI_ENABLE_TESTS "Enable unit testing" FALSE)
 
 find_package(YARP 2.3.63.7 REQUIRED)
-if (${YARP_VERSION} VERSION_LESS 2.3.69.8)
-    add_definitions(-DYARPWBI_YARP_HAS_LEGACY_IOPENLOOP)
-endif ()
 
 if(YARPWBI_USES_KDL)
     find_package(iDynTree 0.3.14 REQUIRED)
