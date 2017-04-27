@@ -135,9 +135,7 @@ namespace yarpWbi
 
         // yarp interfaces (the "key" of these vector is wbi numeric controlboard id
         std::vector<yarp::dev::IEncodersTimed*>       ienc;   // interface to read encoders
-        // Temporary defined open loop as void to be compatible with both YARP master and devel
-        // see https://github.com/robotology/yarp-wholebodyinterface/issues/72
-        std::vector<void*>     iopl;   // interface to read motor PWM
+        std::vector<yarp::dev::IOpenLoopControl*>     iopl;   // interface to read motor PWM
         std::vector<yarp::dev::PolyDriver*>           dd; //device drivers
         std::vector<yarp::dev::ITorqueControl*>       itrq;  // interface to read joint torques
 
