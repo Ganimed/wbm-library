@@ -442,11 +442,22 @@ bool yarpWholeBodySensors::openPwm(const int bp)
         return false;
     }
 
-    if(!dd[bp]->view(iopl[bp]))
+    // Conditional definition of open loop for compatibility with both YARP master and devel:
+    // The iopl pointer is passed to the device driver that implements the interface. The view
+    // function is using a dynamic cast which doesn't work properly on a (void*), so we use a
+    // proper type here (IPWMControl*) or (IOpenLoopControl*).
+#ifndef YARPWBI_YARP_HAS_LEGACY_IOPENLOOP
+    IPWMControl * typed_iopl = 0;
+#else
+    IOpenLoopControl * typed_iopl = 0;
+#endif
+
+    if(!dd[bp]->view(typed_iopl))
     {
         fprintf(stderr, "Problem initializing drivers of %s\n", controlBoardNames[bp].c_str());
         return false;
     }
+    iopl[bp] = typed_iopl; // copy to iopl which is a (void*)
 
     //allocate lastRead variables
     qLastRead[bp].resize(controlBoardAxes[bp]);
