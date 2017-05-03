@@ -39,6 +39,10 @@ const std::string yarpWbi::YarpWholeBodyActuatorsPropertyInteractionModeComplian
 const std::string yarpWbi::YarpWholeBodyActuatorsPropertyImpedanceStiffnessKey = "yarp.dev.impedance.stiffness";
 const std::string yarpWbi::YarpWholeBodyActuatorsPropertyImpedanceDampingKey = "yarp.dev.impedance.damping";
 
+#ifdef YARPWBI_YARP_HAS_LEGACY_IOPENLOOP
+#define VOCAB_CM_PWM VOCAB_CM_OPENLOOP
+#endif
+
 
 // *********************************************************************************************************************
 // *********************************************************************************************************************
@@ -90,10 +94,21 @@ bool yarpWholeBodyActuators::openControlBoardDrivers(int bp)
     }
 
     //Open all necessary interfaces
-    bool ok = dd[bp]->view(itrq[bp]) && dd[bp]->view(iimp[bp]) && dd[bp]->view(icmd[bp])
-              && dd[bp]->view(ivel[bp]) && dd[bp]->view(ipos[bp]) && dd[bp]->view(iopl[bp])
-              && dd[bp]->view(ipositionDirect[bp]) && dd[bp]->view(iinteraction[bp]);
+    //
+    // Conditional definition of open loop for compatibility with both YARP master and devel:
+    // The iopl pointer is passed to the device driver that implements the interface. The view
+    // function is using a dynamic cast which doesn't work properly on a (void*), so we use a
+    // proper type here (IPWMControl*) or (IOpenLoopControl*).
+#ifndef YARPWBI_YARP_HAS_LEGACY_IOPENLOOP
+    IPWMControl * typed_iopl = 0;
+#else
+    IOpenLoopControl * typed_iopl = 0;
+#endif
 
+    bool ok = dd[bp]->view(itrq[bp]) && dd[bp]->view(iimp[bp]) && dd[bp]->view(icmd[bp])
+              && dd[bp]->view(ivel[bp]) && dd[bp]->view(ipos[bp]) && dd[bp]->view(typed_iopl)
+              && dd[bp]->view(ipositionDirect[bp]) && dd[bp]->view(iinteraction[bp]);
+    iopl[bp] = typed_iopl; // copy to iopl which is a (void*)
 
     if(!ok)
     {
@@ -401,7 +416,7 @@ bool yarpWholeBodyActuators::setControlModeSingleJoint(ControlMode controlMode, 
                 }
                 break;
             case CTRL_MODE_MOTOR_PWM:
-                ok = icmd[bodyPart]->setControlMode(controlBoardJointAxis,VOCAB_CM_OPENLOOP);
+                ok = icmd[bodyPart]->setControlMode(controlBoardJointAxis,VOCAB_CM_PWM);
                 break;
             default:
                 break;
@@ -490,7 +505,11 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
             }
                 break;
             case CTRL_MODE_MOTOR_PWM:
-                ret_value = iopl[bodyPart]->setRefOutput(controlBoardAxis, *ref);
+#ifndef YARPWBI_YARP_HAS_LEGACY_IOPENLOOP
+                ret_value = ((IPWMControl*)iopl[bodyPart])->setRefDutyCycle(controlBoardAxis, *ref);
+#else
+                ret_value = ((IOpenLoopControl*)iopl[bodyPart])->setRefOutput(controlBoardAxis, *ref);
+#endif
                 break;
             default:
                 ret_value = false;
@@ -669,10 +688,14 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                 for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfPWMControlledJointsInControlBoard; controlBoard_jnt++ )
                 {
                     int wbi_id = controlledJointsForControlBoard.pwmControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
-                    int yarp_controlboard_axis =  controlledJointsForControlBoard.pwmControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
+                    int yarp_controlboard_axis = controlledJointsForControlBoard.pwmControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
                     buf_references[yarp_controlboard_axis] = ref[wbi_id];
                 }
-                ok = iopl[wbi_controlboard_id]->setRefOutputs(buf_references);
+#ifndef YARPWBI_YARP_HAS_LEGACY_IOPENLOOP
+                ok = ((IPWMControl*)iopl[wbi_controlboard_id])->setRefDutyCycles(buf_references);
+#else
+                ok = ((IOpenLoopControl*)iopl[wbi_controlboard_id])->setRefOutputs(buf_references);
+#endif
                 if(!ok)
                 {
                     std::cerr << "yarpWholeBodyActuators::setControlReference error:"
@@ -687,7 +710,11 @@ bool yarpWholeBodyActuators::setControlReference(double *ref, int joint)
                 {
                     int wbi_id = controlledJointsForControlBoard.pwmControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
                     int yarp_controlboard_axis =  controlledJointsForControlBoard.pwmControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
-                    ok = iopl[wbi_controlboard_id]->setRefOutput(yarp_controlboard_axis,ref[wbi_id]);
+#ifndef YARPWBI_YARP_HAS_LEGACY_IOPENLOOP
+                    ok = ((IPWMControl*)iopl[wbi_controlboard_id])->setRefDutyCycle(yarp_controlboard_axis,ref[wbi_id]);
+#else
+                    ok = ((IOpenLoopControl*)iopl[wbi_controlboard_id])->setRefOutput(yarp_controlboard_axis,ref[wbi_id]);
+#endif
                 }
             }
         }
@@ -746,7 +773,7 @@ ControlMode yarpWholeBodyActuators::yarpToWbiCtrlMode(int yarpCtrlMode)
     case VOCAB_CM_TORQUE:   return CTRL_MODE_TORQUE;
     case VOCAB_CM_POSITION: return CTRL_MODE_POS;
     case VOCAB_CM_VELOCITY: return CTRL_MODE_VEL;
-    case VOCAB_CM_OPENLOOP: return CTRL_MODE_MOTOR_PWM;
+    case VOCAB_CM_PWM: return CTRL_MODE_MOTOR_PWM;
     }
     return CTRL_MODE_UNKNOWN;
 }
