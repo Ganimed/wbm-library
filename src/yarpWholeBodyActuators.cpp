@@ -94,10 +94,21 @@ bool yarpWholeBodyActuators::openControlBoardDrivers(int bp)
     }
 
     //Open all necessary interfaces
-    bool ok = dd[bp]->view(itrq[bp]) && dd[bp]->view(iimp[bp]) && dd[bp]->view(icmd[bp])
-              && dd[bp]->view(ivel[bp]) && dd[bp]->view(ipos[bp]) && dd[bp]->view(iopl[bp])
-              && dd[bp]->view(ipositionDirect[bp]) && dd[bp]->view(iinteraction[bp]);
+    //
+    // Conditional definition of open loop for compatibility with both YARP master and devel:
+    // The iopl pointer is passed to the device driver that implements the interface. The view
+    // function is using a dynamic cast which doesn't work properly on a (void*), so we use a
+    // proper type here (IPWMControl*) or (IOpenLoopControl*).
+#ifndef YARPWBI_YARP_HAS_LEGACY_IOPENLOOP
+    IPWMControl * typed_iopl = 0;
+#else
+    IOpenLoopControl * typed_iopl = 0;
+#endif
 
+    bool ok = dd[bp]->view(itrq[bp]) && dd[bp]->view(iimp[bp]) && dd[bp]->view(icmd[bp])
+              && dd[bp]->view(ivel[bp]) && dd[bp]->view(ipos[bp]) && dd[bp]->view(typed_iopl)
+              && dd[bp]->view(ipositionDirect[bp]) && dd[bp]->view(iinteraction[bp]);
+    iopl[bp] = typed_iopl; // copy to iopl which is a (void*)
 
     if(!ok)
     {
