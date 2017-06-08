@@ -58,7 +58,7 @@ set(folder_header include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
                   include/yarpWholeBodyInterface/PIDList.h)
                   
 if (YARPWBI_USES_KDL)                
-   list(APPEND include/yarpWholeBodyInterface/yarpWholeBodyModelV1.h)
+   list(APPEND folder_header include/yarpWholeBodyInterface/yarpWholeBodyModelV1.h)
 endif ()
 
 source_group("Source Files" FILES ${folder_source})
