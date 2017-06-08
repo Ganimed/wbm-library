@@ -22,7 +22,6 @@
 
 #include <yarp/os/Log.h>
 #include <yarp/os/LogStream.h>
-#include <kdl_codyco/treeserialization.hpp>
 #include <cmath>
 
 static const std::string WBI_YARP_JOINTS_GROUP = "WBI_YARP_JOINTS";

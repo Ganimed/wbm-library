@@ -28,101 +28,106 @@ if (${YARP_VERSION} VERSION_LESS 2.3.69.8)
     add_definitions(-DYARPWBI_YARP_HAS_LEGACY_IOPENLOOP)
 endif ()
 
-if(YARPWBI_USES_KDL)
-    find_package(iDynTree 0.3.14 REQUIRED)
-    find_package(ICUB REQUIRED)
-    find_package(wholeBodyInterface 0.2.6 REQUIRED)
-    find_package(Eigen3 REQUIRED)
+find_package(iDynTree 0.3.14 REQUIRED)
+find_package(ICUB REQUIRED)
+find_package(wholeBodyInterface 0.2.6 REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-    set(folder_source src/yarpWbiUtil.cpp
-                      src/yarpWholeBodyInterface.cpp
-                      src/yarpWholeBodyModelV1.cpp
-                      src/yarpWholeBodyModelV2.cpp
-                      src/yarpWholeBodyStates.cpp
-                      src/floatingBaseEstimators.cpp
-                      src/yarpWholeBodyActuators.cpp
-                      src/yarpWholeBodySensors.cpp
-                      src/PIDList.cpp)
+set(folder_source src/yarpWbiUtil.cpp
+                  src/yarpWholeBodyInterface.cpp
+                  src/yarpWholeBodyModelV2.cpp
+                  src/yarpWholeBodyStates.cpp
+                  src/floatingBaseEstimators.cpp
+                  src/yarpWholeBodyActuators.cpp
+                  src/yarpWholeBodySensors.cpp
+                  src/PIDList.cpp)
 
-    set(folder_header include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
-                      include/yarpWholeBodyInterface/yarpWholeBodyModelV1.h
-                      include/yarpWholeBodyInterface/yarpWholeBodyModelV2.h
-                      include/yarpWholeBodyInterface/yarpWholeBodyModel.h
-                      include/yarpWholeBodyInterface/yarpWholeBodyStates.h
-                      include/yarpWholeBodyInterface/yarpWholeBodyActuators.h
-                      include/yarpWholeBodyInterface/yarpWholeBodySensors.h
-                      include/yarpWholeBodyInterface/floatingBaseEstimators.h
-                      include/yarpWholeBodyInterface/yarpWbiUtil.h
-                      include/yarpWholeBodyInterface/PIDList.h)
-
-    source_group("Source Files" FILES ${folder_source})
-    source_group("Header Files" FILES ${folder_header})
-
-    add_definitions(-Wall)
-
-    # import math symbols from standard cmath
-    add_definitions(-D_USE_MATH_DEFINES)
-
-    option(YARPWBI_ENABLE_RPATH "Enable RPATH for the library" TRUE)
-    mark_as_advanced(YARPWBI_ENABLE_RPATH)
-
-    if(MSVC)
-        message(STATUS "Building ${PROJECT_NAME} as a shared library is not currently supported on Windows")
-        set(BUILD_SHARED_LIBS  FALSE)
-    endif()
-
-    include(AddInstallRPATHSupport)
-    add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_PREFIX}/bin"
-                            LIB_DIRS "${CMAKE_INSTALL_PREFIX}/lib"
-                            DEPENDS YARPWBI_ENABLE_RPATH
-                            USE_LINK_PATH)
-
-    add_library(${LIBRARY_NAME} ${folder_source} ${folder_header})
-
-    set_target_properties(${LIBRARY_NAME}  PROPERTIES VERSION ${${VARS_PREFIX}_VERSION}
-                                        SOVERSION ${${VARS_PREFIX}_VERSION}
-                                        PUBLIC_HEADER "${folder_header}")
-
-    target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>")
-    target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/yarpWholeBodyInterface>"
-                                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${${VARS_PREFIX}_INSTALL_INCLUDEDIR}>")
-
-    target_include_directories(${LIBRARY_NAME} PUBLIC
-                                        ${YARP_INCLUDE_DIRS}
-                                        ${iDynTree_INCLUDE_DIRS}
-                                        ${wholeBodyInterface_INCLUDE_DIRS}
-                                        ${EIGEN3_INCLUDE_DIR}
-                                        ${skinDynLib_INCLUDE_DIRS}
-                                        ${ctrlLib_INCLUDE_DIRS})
+if (YARPWBI_USES_KDL)                
+    list(APPEND folder_source src/yarpWholeBodyModelV1.cpp)
+endif ()
 
 
-    target_link_libraries(${LIBRARY_NAME} LINK_PUBLIC ${YARP_LIBRARIES}
-                                                    ${wholeBodyInterface_LIBRARIES}
-                                        LINK_PRIVATE ${iDynTree_LIBRARIES}
-                                                    ${paramHelp_LIBRARIES})
+set(folder_header include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
+                  include/yarpWholeBodyInterface/yarpWholeBodyModelV2.h
+                  include/yarpWholeBodyInterface/yarpWholeBodyModel.h
+                  include/yarpWholeBodyInterface/yarpWholeBodyStates.h
+                  include/yarpWholeBodyInterface/yarpWholeBodyActuators.h
+                  include/yarpWholeBodyInterface/yarpWholeBodySensors.h
+                  include/yarpWholeBodyInterface/floatingBaseEstimators.h
+                  include/yarpWholeBodyInterface/yarpWbiUtil.h
+                  include/yarpWholeBodyInterface/PIDList.h)
+                  
+if (YARPWBI_USES_KDL)                
+   list(APPEND include/yarpWholeBodyInterface/yarpWholeBodyModelV1.h)
+endif ()
 
-    install(TARGETS ${LIBRARY_NAME}
-            EXPORT  ${PROJECT_NAME}
-            RUNTIME DESTINATION "${${VARS_PREFIX}_INSTALL_BINDIR}" COMPONENT bin
-            LIBRARY DESTINATION "${${VARS_PREFIX}_INSTALL_LIBDIR}" COMPONENT shlib
-            ARCHIVE DESTINATION "${${VARS_PREFIX}_INSTALL_LIBDIR}" COMPONENT lib
-            PUBLIC_HEADER DESTINATION "${${VARS_PREFIX}_INSTALL_INCLUDEDIR}/${INCLUDE_DIRS}" COMPONENT dev)
+source_group("Source Files" FILES ${folder_source})
+source_group("Header Files" FILES ${folder_header})
 
-    set_property(GLOBAL APPEND PROPERTY ${VARS_PREFIX}_TARGETS ${LIBRARY_NAME})
+add_definitions(-Wall)
 
-    include(InstallBasicPackageFiles)
-    install_basic_package_files(${PROJECT_NAME} VARS_PREFIX ${VARS_PREFIX}
-                                                VERSION ${${VARS_PREFIX}_VERSION}
-                                                COMPATIBILITY SameMajorVersion
-                                                TARGETS_PROPERTY ${VARS_PREFIX}_TARGETS
-                                                NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+# import math symbols from standard cmath
+add_definitions(-D_USE_MATH_DEFINES)
 
-    if(YARPWBI_ENABLE_TESTS)
-        #enable testing
-        #include(CTest)
-        enable_testing()
-        add_subdirectory(tests)
-    endif()
+option(YARPWBI_ENABLE_RPATH "Enable RPATH for the library" TRUE)
+mark_as_advanced(YARPWBI_ENABLE_RPATH)
+
+if(MSVC)
+    message(STATUS "Building ${PROJECT_NAME} as a shared library is not currently supported on Windows")
+    set(BUILD_SHARED_LIBS  FALSE)
+endif()
+
+include(AddInstallRPATHSupport)
+add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_PREFIX}/bin"
+                        LIB_DIRS "${CMAKE_INSTALL_PREFIX}/lib"
+                        DEPENDS YARPWBI_ENABLE_RPATH
+                        USE_LINK_PATH)
+
+add_library(${LIBRARY_NAME} ${folder_source} ${folder_header})
+
+set_target_properties(${LIBRARY_NAME}  PROPERTIES VERSION ${${VARS_PREFIX}_VERSION}
+                                    SOVERSION ${${VARS_PREFIX}_VERSION}
+                                    PUBLIC_HEADER "${folder_header}")
+
+target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>")
+target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/yarpWholeBodyInterface>"
+                                        "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${${VARS_PREFIX}_INSTALL_INCLUDEDIR}>")
+
+target_include_directories(${LIBRARY_NAME} PUBLIC
+                                    ${YARP_INCLUDE_DIRS}
+                                    ${iDynTree_INCLUDE_DIRS}
+                                    ${wholeBodyInterface_INCLUDE_DIRS}
+                                    ${EIGEN3_INCLUDE_DIR}
+                                    ${skinDynLib_INCLUDE_DIRS}
+                                    ${ctrlLib_INCLUDE_DIRS})
+
+
+target_link_libraries(${LIBRARY_NAME} LINK_PUBLIC ${YARP_LIBRARIES}
+                                                ${wholeBodyInterface_LIBRARIES}
+                                    LINK_PRIVATE ${iDynTree_LIBRARIES}
+                                                ${paramHelp_LIBRARIES})
+
+install(TARGETS ${LIBRARY_NAME}
+        EXPORT  ${PROJECT_NAME}
+        RUNTIME DESTINATION "${${VARS_PREFIX}_INSTALL_BINDIR}" COMPONENT bin
+        LIBRARY DESTINATION "${${VARS_PREFIX}_INSTALL_LIBDIR}" COMPONENT shlib
+        ARCHIVE DESTINATION "${${VARS_PREFIX}_INSTALL_LIBDIR}" COMPONENT lib
+        PUBLIC_HEADER DESTINATION "${${VARS_PREFIX}_INSTALL_INCLUDEDIR}/${INCLUDE_DIRS}" COMPONENT dev)
+
+set_property(GLOBAL APPEND PROPERTY ${VARS_PREFIX}_TARGETS ${LIBRARY_NAME})
+
+include(InstallBasicPackageFiles)
+install_basic_package_files(${PROJECT_NAME} VARS_PREFIX ${VARS_PREFIX}
+                                            VERSION ${${VARS_PREFIX}_VERSION}
+                                            COMPATIBILITY SameMajorVersion
+                                            TARGETS_PROPERTY ${VARS_PREFIX}_TARGETS
+                                            NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+
+if(YARPWBI_ENABLE_TESTS)
+    #enable testing
+    #include(CTest)
+    enable_testing()
+    add_subdirectory(tests)
 endif()
 
 include(AddUninstallTarget)
