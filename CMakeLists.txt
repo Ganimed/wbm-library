@@ -64,7 +64,9 @@ endif ()
 source_group("Source Files" FILES ${folder_source})
 source_group("Header Files" FILES ${folder_header})
 
-add_definitions(-Wall)
+if (NOT ${MSVC})
+    add_definitions(-Wall)
+endif ()
 
 # import math symbols from standard cmath
 add_definitions(-D_USE_MATH_DEFINES)
