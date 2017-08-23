@@ -623,7 +623,7 @@ bool yarpWholeBodyModelV1::computeDJdq(double *q, const Frame &xBase, double *dq
     }
 
     //should I copy directly?
-    YARP_ASSERT(six_elem_buffer.size() == 6);
+    yAssert(six_elem_buffer.size() == 6);
     memcpy(dJdq, six_elem_buffer.data(), sizeof(double) * six_elem_buffer.size());
     return true;
 
