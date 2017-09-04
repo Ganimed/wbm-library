@@ -146,6 +146,8 @@ namespace yarpWbi
         std::vector<void*>     iopl;
         std::vector<yarp::dev::PolyDriver*>           dd;
 
+        std::vector<yarp::sig::Vector>   controlBoardReadingBuffer;
+
         /**
          * Open the yarp PolyDriver relative to control board bodyPartNames[bodyPart].
          */
@@ -308,7 +310,7 @@ namespace yarpWbi
 
         virtual bool getControlProperty(std::string key, std::string &value, int joint = -1, ::wbi::Error *error = 0) const;
 
-        virtual bool getControlReferences(double *ref, int joint=-1) const;
+        virtual bool getControlReferences(wbi::ControlMode controlMode, double *ref, int joint=-1);
 
     };
 }
