@@ -134,7 +134,7 @@ namespace yarpWbi
         yarp::os::Property wbi_yarp_properties;
 
          // yarp drivers vector whose index is given by relative index of the bodyPartNames vector
-        std::vector<yarp::dev::IPositionControl*>     ipos;
+        std::vector<yarp::dev::IPositionControl2*>     ipos;
         std::vector<yarp::dev::IPositionDirect*>      ipositionDirect;
         std::vector<yarp::dev::ITorqueControl*>       itrq;
         std::vector<yarp::dev::IImpedanceControl*>    iimp;
@@ -307,6 +307,8 @@ namespace yarpWbi
         virtual bool setControlProperty(const std::string key, const std::string value, int joint = -1, ::wbi::Error *error = 0);
 
         virtual bool getControlProperty(std::string key, std::string &value, int joint = -1, ::wbi::Error *error = 0) const;
+
+        virtual bool getControlReferences(double *ref, int joint=-1) const;
 
     };
 }

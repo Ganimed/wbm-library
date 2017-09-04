@@ -1187,3 +1187,275 @@ bool yarpWholeBodyActuators::setFullImpedance(double stiffness, double damping, 
         return iimp[bodyPart]->setImpedance(controlBoardAxis, stiffness, damping);
     }
 }
+
+bool yarpWholeBodyActuators::getControlReferences(double *ref, int joint) const
+{
+    if (!initDone) return false;
+
+    //std::cout << "~~~~~~~~~~~~ getControlReferences called " << std::endl;
+    if(joint> (int)jointIdList.size())
+        return false;
+
+    bool ok = true;
+    if(joint>=0)    // get control reference for the specified joint
+    {
+        int bodyPart = controlBoardAxisList[joint].first;
+        int controlBoardAxis = controlBoardAxisList[joint].second;
+
+        bool ret_value = false;
+        switch(currentCtrlModes[joint])
+        {
+            case CTRL_MODE_POS:
+                ret_value = ipos[bodyPart]->getTargetPosition(controlBoardAxis, ref);
+                (*ref) *= yarpWbi::Deg2Rad;
+                break;
+            case CTRL_MODE_DIRECT_POSITION:
+                ret_value = ipositionDirect[bodyPart]->getRefPosition(controlBoardAxis, ref);
+                (*ref) *= yarpWbi::Deg2Rad;
+                break;
+            case CTRL_MODE_VEL:
+                ret_value = ivel[bodyPart]->getRefVelocity(controlBoardAxis, ref);
+                (*ref) *= yarpWbi::Deg2Rad;
+                break;
+            case CTRL_MODE_TORQUE:
+            {
+                ret_value = itrq[bodyPart]->getRefTorque(controlBoardAxis, ref);
+            }
+                break;
+            case CTRL_MODE_MOTOR_PWM:
+#ifndef YARPWBI_YARP_HAS_LEGACY_IOPENLOOP
+                ret_value = ((IPWMControl*)iopl[bodyPart])->getRefDutyCycle(controlBoardAxis, ref);
+#else
+                ret_value = false;
+#endif
+                break;
+            default:
+                ret_value = false;
+        }
+        return ret_value;
+    }
+
+    //Buffer variables
+    double buf_references[MAX_NJ];
+    int buf_controlledJoints[MAX_NJ];
+
+    // set control references for all joints
+    for(int wbi_controlboard_id=0; wbi_controlboard_id < (int)controlBoardNames.size(); wbi_controlboard_id++ )
+    {
+        ///////////////////////////////////////////////////
+        //Sending references for position controlled joints
+        ///////////////////////////////////////////////////
+        int nrOfPosControlledJointsInControlBoard = controlledJointsForControlBoard.positionControlledJoints[wbi_controlboard_id].size();
+        if( nrOfPosControlledJointsInControlBoard > 0 )
+        {
+            if( nrOfPosControlledJointsInControlBoard == totalAxesInControlBoard[wbi_controlboard_id] )
+            {
+                ok = ipos[wbi_controlboard_id]->getTargetPositions(buf_references);
+
+                if(!ok)
+                {
+                    std::cerr << "[ERR] yarpWholeBodyActuators::getControlReferences error:"
+                    << "[ERR]  unable to getTargetPositions for controlboard " << controlBoardNames[wbi_controlboard_id] << std::endl;
+                    return false;
+                }
+
+                //If the wbi controls all the joint in the control board, use the usual interface setPositions
+                for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfPosControlledJointsInControlBoard; controlBoard_jnt++ )
+                {
+                    int wbi_id = controlledJointsForControlBoard.positionControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
+                    int yarp_controlboard_axis =  controlledJointsForControlBoard.positionControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
+
+                    ref[wbi_id] = yarpWbi::Deg2Rad * buf_references[yarp_controlboard_axis];
+                }
+            }
+            else
+            {
+                //Otherwise send all the commands individually
+                for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfPosControlledJointsInControlBoard; controlBoard_jnt++ )
+                {
+                    int wbi_id = controlledJointsForControlBoard.positionControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
+                    int yarp_controlboard_axis =  controlledJointsForControlBoard.positionControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
+
+                    ok = ipos[wbi_controlboard_id]->getTargetPosition(yarp_controlboard_axis, &(ref[wbi_id]));
+                    ref[wbi_id] *= yarpWbi::Deg2Rad;
+
+                }
+            }
+        }
+
+        //////////////////////////////////////////////////////////
+        //Sending references for direct position controlled joints
+        //////////////////////////////////////////////////////////
+        int nrOfPosDirectControlledJointsInControlBoard = controlledJointsForControlBoard.positionDirectedControlledJoints[wbi_controlboard_id].size();
+        if( nrOfPosDirectControlledJointsInControlBoard > 0 )
+        {
+            if( nrOfPosDirectControlledJointsInControlBoard == totalAxesInControlBoard[wbi_controlboard_id] )
+            {
+                ok = ipositionDirect[wbi_controlboard_id]->getRefPositions(buf_references);
+                if(!ok)
+                {
+                    std::cerr << "yarpWholeBodyActuators::getControlReference error:"
+                    << " unable to read position for controlboard " << controlBoardNames[wbi_controlboard_id] << std::endl;
+                    return false;
+                }
+                //If the wbi controls all the joint in the control board, use the usual interface setPositions
+                for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfPosDirectControlledJointsInControlBoard; controlBoard_jnt++ )
+                {
+                    int wbi_id = controlledJointsForControlBoard.positionDirectedControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
+                    int yarp_controlboard_axis =  controlledJointsForControlBoard.positionDirectedControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
+                    ref[yarp_controlboard_axis] = yarpWbi::Deg2Rad * buf_references[wbi_id];
+                }
+            }
+            else
+            {
+                //Otherwise send all the commands individually
+                for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfPosDirectControlledJointsInControlBoard; controlBoard_jnt++ )
+                {
+                    int wbi_id = controlledJointsForControlBoard.positionDirectedControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
+                    int yarp_controlboard_axis =  controlledJointsForControlBoard.positionDirectedControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
+                    ok = ipositionDirect[wbi_controlboard_id]->getRefPosition(yarp_controlboard_axis, &(ref[wbi_id]));
+                    ref[wbi_id] *= yarpWbi::Deg2Rad;
+                }
+            }
+        }
+
+        //////////////////////////////////////////////////////////
+        //Sending references for velocity controlled joints
+        //////////////////////////////////////////////////////////
+        int nrOfVelocityControlledJointsInControlBoard = controlledJointsForControlBoard.velocityControlledJoints[wbi_controlboard_id].size();
+        if( nrOfVelocityControlledJointsInControlBoard > 0 )
+        {
+            if( nrOfVelocityControlledJointsInControlBoard == totalAxesInControlBoard[wbi_controlboard_id] )
+            {
+                ok = ivel[wbi_controlboard_id]->getRefVelocities(buf_references);
+                if(!ok)
+                {
+                    std::cerr << "yarpWholeBodyActuators::getControlReference error:"
+                    << " unable to read velocities for controlboard " << controlBoardNames[wbi_controlboard_id] << std::endl;
+                    return false;
+                }
+
+                //If the wbi controls all the joint in the control board, use the usual interface setPositions
+                for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfVelocityControlledJointsInControlBoard; controlBoard_jnt++ )
+                {
+                    int wbi_id = controlledJointsForControlBoard.velocityControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
+                    int yarp_controlboard_axis =  controlledJointsForControlBoard.velocityControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
+
+                    ref[wbi_id] = yarpWbi::Deg2Rad * buf_references[yarp_controlboard_axis];
+                }
+
+            }
+            else
+            {
+                {
+                    //Otherwise send all the commands together, but packing them for iVelocityControl interface
+                    for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfVelocityControlledJointsInControlBoard; controlBoard_jnt++ )
+                    {
+                        int yarp_controlboard_axis =  controlledJointsForControlBoard.velocityControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
+                        buf_controlledJoints[controlBoard_jnt] = yarp_controlboard_axis;
+                    }
+
+                    ok = ivel[wbi_controlboard_id]->getRefVelocities(nrOfVelocityControlledJointsInControlBoard, buf_controlledJoints, ref);
+                    if(!ok)
+                    {
+                        std::cerr << "yarpWholeBodyActuators::getControlReference error:"
+                        << " unable to get velocities for controlboard " << controlBoardNames[wbi_controlboard_id] << std::endl;
+                        return false;
+                    }
+
+                    //Otherwise send all the commands together, but packing them for iVelocityControl interface
+                    for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfVelocityControlledJointsInControlBoard; controlBoard_jnt++ )
+                    {
+                        ref[controlBoard_jnt] *= yarpWbi::Deg2Rad;
+                    }
+                }
+
+            }
+        }
+
+        //////////////////////////////////////////////////////////
+        //Sending references for torque controlled joints
+        //////////////////////////////////////////////////////////
+        int nrOfTorqueControlledJointsInControlBoard = controlledJointsForControlBoard.torqueControlledJoints[wbi_controlboard_id].size();
+        if( nrOfTorqueControlledJointsInControlBoard > 0 )
+        {
+
+            if( nrOfTorqueControlledJointsInControlBoard == totalAxesInControlBoard[wbi_controlboard_id] )
+            {
+                ok = itrq[wbi_controlboard_id]->getRefTorques(buf_references);
+                if(!ok)
+                {
+                    std::cerr << "yarpWholeBodyActuators::getControlReference error:"
+                    << " unable to get torques for controlboard " << controlBoardNames[wbi_controlboard_id] << std::endl;
+                    return false;
+                }
+
+                //If the wbi controls all the joint in the control board, use the usual interface setPositions
+                for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfTorqueControlledJointsInControlBoard; controlBoard_jnt++ )
+                {
+                    int wbi_id = controlledJointsForControlBoard.torqueControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
+                    int yarp_controlboard_axis =  controlledJointsForControlBoard.torqueControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
+                    ref[wbi_id] = buf_references[yarp_controlboard_axis];
+                }
+            }
+            else
+            {
+                //Otherwise send all the commands individually
+                for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfTorqueControlledJointsInControlBoard; controlBoard_jnt++ )
+                {
+                    int wbi_id = controlledJointsForControlBoard.torqueControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
+                    int yarp_controlboard_axis =  controlledJointsForControlBoard.torqueControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
+                    ok = itrq[wbi_controlboard_id]->getRefTorque(yarp_controlboard_axis, &(ref[wbi_id]));
+                }
+            }
+        }
+
+        //////////////////////////////////////////////////////////
+        //Sending references for pwm controlled joints
+        //////////////////////////////////////////////////////////
+        int nrOfPWMControlledJointsInControlBoard = controlledJointsForControlBoard.pwmControlledJoints[wbi_controlboard_id].size();
+        if( nrOfPWMControlledJointsInControlBoard > 0 )
+        {
+            if( nrOfPWMControlledJointsInControlBoard == totalAxesInControlBoard[wbi_controlboard_id] )
+            {
+#ifndef YARPWBI_YARP_HAS_LEGACY_IOPENLOOP
+                ok = ((IPWMControl*)iopl[wbi_controlboard_id])->getRefDutyCycles(buf_references);
+#else
+                ok = false
+#endif
+                if(!ok)
+                {
+                    std::cerr << "yarpWholeBodyActuators::getControlReference error:"
+                    << " unable to get PWMs for controlboard " << controlBoardNames[wbi_controlboard_id] << std::endl;
+                    return false;
+                }
+
+                //If the wbi controls all the joint in the control board, use the usual interface setPositions
+                for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfPWMControlledJointsInControlBoard; controlBoard_jnt++ )
+                {
+                    int wbi_id = controlledJointsForControlBoard.pwmControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
+                    int yarp_controlboard_axis = controlledJointsForControlBoard.pwmControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
+                    ref[wbi_id] = buf_references[yarp_controlboard_axis];
+                }
+
+            }
+            else
+            {
+                //Otherwise send all the commands individually
+                for( int controlBoard_jnt = 0; controlBoard_jnt < nrOfPWMControlledJointsInControlBoard; controlBoard_jnt++ )
+                {
+                    int wbi_id = controlledJointsForControlBoard.pwmControlledJoints[wbi_controlboard_id][controlBoard_jnt].wbi_id;
+                    int yarp_controlboard_axis =  controlledJointsForControlBoard.pwmControlledJoints[wbi_controlboard_id][controlBoard_jnt].yarp_controlboard_axis;
+#ifndef YARPWBI_YARP_HAS_LEGACY_IOPENLOOP
+                    ok = ((IPWMControl*)iopl[wbi_controlboard_id])->getRefDutyCycle(yarp_controlboard_axis, &(ref[wbi_id]));
+#else
+                    false
+#endif
+                }
+            }
+        }
+
+    }
+
+    return ok;
+}
