@@ -1241,7 +1241,7 @@ bool yarpWholeBodyActuators::getControlReferences(wbi::ControlMode controlMode, 
     for(int wbi_controlboard_id=0; wbi_controlboard_id < (int)controlBoardNames.size(); wbi_controlboard_id++ )
     {
         controlBoardReadingBuffer[wbi_controlboard_id].zero();
-        
+
         switch(controlMode)
         {
             case CTRL_MODE_POS:
@@ -1323,16 +1323,17 @@ bool yarpWholeBodyActuators::getControlReferences(wbi::ControlMode controlMode, 
                 break;
         }
 
-        // now map to WBI id ordering
-        for(int idx = 0; idx < (int)jointIdList.size(); ++idx)
-        {
-            int boardIdx = controlBoardAxisList[idx].first;
-            int axis = controlBoardAxisList[idx].second;
-
-            ref[idx] = controlBoardReadingBuffer[boardIdx](axis);
-        }
-
     }
+
+    // now map to WBI id ordering
+    for(int idx = 0; idx < (int)jointIdList.size(); ++idx)
+    {
+        int boardIdx = controlBoardAxisList[idx].first;
+        int axis = controlBoardAxisList[idx].second;
+
+        ref[idx] = controlBoardReadingBuffer[boardIdx](axis);
+    }
+
 
     return ok;
 }
