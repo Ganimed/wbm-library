@@ -85,7 +85,7 @@ bool yarpWholeBodyActuators::openControlBoardDrivers(int bp)
                      " but the total number of bodyparts considered in the interface is " << controlBoardNames.size() << std::endl;
         return false;
     }
-    itrq[bp]=0; iimp[bp]=0; icmd[bp]=0; ivel[bp]=0; ipos[bp]=0; iopl[bp]=0;  dd[bp]=0; ipositionDirect[bp]=0; iinteraction[bp]=0;
+    itrq[bp]=0; iimp[bp]=0; icmd[bp]=0; ivel[bp]=0; ipos[bp]=0; iopl[bp]=0;  dd[bp]=0; ipositionDirect[bp]=0; iinteraction[bp]=0; ipid[bp]=0;
     if(!openPolyDriver(name, robot, dd[bp], controlBoardNames[bp].c_str()))
     {
         std::cerr << "[ERR] yarpWholeBodyActuators::openDrivers error: unable to open controlboard " << controlBoardNames[bp]
@@ -107,7 +107,7 @@ bool yarpWholeBodyActuators::openControlBoardDrivers(int bp)
 
     bool ok = dd[bp]->view(itrq[bp]) && dd[bp]->view(iimp[bp]) && dd[bp]->view(icmd[bp])
               && dd[bp]->view(ivel[bp]) && dd[bp]->view(ipos[bp]) && dd[bp]->view(typed_iopl)
-              && dd[bp]->view(ipositionDirect[bp]) && dd[bp]->view(iinteraction[bp]);
+              && dd[bp]->view(ipositionDirect[bp]) && dd[bp]->view(iinteraction[bp]) && dd[bp]->view(ipid[bp]);
     iopl[bp] = typed_iopl; // copy to iopl which is a (void*)
 
     if(!ok)
@@ -183,6 +183,7 @@ bool yarpWholeBodyActuators::init()
         iopl.resize(controlBoardNames.size());
         ipositionDirect.resize(controlBoardNames.size());
         iinteraction.resize(controlBoardNames.size());
+        ipid.resize(controlBoardNames.size());
         dd.resize(controlBoardNames.size());
 
         //Open necessary yarp controlboard drivers
@@ -235,6 +236,7 @@ bool yarpWholeBodyActuators::init()
         iopl.resize(0);
         ipositionDirect.resize(0);
         iinteraction.resize(0);
+        ipid.resize(0);
         dd.resize(0);
         controlBoardAxisList.resize(0);
 
@@ -818,7 +820,7 @@ bool yarpWholeBodyActuators::setPIDGains(const double *pValue, const double *dVa
             case wbi::CTRL_MODE_TORQUE:
             {
                 Pid currentPid;
-                result = itrq[bodyPart]->getTorquePid(controlBoardJointAxis, &currentPid);
+                result = ipid[bodyPart]->getPid(VOCAB_PIDTYPE_TORQUE, controlBoardJointAxis, &currentPid);
                 if (!result) break;
                 if (pValue != NULL)
                     currentPid.kp = *pValue;
@@ -826,7 +828,7 @@ bool yarpWholeBodyActuators::setPIDGains(const double *pValue, const double *dVa
                     currentPid.kd = *dValue;
                 if (iValue != NULL)
                     currentPid.ki = *iValue;
-                result = itrq[bodyPart]->setTorquePid(controlBoardJointAxis, currentPid);
+                result = ipid[bodyPart]->setPid(VOCAB_PIDTYPE_TORQUE, controlBoardJointAxis, currentPid);
                 break;
             }
             default:
@@ -846,7 +848,7 @@ bool yarpWholeBodyActuators::setPIDGains(yarp::dev::Pid *pids, wbi::ControlMode 
             case wbi::CTRL_MODE_TORQUE:
                 for (std::vector< std::pair<int,int> >::const_iterator jointPair = controlBoardAxisList.begin();
                      jointPair != controlBoardAxisList.end(); ++jointPair) {
-                    result = result && itrq[jointPair->first]->setTorquePid(jointPair->second, pids[i++]);
+                    result = result && ipid[jointPair->first]->setPid(VOCAB_PIDTYPE_TORQUE, jointPair->second, pids[i++]);
                 }
                 break;
             default:
@@ -858,7 +860,7 @@ bool yarpWholeBodyActuators::setPIDGains(yarp::dev::Pid *pids, wbi::ControlMode 
         switch (controlMode) {
             case wbi::CTRL_MODE_TORQUE:
             {
-                result = itrq[bodyPart]->setTorquePid(controlBoardJointAxis, *pids);
+                result = ipid[bodyPart]->setPid(VOCAB_PIDTYPE_TORQUE, controlBoardJointAxis, *pids);
                 break;
             }
             default:
@@ -878,7 +880,7 @@ bool yarpWholeBodyActuators::getPIDGains(yarp::dev::Pid *pids, wbi::ControlMode 
             case wbi::CTRL_MODE_TORQUE:
                 for (std::vector< std::pair<int,int> >::const_iterator jointPair = controlBoardAxisList.begin();
                      jointPair != controlBoardAxisList.end(); ++jointPair) {
-                    result = result && itrq[jointPair->first]->getTorquePid(jointPair->second, &pids[i++]);
+                    result = result && ipid[jointPair->first]->getPid(VOCAB_PIDTYPE_TORQUE, jointPair->second, &pids[i++]);
                 }
                 break;
             default:
@@ -891,7 +893,7 @@ bool yarpWholeBodyActuators::getPIDGains(yarp::dev::Pid *pids, wbi::ControlMode 
         switch (controlMode) {
             case wbi::CTRL_MODE_TORQUE:
             {
-                result = itrq[bodyPart]->getTorquePid(controlBoardJointAxis, pids);
+                result = ipid[bodyPart]->getPid(VOCAB_PIDTYPE_TORQUE, controlBoardJointAxis, pids);
                 break;
             }
             default:
@@ -959,10 +961,10 @@ bool yarpWholeBodyActuators::setControlOffset(const double *value, int joint)
                 int bodyPart = controlBoardAxisList[joint].first;
                 int controlBoardJointAxis = controlBoardAxisList[joint].second;
                 Pid currentPid;
-                result = itrq[bodyPart]->getTorquePid(controlBoardJointAxis, &currentPid);
+                result = ipid[bodyPart]->getPid(VOCAB_PIDTYPE_TORQUE, controlBoardJointAxis, &currentPid);
                 if (!result) break;
                 currentPid.offset = *value;
-                result = itrq[bodyPart]->setTorquePid(controlBoardJointAxis, currentPid);
+                result = ipid[bodyPart]->setPid(VOCAB_PIDTYPE_TORQUE, controlBoardJointAxis, currentPid);
                 break;
             }
             default:

@@ -141,6 +141,8 @@ namespace yarpWbi
         std::vector<yarp::dev::IControlMode2*>        icmd;
         std::vector<yarp::dev::IInteractionMode*>     iinteraction;
         std::vector<yarp::dev::IVelocityControl2*>    ivel;
+        std::vector<yarp::dev::IPidControl*>          ipid;
+
         // Temporary defined open loop as void to be compatible with both YARP master and devel
         // see https://github.com/robotology/yarp-wholebodyinterface/issues/72
         std::vector<void*>     iopl;
