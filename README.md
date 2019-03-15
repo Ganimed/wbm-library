@@ -3,7 +3,7 @@ yarpWholeBodyInterface [![Build Status](https://travis-ci.org/robotology/yarp-wh
 
 Implementation of the [wholeBodyInterface](https://github.com/robotology-playground/wholeBodyInterface) for YARP based robots.
 
-DEPRECATED: This library is deprecated, and will not receive any update in the future.
+**DEPRECATED: This library is deprecated, and will not receive any update in the future.**
 
 ![wbi_diagram](https://cloud.githubusercontent.com/assets/2189180/20675411/6b175f80-b58c-11e6-8a2c-1b211251172f.png)
 
