@@ -1,6 +1,6 @@
 wholeBodyInterface
 ==================
-**DEPRECATED: This library is being deprecated, and will not receive any update in the future.**
+**DEPRECATED: This library is deprecated, and will not receive any update in the future.**
 
 [![Build Status](https://travis-ci.org/robotology/wholebodyinterface.svg?branch=master)](https://travis-ci.org/robotology-playground/wholebodyinterface)
 
