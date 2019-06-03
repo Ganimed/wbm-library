@@ -1,21 +1,27 @@
 /*
  * Copyright (C) 2014 Robotics, Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
- * Authors: Naveen Kuppuswamy
- * email: naveen.kuppuswamy@iit.it
- * modified by: Martin Neururer; email: martin.neururer@gmail.com; date: June, 2016 & January, 2017
+ * Author: Naveen Kuppuswamy
+ * E-mail: naveen.kuppuswamy@iit.it
  *
- * The development of this software was supported by the FP7 EU projects
- * CoDyCo (No. 600716 ICT 2011.2.1 Cognitive Systems and Robotics (b))
- * http://www.codyco.eu
+ * Modified by: Martin Neururer
+ * E-mail:      martin.neururer@student.tuwien.ac.at / martin.neururer@gmail.com
+ * Date:        June, 2016 & January, 2017
+ *
+ * The development of this software was supported by the FP7 EU-project
+ * CoDyCo (No. 600716, ICT-2011.2.1 Cognitive Systems and Robotics (b)),
+ * <http://www.codyco.eu>.
  *
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * A copy of the GNU General Public License can be found along with
+ * the source library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 // global includes
@@ -36,6 +42,9 @@ ModelComponent::ModelComponent(const unsigned int nArgs, const unsigned int nAlt
 {
   modelState = ModelState::getInstance();
   robotModel = modelState->robotModel();
+
+  // initialize/reset the frame transformation H ...
+  wf_H_b = wbi::Frame::identity();
 }
 
 ModelComponent::~ModelComponent()
@@ -62,7 +71,7 @@ const unsigned int ModelComponent::numAltArguments()
   return numAltArgs;
 }
 
-bool ModelComponent::reorderMatrixInRowMajor(const double *srcMat, double *destMat, int nRows, int nCols)
+void ModelComponent::reorderMatrixInRowMajor(const double *srcMat, double *destMat, int nRows, int nCols)
 {
   // store the values of the matrix-array in row-major order (*):
   // 2D row-major:  offset = i_row*nCols + i_col
@@ -73,10 +82,9 @@ bool ModelComponent::reorderMatrixInRowMajor(const double *srcMat, double *destM
       // destMat: idx = (i*nCols + j)
     }
   }
-  return true;
 }
 
-bool ModelComponent::reorderMatrixInColMajor(const double *srcMat, double *destMat, int nRows, int nCols)
+void ModelComponent::reorderMatrixInColMajor(const double *srcMat, double *destMat, int nRows, int nCols)
 {
   // store the values of the matrix-array in column-major order (*):
   // 2D column-major:  offset = i_col*nRows + i_row
@@ -87,17 +95,16 @@ bool ModelComponent::reorderMatrixInColMajor(const double *srcMat, double *destM
       // destMat: idx = (i*nRows + j)
     }
   }
-  return true;
 }
 
 // (*) Further details about the offset calculation for the memory layout of 2D-arrays
 //     are available under:
 //      [1] Memory layout of multi-dimensional arrays, Eli Bendersky, September 2015,
-//            url: http://eli.thegreenplace.net/2015/memory-layout-of-multi-dimensional-arrays
+//            URL: http://eli.thegreenplace.net/2015/memory-layout-of-multi-dimensional-arrays
 //      [2] Row Major and Column Major Address calculations, October 2012,
-//            url: http://www.cbseguy.com/row-column-major-address-calculations-cbse
+//            URL: http://www.cbseguy.com/row-column-major-address-calculations-cbse
 //      [3] An exhaustive evaluation of row-major, column-major and Morton layouts for large two-dimensional arrays,
 //          Thiyagalingam & Beckmann & Kelly, Imperial College, 2003, p. 2,
-//            url: https://www.doc.ic.ac.uk/~phjk/Publications/ExhaustiveMortonUKPEW2003.pdf
+//            URL: https://www.doc.ic.ac.uk/~phjk/Publications/ExhaustiveMortonUKPEW2003.pdf
 //      [4] The Art of Assembly Language Programming, Randall Hyde, 2003, pp. 468-475,
-//            url: http://www.plantation-productions.com/Webster/www.artofasm.com/Linux/HTML/Arraysa2.html
+//            URL: http://www.plantation-productions.com/Webster/www.artofasm.com/Linux/HTML/Arraysa2.html

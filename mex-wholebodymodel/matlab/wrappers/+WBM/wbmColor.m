@@ -1,9 +1,48 @@
+% Copyright (C) 2015-2018, by Martin Neururer
+% Author: Martin Neururer
+% E-mail: martin.neururer@student.tuwien.ac.at / martin.neururer@gmail.com
+% Date:   January-May, 2018
+%
+% Departments:
+%   Robotics, Brain and Cognitive Sciences - Istituto Italiano di Tecnologia and
+%   Automation and Control Institute - TU Wien.
+%
+% This file is part of the Whole-Body Model Library for Matlab (WBML).
+%
+% The development of the WBM-Library was made in the context of the master
+% thesis "Learning Task Behaviors for Humanoid Robots" and is an extension
+% for the Matlab MEX whole-body model interface, which was supported by the
+% FP7 EU-project CoDyCo (No. 600716, ICT-2011.2.1 Cognitive Systems and
+% Robotics (b)), <http://www.codyco.eu>.
+%
+% Permission is granted to copy, distribute, and/or modify the WBM-Library
+% under the terms of the GNU Lesser General Public License, Version 2.1
+% or any later version published by the Free Software Foundation.
+%
+% The WBM-Library is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+% GNU Lesser General Public License for more details.
+%
+% A copy of the GNU Lesser General Public License can be found along
+% with the WBML. If not, see <http://www.gnu.org/licenses/>.
+
 classdef wbmColor
+    % :class:`!wbmColor` is a *utility class* with a list of constant member
+    % variables of predefined RGB-triplets to colorize the simulation of the
+    % robot with some nice colors.
+    %
+    % The color list is based on the color map of *R for Statistical Computing*
+    % (`www.r-project.org <https://www.r-project.org>`_).
+    %
+    % Further details about the R colors are available in the technical note of
+    % the *Stowers Institute for Medical Research*:
+    % `<http://research.stowers.org/mcm/efg/R/Color/Chart/index.htm>`_.
     properties(Constant)
-        % Small color list to colorize the simulation of the robot with some nice colors:
-        % The color list is based on the color map of R for Statistical Computing (https://www.r-project.org).
-        % Source: <http://research.stowers-institute.org/efg/R/Color/Chart/ColorChart.pdf>
-        %                                              idx:
+        % R colors:
+        % Source: <http://research.stowers.org/mcm/efg/R/Color/Chart/ColorChart.pdf>
+
+                                                     % idx:
         aliceblue            = [240 248 255] ./ 255; % 2
         antiquewhite         = [250 235 215] ./ 255; % 3
         azure                = [240 255 255] ./ 255; % 13
@@ -16,6 +55,7 @@ classdef wbmColor
         darkgray             = [169 169 169] ./ 255; % 80
         darkgreen            = [0   100   0] ./ 255; % 81
         darkmagenta          = [139 0   139] ./ 255; % 84
+        deeppink             = [255 20  147] ./ 255; % 116
         deepskyblue          = [0   191 255] ./ 255; % 121
         dimgray              = [105 105 105] ./ 255; % 126
         dodgerblue           = [30  144 255] ./ 255; % 128
@@ -23,9 +63,12 @@ classdef wbmColor
         firebrick            = [178 34   34] ./ 255; % 133
         floralwhite          = [255 250 240] ./ 255; % 138
         forestgreen          = [34  139  34] ./ 255; % 139
+        gold                 = [255 215   0] ./ 255; % 142
         gray                 = [190 190 190] ./ 255; % 152
+        gray80               = [204 204 204] ./ 255; % 233
         greenyellow          = [173 255  47] ./ 255; % 259
-        khaki                = [240 230  14] ./ 255; % 382
+        indianred1           = [255 106 106] ./ 255; % 373
+        khaki                = [240 230 140] ./ 255; % 382
         lavender             = [230 230 250] ./ 255; % 387
         lightgoldenrod       = [238 221 130] ./ 255; % 410
         lightgoldenrodyellow = [250 250 210] ./ 255; % 415
@@ -46,6 +89,7 @@ classdef wbmColor
         mintcream            = [245 255 250] ./ 255; % 478
         mistyrose            = [255 228 225] ./ 255; % 479
         moccasin             = [255 228 181] ./ 255; % 484
+        navajowhite          = [255 222 173] ./ 255; % 485
         navyblue             = [0   0   128] ./ 255; % 491
         olivedrab            = [107 142  35] ./ 255; % 493
         olivedrab1           = [192 255  62] ./ 255; % 494
@@ -76,6 +120,8 @@ classdef wbmColor
         tan1                 = [255 165  79] ./ 255; % 621
         thistle              = [216 191 216] ./ 255; % 625
         tomato               = [255 99   71] ./ 255; % 630
+        turquoise            = [64  224 208] ./ 255; % 635
+        turquoise1           = [0   245 255] ./ 255; % 636
         violetred            = [208 32  144] ./ 255; % 641
         violetred4           = [139 34   82] ./ 255; % 645
         wheat                = [245 222 179] ./ 255; % 646

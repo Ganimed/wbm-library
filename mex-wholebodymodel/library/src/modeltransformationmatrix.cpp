@@ -1,21 +1,23 @@
 /*
- * Copyright (C) 2016 Robotics, Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
- * Authors: Martin Neururer
- * email: martin.neururer@gmail.com, gabriele.nava@iit.it
- * modified by: Martin Neururer; email: martin.neururer@gmail.com; date: June, 2016 & January, 2017
+ * Copyright (C) 2016-2017 Robotics, Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
+ * Author: Martin Neururer
+ * E-mail: martin.neururer@student.tuwien.ac.at / martin.neururer@gmail.com
  *
- * The development of this software was supported by the FP7 EU projects
- * CoDyCo (No. 600716 ICT 2011.2.1 Cognitive Systems and Robotics (b))
- * http://www.codyco.eu
+ * The development of this software was supported by the FP7 EU-project
+ * CoDyCo (No. 600716, ICT-2011.2.1 Cognitive Systems and Robotics (b)),
+ * <http://www.codyco.eu>.
  *
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * A copy of the GNU General Public License can be found along with
+ * the source library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 // global includes
@@ -96,27 +98,7 @@ bool ModelTransformationMatrix::computeFast(int nrhs, const mxArray **prhs)
   qj     = modelState->qj();
   refLnk = mxArrayToString(prhs[1]);
 
-  std::string strCom = "com";
-  int refLnkID = -1; // the ID for ref. link "com" is -1
-
-  if (strCom.compare(refLnk) != 0) { // if refLnk != "com"
-    // try to get the index number from the frame list ...
-    if ( !robotModel->getFrameList().idToIndex(refLnk, refLnkID) ) {
-      mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidInputs", "transformationMatrix call: Link ID does not exist.");
-    }
-  }
-
-  wbi::Frame frm3d_H;
-  if ( !robotModel->computeH(qj, wf_H_b, refLnkID, frm3d_H) ) {
-    mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidInputs", "Something failed in the WBI computeH call.");
-  }
-
-  double H_rmo[16]; // transformation matrix in "row major order"
-  frm3d_H.get4x4Matrix(H_rmo);
-  // since the values in the array are stored in row-major order and Matlab
-  // uses the column-major order for multi-dimensional arrays, we have to
-  // make an array-transposition ...
-  reorderMatrixInColMajor(H_rmo, wf_H_lnk, 4, 4);
+  computeTransformationMat();
   return true;
 }
 
@@ -142,15 +124,6 @@ bool ModelTransformationMatrix::processArguments(int nrhs, const mxArray **prhs)
   qj     = mxGetPr(prhs[3]);
   refLnk = mxArrayToString(prhs[4]);
 
-  std::string strCom = "com";
-  int refLnkID = -1; // if ref. link = "com"
-
-  if (strCom.compare(refLnk) != 0) { // if refLnk != "com"
-    if ( !robotModel->getFrameList().idToIndex(refLnk, refLnkID) ) {
-      mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidInputs", "transformationMatrix call: Link ID does not exist.");
-    }
-  }
-
 #ifdef DEBUG
   mexPrintf("qj received.\n");
 
@@ -165,6 +138,22 @@ bool ModelTransformationMatrix::processArguments(int nrhs, const mxArray **prhs)
 
   wf_H_b = wbi::Frame(rot3d, ppos);
 
+  computeTransformationMat();
+  return true;
+}
+
+void ModelTransformationMatrix::computeTransformationMat()
+{
+  std::string strCom = "com";
+  int refLnkID = -1; // the ID for ref. link "com" is -1
+
+  if (strCom.compare(refLnk) != 0) { // if refLnk != "com"
+    // try to get the index number from the frame list ...
+    if ( !robotModel->getFrameList().idToIndex(refLnk, refLnkID) ) {
+      mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidInputs", "transformationMatrix call: Link ID does not exist.");
+    }
+  }
+
   wbi::Frame frm3d_H;
   if ( !robotModel->computeH(qj, wf_H_b, refLnkID, frm3d_H) ) {
     mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidInputs", "Something failed in the WBI computeH call.");
@@ -172,6 +161,8 @@ bool ModelTransformationMatrix::processArguments(int nrhs, const mxArray **prhs)
 
   double H_rmo[16]; // transformation matrix in "row major order"
   frm3d_H.get4x4Matrix(H_rmo);
-  reorderMatrixInColMajor(H_rmo, wf_H_lnk, 4, 4); // put the output matrix in "column major order"
-  return true;
+  // since the values in the array are stored in row-major order and
+  // Matlab uses the column-major order for multi-dimensional arrays,
+  // --> put the output matrix in "column major order":
+  reorderMatrixInColMajor(H_rmo, wf_H_lnk, 4, 4);
 }

@@ -5,10 +5,11 @@ classdef (Abstract) IMultChainTree < handle
         manuf@char      % the name of the manufacturer (annotation)
         comment@char    % general comment (annotation)
         wbm_info@struct % general information about whole body model of the robot.
-        wbm_params@WBM.wbmBaseRobotParams % base model and configuration parameters of the robot
-        plotopt3d@WBM.absSimConfig
-        ctrl_link@char        % current kinematic link of the robot that is controlled by the system.
-        ee_link@char          % kinematic link of the current end-effector that is controlled by the system.
+        wbm_params@WBM.wbmRobotParams % base model and configuration parameters of the robot.
+        plotopt3d@WBM.wbmSimConfig
+        base_link@char        % floating-base link (fixed reference link) of the robot.
+        ee_links              % kinematic links of the end-effectors (hands) that are controlled by the system.
+        link@char             % current kinematic link of the robot that is controlled by the system.
         gravity@double vector % gravity vector (direction of the gravity)
         base@double    matrix % base transform of the robot (pose of the robot)
         tool@double    matrix % tool transform (from the end-effector to the tool-tip)
@@ -19,35 +20,49 @@ classdef (Abstract) IMultChainTree < handle
     end
 
     methods(Abstract)
-        ddq_j = accel(obj, q_j, dq_j, tau)
+        newBot = copy(bot)
 
-        c_qv = corolis(obj, q_j, dq_j)
+        [q_j, dq_j, wf_H_b, v_b] = getstate(bot)
 
-        tau_fr = friction(obj, dq_j)
+        setcontact(bot, cmode, varargin) % for closed-loop & non-closed loop contacts
 
-        g_q = gravload(obj, q_j)
+        ddq_j = accel(bot, q_j, dq_j, tau)
 
-        tau_j = invdyn(obj, q_j, dq_j, ddq_j)
+        c_qv = coriolis(bot, q_j, dq_j)
 
-        [t, stmChi] = fdyn(obj, tspan, fhCtrlTrqs, stvChi_0, ode_opt)
+        tau_fr = friction(bot, dq_j)
 
-        wf_H_lnk = fkine(obj, q_j)
+        g_q = gravload(bot, q_j)
 
-        wf_H_lnk = A(obj, jnt_idx, q_j)
+        [g_q, wf_J_b] = gravjac(bot, q_j)
 
-        wf_H_ee = T0_n(obj, q_j) % computes the forward kinematics of the current end-effector.
+        tau_j = rne(bot, q_j, dq_j, ddq_j)
 
-        djdq_lnk = jacob_dot(obj, q_j, dq_j)
+        [t, stmChi] = fdyn(bot, tspan, stvChi_0, fhCtrlTrqs, ode_opt, varargin)
 
-        wf_J_lnk = jacob0(obj, q_j, varargin)
+        wf_H_lnk = fkine(bot, q_j)
 
-        wf_J_ee = jacobn(obj, q_j) % Jacobian of the current ee-frame.
+        wf_H_lnk = A(bot, lnk_name, q_j)
 
-        M = inertia(obj, q_j)
+        wf_H_ee = T0_n(bot, q_j) % computes the forward kinematics of the end-effectors (hands).
 
-        resv = islimit(obj, q_j)
+        djdq_lnk = jacob_dot(bot, q_j, dq_j)
 
-        plot3d(obj, x_out, sim_tstep, vis_ctrl)
+        wf_J_lnk = jacob0(bot, q_j, varargin)
+
+        wf_J_ee = jacobn(bot, q_j, varargin) % Jacobians of the ee-frames.
+
+        M = inertia(bot, q_j)
+
+        Mx = cinertia(bot, q_j)
+
+        payload(bot, pl_lnk_data)
+
+        f_pl = pay(bot, fhTotCWrench, f_cp, tau, q_j, dq_j)
+
+        resv = islimit(bot, q_j)
+
+        plot3d(bot, stmChi, sim_tstep, vis_ctrl)
 
     end
 end

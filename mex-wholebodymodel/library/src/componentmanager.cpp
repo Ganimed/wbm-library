@@ -1,21 +1,27 @@
 /*
  * Copyright (C) 2014 Robotics, Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
- * Authors: Naveen Kuppuswamy
- * email: naveen.kuppuswamy@iit.it
- * modified by: Martin Neururer; email: martin.neururer@gmail.com; date: June, 2016 & January, 2017
+ * Author: Naveen Kuppuswamy
+ * E-mail: naveen.kuppuswamy@iit.it
  *
- * The development of this software was supported by the FP7 EU projects
- * CoDyCo (No. 600716 ICT 2011.2.1 Cognitive Systems and Robotics (b))
- * http://www.codyco.eu
+ * Modified by: Martin Neururer
+ * E-mail:      martin.neururer@student.tuwien.ac.at / martin.neururer@gmail.com
+ * Date:        June, 2016 & January, 2017
+ *
+ * The development of this software was supported by the FP7 EU-project
+ * CoDyCo (No. 600716, ICT-2011.2.1 Cognitive Systems and Robotics (b)),
+ * <http://www.codyco.eu>.
  *
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * A copy of the GNU General Public License can be found along with
+ * the source library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 // global includes
@@ -104,6 +110,27 @@ void ComponentManager::initialize(const char *pstrRobotName)
   initComponentList();
 }
 
+void ComponentManager::reinitialize(const mxArray **prhs)
+{
+  if ( !mxIsChar(prhs[1]) ) {
+    mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidNumInputs", "Malformed state dimensions/components.");
+  }
+  char *pstrNewRobotName  = mxArrayToString(prhs[1]);
+  char *pstrCurrRobotName = modelState->robotName();
+
+  if (strcmp(pstrCurrRobotName, pstrNewRobotName) != 0) {
+    // the model names are different ...
+    mexPrintf("\nNew robot model: %s\n", pstrNewRobotName);
+    mexPrintf("Deleting previous version of the robot model.\n\n");
+
+    // reset all components and the component list ...
+    cleanup();
+    initialize(pstrNewRobotName);
+
+    mexPrintf("Robot name set as: %s\n", modelState->robotName());
+  }
+}
+
 void ComponentManager::initComponents()
 {
   modelCentroidalMomentum    = ModelCentroidalMomentum::getInstance();
@@ -189,11 +216,8 @@ bool ComponentManager::processFunctionCall(int nlhs, mxArray **plhs, int nrhs, c
   mexPrintf("Trying to parse mex-arguments...\n");
 #endif
   char *pstrKeyName = mxArrayToString(prhs[0]);
-  size_t cmplen = sizeof(pcstrInitKey) + 1;
 
-  if ( (strncmp(pstrKeyName, pcstrInitKey, cmplen) != 0) &&
-       (strncmp(pstrKeyName, pcstrInitURDFKey, cmplen) != 0) )
-  {
+  if (strncmp(pstrKeyName, "model-init", 10) != 0) { // everything that starts with "model-init" will be ignored
   #ifdef DEBUG
     mexPrintf("Searching for component '%s'.\n", pstrKeyName);
   #endif
@@ -202,11 +226,11 @@ bool ComponentManager::processFunctionCall(int nlhs, mxArray **plhs, int nrhs, c
       return executeComputation(comp->second, nlhs, plhs, nrhs, prhs);
     }
   }
-  else if ( !strncmp(pstrKeyName, pcstrInitKey, cmplen) ||
-            !strncmp(pstrKeyName, pcstrInitURDFKey, cmplen) )
+  else if ( !strcmp(pstrKeyName, pcstrInitKey) ||
+            !strcmp(pstrKeyName, pcstrInitURDFKey) )
   {
-    // reinitialize the whole body model either with a new robot model
-    // from the yarp-WBI directory, or specified by an URDF file:
+    // reinitialize the whole body model with a new robot model either
+    // from the yarp-WBI directory or specified by an URDF file:
     reinitialize(prhs);
     return true;
   }
@@ -236,25 +260,4 @@ bool ComponentManager::executeComputation(ModelComponent *pActiveComp, int nlhs,
   }
   // else, perform normal computation ...
   return pActiveComp->compute(nrhs, prhs);
-}
-
-void ComponentManager::reinitialize(const mxArray **prhs)
-{
-  if ( !mxIsChar(prhs[1]) ) {
-    mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidNumInputs", "Malformed state dimensions/components.");
-  }
-  char *pstrNewRobotName  = mxArrayToString(prhs[1]);
-  char *pstrCurrRobotName = modelState->robotName();
-
-  if (strcmp(pstrCurrRobotName, pstrNewRobotName) != 0) {
-    // the model names are different ...
-    mexPrintf("\nNew robot model: %s\n", pstrNewRobotName);
-
-    mexPrintf("Deleting previous version of the robot model.\n\n");
-    // reset all components and the component list ...
-    cleanup();
-    initialize(pstrNewRobotName);
-
-    mexPrintf("Robot name set as: %s\n", modelState->robotName());
-  }
 }

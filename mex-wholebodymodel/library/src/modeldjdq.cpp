@@ -1,21 +1,27 @@
 /*
  * Copyright (C) 2014 Robotics, Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
- * Authors: Naveen Kuppuswamy
- * email: naveen.kuppuswamy@iit.it
- * modified by: Martin Neururer; email: martin.neururer@gmail.com; date: June, 2016 & January, 2017
+ * Author: Naveen Kuppuswamy
+ * E-mail: naveen.kuppuswamy@iit.it
  *
- * The development of this software was supported by the FP7 EU projects
- * CoDyCo (No. 600716 ICT 2011.2.1 Cognitive Systems and Robotics (b))
- * http://www.codyco.eu
+ * Modified by: Martin Neururer
+ * E-mail:      martin.neururer@student.tuwien.ac.at / martin.neururer@gmail.com
+ * Date:        June, 2016 & January, 2017
+ *
+ * The development of this software was supported by the FP7 EU-project
+ * CoDyCo (No. 600716, ICT-2011.2.1 Cognitive Systems and Robotics (b)),
+ * <http://www.codyco.eu>.
  *
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * A copy of the GNU General Public License can be found along with
+ * the source library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 //global includes
@@ -95,7 +101,6 @@ bool ModelDJdq::computeFast(int nrhs, const mxArray **prhs)
   if( !mxIsChar(prhs[1]) ) {
     mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidNumInputs", "Malformed state dimensions/components.");
   }
-
   robotModel = modelState->robotModel();
 
   wf_H_b = modelState->getBase2WorldTransformation();
@@ -104,15 +109,7 @@ bool ModelDJdq::computeFast(int nrhs, const mxArray **prhs)
   vb     = modelState->vb();
   refLnk = mxArrayToString(prhs[1]);
 
-  std::string strCom("com");
-  int refLnkID = -1; // if refLnk = "com"
-
-  // try to get the index number ...
-  if (strCom.compare(refLnk) != 0) {
-    if ( !robotModel->getFrameList().idToIndex(refLnk, refLnkID) ) {
-      mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidInputs", "dJdq call: Link ID does not exist.");
-    }
-  }
+  int refLnkID = getRefLinkID();
 
   if ( !robotModel->computeDJdq(qj, wf_H_b, qj_dot, vb, refLnkID, dJdq) ) {
     mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidInputs", "Something failed in the WBI computeDJdq call.");
@@ -145,15 +142,6 @@ bool ModelDJdq::processArguments(int nrhs, const mxArray **prhs)
   vb     = mxGetPr(prhs[5]);
   refLnk = mxArrayToString(prhs[6]);
 
-  std::string strCom("com");
-  int refLnkID = -1; // if refLnk = "com"
-
-  if (strCom.compare(refLnk) != 0) {
-    if ( !robotModel->getFrameList().idToIndex(refLnk, refLnkID) ) {
-      mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidInputs", "dJdq call: Link ID does not exist.");
-    }
-  }
-
 #ifdef DEBUG
   mexPrintf("qj received.\n");
 
@@ -168,8 +156,24 @@ bool ModelDJdq::processArguments(int nrhs, const mxArray **prhs)
 
   wf_H_b = wbi::Frame(rot3d, ppos);
 
+  int refLnkID = getRefLinkID();
+
   if ( !robotModel->computeDJdq(qj, wf_H_b, qj_dot, vb, refLnkID, dJdq) ) {
     mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidInputs", "Something failed in the WBI computeDJdq call.");
   }
   return true;
+}
+
+int ModelDJdq::getRefLinkID()
+{
+  std::string strCom("com");
+  int refLnkID = -1; // if refLnk = "com"
+
+  // try to get the index number ...
+  if (strCom.compare(refLnk) != 0) {
+    if ( !robotModel->getFrameList().idToIndex(refLnk, refLnkID) ) {
+      mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidInputs", "dJdq call: Link ID does not exist.");
+    }
+  }
+  return refLnkID;
 }

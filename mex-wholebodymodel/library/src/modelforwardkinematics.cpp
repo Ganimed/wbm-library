@@ -1,21 +1,27 @@
 /*
  * Copyright (C) 2014 Robotics, Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
- * Authors: Naveen Kuppuswamy
- * email: naveen.kuppuswamy@iit.it
- * modified by: Martin Neururer; email: martin.neururer@gmail.com; date: June, 2016 & January, 2017
+ * Author: Naveen Kuppuswamy
+ * E-mail: naveen.kuppuswamy@iit.it
  *
- * The development of this software was supported by the FP7 EU projects
- * CoDyCo (No. 600716 ICT 2011.2.1 Cognitive Systems and Robotics (b))
- * http://www.codyco.eu
+ * Modified by: Martin Neururer
+ * E-mail:      martin.neururer@student.tuwien.ac.at / martin.neururer@gmail.com
+ * Date:        June, 2016 & January, 2017
+ *
+ * The development of this software was supported by the FP7 EU-project
+ * CoDyCo (No. 600716, ICT-2011.2.1 Cognitive Systems and Robotics (b)),
+ * <http://www.codyco.eu>.
  *
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * A copy of the GNU General Public License can be found along with
+ * the source library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 // global includes
@@ -98,15 +104,6 @@ bool ModelForwardKinematics::processArguments(int nrhs, const mxArray **prhs)
   qj     = mxGetPr(prhs[3]);
   refLnk = mxArrayToString(prhs[4]);
 
-  std::string strCom("com");
-  int refLnkID = -1; // if refLnk = "com"
-
-  if (strCom.compare(refLnk) != 0) {
-    if ( !robotModel->getFrameList().idToIndex(refLnk, refLnkID) ) {
-      mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidInputs", "forwardKinematics call: Link ID does not exist.");
-    }
-  }
-
 #ifdef DEBUG
   mexPrintf("qj received.\n");
 
@@ -121,33 +118,7 @@ bool ModelForwardKinematics::processArguments(int nrhs, const mxArray **prhs)
 
   wf_H_b = wbi::Frame(rot3d, ppos);
 
-  double vxT_lnk[7]; // vector axis-angle transformation (from ref. link to world frame)
-  if ( !(robotModel->forwardKinematics(qj, wf_H_b, refLnkID, vxT_lnk)) ) {
-    mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidInputs", "Something failed in the WBI forwardKinematics call.");
-  }
-
-  int i;
-  for (i=0; i < 3; i++) {
-    *(vqT_lnk + i) = *(vxT_lnk + i); // copy position vector
-  }
-
-  double axang[4] = {vxT_lnk[3], vxT_lnk[4], vxT_lnk[5], vxT_lnk[6]}; // axis-angle vector
-  rot3d = wbi::Rotation::axisAngle(axang);
-
-#ifdef DEBUG
-  std::stringstream ssR;
-  ssR << "axis-angle: [" << vxT_lnk[3] << "," << vxT_lnk[4] << "," << vxT_lnk[5] << "," << vxT_lnk[6] << "]\n";
-  std::string sR = ssR.str();
-  mexPrintf(sR.c_str());
-  mexPrintf("rotation:\n");
-  mexPrintf((rot3d.toString()).c_str());
-#endif
-
-  double quat_lnk[4];
-  rot3d.getQuaternion(quat_lnk[1], quat_lnk[2], quat_lnk[3], quat_lnk[0]);
-  for (i=0; i < 4; i++) {
-    *(vqT_lnk + (3+i)) = *(quat_lnk + i); // copy quaternion
-  }
+  computeForwardKin();
   return true;
 }
 
@@ -170,6 +141,16 @@ bool ModelForwardKinematics::computeFast(int nrhs, const mxArray **prhs)
   qj     = modelState->qj();
   refLnk = mxArrayToString(prhs[1]);
 
+  computeForwardKin();
+
+#ifdef DEBUG
+  mexPrintf("ModelForwardKinematics fast computed.\n");
+#endif
+  return true;
+}
+
+void ModelForwardKinematics::computeForwardKin()
+{
   std::string strCom("com");
   int refLnkID = -1; // if refLnk = "com"
 
@@ -184,13 +165,8 @@ bool ModelForwardKinematics::computeFast(int nrhs, const mxArray **prhs)
     mexErrMsgIdAndTxt("MATLAB:mexatexit:invalidInputs", "Something failed in the WBI forwardKinematics call.");
   }
 
-  int i;
-  for (i=0; i < 3; i++) {
-    *(vqT_lnk + i) = *(vxT_lnk + i); // copy position vector
-  }
-
-  double axang[4] = {vxT_lnk[3], vxT_lnk[4], vxT_lnk[5], vxT_lnk[6]}; // axis-angle vector
-  wbi::Rotation rot3d = wbi::Rotation::axisAngle(axang);
+  double axang[4];
+  memcpy(axang, (vxT_lnk + 3), sizeof(double)*4); // axis-angle vector
 
 #ifdef DEBUG
   std::stringstream ssR;
@@ -201,14 +177,11 @@ bool ModelForwardKinematics::computeFast(int nrhs, const mxArray **prhs)
   mexPrintf((rot3d.toString()).c_str());
 #endif
 
+  wbi::Rotation rot3d = wbi::Rotation::axisAngle(axang);
+
   double quat_lnk[4];
   rot3d.getQuaternion(quat_lnk[1], quat_lnk[2], quat_lnk[3], quat_lnk[0]);
-  for (i=0; i < 4; i++) {
-    *(vqT_lnk + (3+i)) = *(quat_lnk + i); // copy quaternion
-  }
 
-#ifdef DEBUG
-  mexPrintf("ModelForwardKinematics fast computed.\n");
-#endif
-  return true;
+  memcpy(vqT_lnk, vxT_lnk, sizeof(double)*3);        // copy position vector
+  memcpy((vqT_lnk + 3), quat_lnk, sizeof(double)*4); // copy quaternion
 }

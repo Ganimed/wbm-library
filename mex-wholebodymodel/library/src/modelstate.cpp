@@ -1,24 +1,33 @@
 /*
  * Copyright (C) 2014 Robotics, Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
- * Authors: Naveen Kuppuswamy
- * email: naveen.kuppuswamy@iit.it
- * modified by: Martin Neururer; email: martin.neururer@gmail.com; date: June, 2016 & January, 2017
+ * Author: Naveen Kuppuswamy
+ * E-mail: naveen.kuppuswamy@iit.it
  *
- * The development of this software was supported by the FP7 EU projects
- * CoDyCo (No. 600716 ICT 2011.2.1 Cognitive Systems and Robotics (b))
- * http://www.codyco.eu
+ * Modified by: Martin Neururer
+ * E-mail:      martin.neururer@student.tuwien.ac.at / martin.neururer@gmail.com
+ * Date:        June, 2016 & January, 2017
+ *
+ * The development of this software was supported by the FP7 EU-project
+ * CoDyCo (No. 600716, ICT-2011.2.1 Cognitive Systems and Robotics (b)),
+ * <http://www.codyco.eu>.
  *
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * A copy of the GNU General Public License can be found along with
+ * the source library. If not, see <http://www.gnu.org/licenses/>.
  */
 
 // global includes
+#ifdef DEBUG
+#include <matrix.h>
+#endif
 
 // library includes
 #include <iDynTree/ModelIO/URDFDofsImport.h>
@@ -45,30 +54,31 @@ double *ModelState::sqj_dot = 0;
 
 wbi::Frame ModelState::wf_H_b = wbi::Frame();
 
-bool isRobotNameAFile(const char *pstrRobotName)
+bool isFileName(const char *pstrRobotName)
 {
   std::string fn = pstrRobotName;
   size_t len = fn.size();
 
   if (len > 4) {
-    // extensions with length of 3 or 4 are only allowed:
-    size_t pos = fn.rfind('.', len-4);
+    // only extensions with a length of 3 or 4 are allowed:
+    fn = fn.substr(len-5, 5);
+    size_t pos = fn.find('.', 0);
     if (pos != std::string::npos) {
       // if '.' was found ...
-      std::string ext = fn.substr(pos+1, len - pos);
+      std::string ext = fn.substr(pos+1, 5 - pos);
       len = ext.size();
       if ( (len > 2) && (len < 5) ) {
         return true;
       }
     }
   }
-  // else, it is not a file name ...
+  // else, it is not a file name ending with "urdf", "mdl", etc.
   return false;
 }
 
 ModelState::ModelState(const char *pstrRobotName)
 {
-  if (isRobotNameAFile(pstrRobotName)) {
+  if (isFileName(pstrRobotName)) {
     robotModelFromURDF(pstrRobotName);
     return;
   }
@@ -87,7 +97,12 @@ void ModelState::initState()
   #endif
   }
 
-  sg[0] = 0.0f; sg[1] = 0.0f; sg[2] = -9.81f;
+  // initialize/reset the state variables and
+  // the frame transformation (matrix) H:
+  sg[0]  =  0.0f;
+  sg[1]  =  0.0f;
+  sg[2]  = -9.81f;
+  wf_H_b = wbi::Frame::identity();
 }
 
 void ModelState::initRobotModel(const wbi::IDList &jntIDList)
@@ -152,12 +167,15 @@ void ModelState::deleteInstance()
 bool ModelState::setState(double *qj_t, double *qj_dot_t, double *vb_t)
 {
 #ifdef DEBUG
-  mexPrintf("Trying to update state.\n");
+  mexPrintf("Try to update state.\n");
 #endif
   memcpy(sqj, qj_t, sizeof(double)*nDof);
   memcpy(sqj_dot, qj_dot_t, sizeof(double)*nDof);
   memcpy(svb, vb_t, sizeof(double)*6);
 
+#ifdef DEBUG
+  mexPrintf("State updated.\n");
+#endif
   return true;
 }
 
@@ -168,11 +186,33 @@ void ModelState::setGravity(double *pg)
 
 void ModelState::setBase2WorldTransformation(wbi::Frame frm3d_H)
 {
+#ifdef DEBUG
+  double tform[16];
+  frm3d_H.get4x4Matrix(tform);
+
+  for (int i=0; i < 16; i++) {
+    if (mxIsNaN( *(tform + i) )) {
+      mexErrMsgIdAndTxt("MATLAB:mexatexit:Not_a_Number", "The frame transformation frm3d_H in ModelState has NaN values.");
+    }
+  }
+#endif
+
   wf_H_b = frm3d_H;
 }
 
 wbi::Frame ModelState::getBase2WorldTransformation()
 {
+#ifdef DEBUG
+  double tform[16];
+  wf_H_b.get4x4Matrix(tform);
+
+  for (int i=0; i < 16; i++) {
+    if (mxIsNaN( *(tform + i) )) {
+      mexErrMsgIdAndTxt("MATLAB:mexatexit:Not_a_Number", "The frame transformation wf_H_b in ModelState has NaN values.");
+    }
+  }
+#endif
+
   return wf_H_b;
 }
 

@@ -1,19 +1,18 @@
 % namespaces:
 import WBM.*
-import WBM.utilities.*
 
 
 %% First initialization of the WBM:
 % base model:
-icub_model = wbmBaseRobotModel;
+icub_model = wbmRobotModel;
 icub_model.ndof            = 25;
 icub_model.urdf_robot_name = 'icubGazeboSim';
-icub_model.wf_R_b          = eye(3,3);
+icub_model.wf_R_b_init     = eye(3,3);
 icub_model.g_wf            = [0; 0; -9.81];
 % base robot config:
 icub_config = wbmHumanoidConfig;
-icub_config.nCstrs          = 2;
-icub_config.cstr_link_names = {'r_sole', 'l_gripper'};
+icub_config.nCstrs           = 2;
+icub_config.ccstr_link_names = {'r_sole', 'l_gripper'};
 
 noi = 1000;
 
@@ -26,7 +25,7 @@ initTime = toc();
 fprintf('Initialization time: %e secs\n', initTime);
 fprintf('Num of Trials: %d\nStarting Trial...\n', noi);
 
-R = icub_model.wf_R_b;
+R = icub_model.wf_R_b_init;
 g = icub_model.g_wf;
 
 tic;
@@ -53,14 +52,14 @@ for i = 1:noi
     g_q    = wbm_icub.gravityBiasForces(R, p, q_j);
     g_q    = wbm_icub.gravityBiasForces(R, p, q_j);
 
-    djdq_1 = wbm_icub.dJdq(R, p, q_j, dq_j, v_b, icub_config.cstr_link_names{1});
-    djdq_2 = wbm_icub.dJdq(R, p, q_j, dq_j, v_b, icub_config.cstr_link_names{2});
+    djdq_1 = wbm_icub.dJdq(R, p, q_j, dq_j, v_b, icub_config.ccstr_link_names{1});
+    djdq_2 = wbm_icub.dJdq(R, p, q_j, dq_j, v_b, icub_config.ccstr_link_names{2});
 
-    J      = wbm_icub.jacobian(R, p, q_j, icub_config.cstr_link_names{1});
-    J      = wbm_icub.jacobian(R, p, q_j, icub_config.cstr_link_names{2});
+    J      = wbm_icub.jacobian(R, p, q_j, icub_config.ccstr_link_names{1});
+    J      = wbm_icub.jacobian(R, p, q_j, icub_config.ccstr_link_names{2});
 
-    J      = wbm_icub.jacobian(R, p, q_j, icub_config.cstr_link_names{1});
-    J      = wbm_icub.jacobian(R, p, q_j, icub_config.cstr_link_names{2});
+    J      = wbm_icub.jacobian(R, p, q_j, icub_config.ccstr_link_names{1});
+    J      = wbm_icub.jacobian(R, p, q_j, icub_config.ccstr_link_names{2});
 end
 totTime = toc();
 
@@ -74,15 +73,15 @@ clearvars; % clear all variables from the workspace ...
 fprintf('\n\nStarting optimized mode trial\n-----------------------------\n');
 
 % base model:
-icub_model = wbmBaseRobotModel;
+icub_model = wbmRobotModel;
 icub_model.ndof            = 25;
 icub_model.urdf_robot_name = 'icubGazeboSim';
-icub_model.wf_R_b          = eye(3,3);
+icub_model.wf_R_b_init     = eye(3,3);
 icub_model.g_wf            = [0; 0; 9.81];
 % base robot config:
 icub_config = wbmHumanoidConfig;
-icub_config.nCstrs          = 2;
-icub_config.cstr_link_names = {'r_sole', 'l_gripper'};
+icub_config.nCstrs           = 2;
+icub_config.ccstr_link_names = {'r_sole', 'l_gripper'};
 
 noi = 1000;
 
@@ -92,7 +91,7 @@ initTime = toc();
 
 fprintf('Initialization time: %e secs\nStarting Trial...\n', initTime);
 
-R = icub_model.wf_R_b;
+R = icub_model.wf_R_b_init;
 g = icub_model.g_wf;
 
 tic;
@@ -120,14 +119,14 @@ for i = 1:noi
     g_q    = wbm_icub.gravityBiasForces();
     g_q    = wbm_icub.gravityBiasForces();
 
-    djdq_1 = wbm_icub.dJdq(icub_config.cstr_link_names{1});
-    djdq_2 = wbm_icub.dJdq(icub_config.cstr_link_names{2});
+    djdq_1 = wbm_icub.dJdq(icub_config.ccstr_link_names{1});
+    djdq_2 = wbm_icub.dJdq(icub_config.ccstr_link_names{2});
 
-    J      = wbm_icub.jacobian(icub_config.cstr_link_names{1});
-    J      = wbm_icub.jacobian(icub_config.cstr_link_names{2});
+    J      = wbm_icub.jacobian(icub_config.ccstr_link_names{1});
+    J      = wbm_icub.jacobian(icub_config.ccstr_link_names{2});
 
-    J      = wbm_icub.jacobian(icub_config.cstr_link_names{1});
-    J      = wbm_icub.jacobian(icub_config.cstr_link_names{2});
+    J      = wbm_icub.jacobian(icub_config.ccstr_link_names{1});
+    J      = wbm_icub.jacobian(icub_config.ccstr_link_names{2});
 end
 totTime = toc();
 
