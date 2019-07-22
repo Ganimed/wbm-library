@@ -1,0 +1,16 @@
+find_package(wholeBodyInterface REQUIRED)
+
+
+set(yarpWholeBodyInterface_VERSION @yarpWholeBodyInterface_VERSION@)
+
+@PACKAGE_INIT@
+
+set_and_check(yarpWholeBodyInterface_INCLUDEDIR "@PACKAGE_yarpWholeBodyInterface_INCLUDEDIR@")
+
+if(NOT TARGET yarpWholeBodyInterface::yarpwholebodyinterface)
+  include("${CMAKE_CURRENT_LIST_DIR}/yarpWholeBodyInterfaceTargets.cmake")
+endif()
+
+# Compatibility
+set(yarpWholeBodyInterface_LIBRARIES yarpWholeBodyInterface::yarpwholebodyinterface)
+set(yarpWholeBodyInterface_INCLUDE_DIRS ${yarpWholeBodyInterface_INCLUDEDIR})
