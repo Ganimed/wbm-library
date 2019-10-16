@@ -21,8 +21,6 @@ find_package(YARP                   REQUIRED)
 find_package(YCM                    REQUIRED)
 find_package(TinyXML                REQUIRED)
 find_package(iDynTree 0.3.9         REQUIRED)
-find_package(wholeBodyInterface     REQUIRED)
-find_package(yarpWholeBodyInterface REQUIRED)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${YARP_MODULE_PATH})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ICUB_MODULE_PATH})
@@ -50,6 +48,8 @@ include(CTest)
 enable_testing()
 
 # Subdirectories
+add_subdirectory(libraries/wholebodyinterface)
+add_subdirectory(libraries/yarp-wholebodyinterface)
 add_subdirectory(mex-wholebodymodel)
 
 if(BUILD_TESTING)

@@ -18,7 +18,7 @@ set(SOURCES src/mexmain.cpp
             src/modeltransformationmatrix.cpp
             src/modelupdatestate.cpp
 )
-            
+
 set(HEADERS include/componentmanager.h
             include/modelstate.h
             include/modelcomponent.h
@@ -108,9 +108,8 @@ elseif(WIN32)
 endif(WIN32)
 
 target_link_libraries(${PROJECT_NAME}
-${wholeBodyInterface_LIBRARIES}
-${yarpWholeBodyInterface_LIBRARIES}
-${paramHelp_LIBRARIES}
+whole-body-interface
+yarpwholebodyinterface
 ${iDynTree_LIBRARIES}
 ${YARP_LIBRARIES}
 ${Matlab_LIBRARIES}

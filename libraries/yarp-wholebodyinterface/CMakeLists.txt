@@ -46,7 +46,7 @@ set(folder_source src/yarpWbiUtil.cpp
                   src/yarpWholeBodySensors.cpp
                   src/PIDList.cpp)
 
-if (YARPWBI_USES_KDL)                
+if (YARPWBI_USES_KDL)
     list(APPEND folder_source src/yarpWholeBodyModelV1.cpp)
 endif ()
 
@@ -60,8 +60,8 @@ set(folder_header include/yarpWholeBodyInterface/yarpWholeBodyInterface.h
                   include/yarpWholeBodyInterface/floatingBaseEstimators.h
                   include/yarpWholeBodyInterface/yarpWbiUtil.h
                   include/yarpWholeBodyInterface/PIDList.h)
-                  
-if (YARPWBI_USES_KDL)                
+
+if (YARPWBI_USES_KDL)
    list(APPEND folder_header include/yarpWholeBodyInterface/yarpWholeBodyModelV1.h)
 endif ()
 
@@ -95,8 +95,9 @@ set_target_properties(${LIBRARY_NAME}  PROPERTIES VERSION ${${VARS_PREFIX}_VERSI
                                     SOVERSION ${${VARS_PREFIX}_VERSION}
                                     PUBLIC_HEADER "${folder_header}")
 
-target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>")
-target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/yarpWholeBodyInterface>"
+target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
+target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/yarpWholeBodyInterface>"
+
                                         "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${${VARS_PREFIX}_INSTALL_INCLUDEDIR}>")
 
 target_include_directories(${LIBRARY_NAME} PUBLIC
