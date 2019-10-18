@@ -26,7 +26,7 @@ function wbm_modelInitializeFromURDF(varargin)
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
     switch nargin
         case 1
-            mexWholeBodyModel('model-initialize-urdf', varargin{1,1});
+            yarpWBM('model-initialize-urdf', varargin{1,1});
         otherwise
             wbm_narginError('wbm_modelInitializeFromURDF');
     end

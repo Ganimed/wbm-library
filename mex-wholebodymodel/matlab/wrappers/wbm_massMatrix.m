@@ -33,9 +33,9 @@ function M = wbm_massMatrix(varargin)
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
     switch nargin
         case 0
-            M = mexWholeBodyModel('mass-matrix');
+            M = yarpWBM('mass-matrix');
         case 3
-            M = mexWholeBodyModel('mass-matrix', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3});
+            M = yarpWBM('mass-matrix', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3});
         otherwise
             wbm_narginError('wbm_massMatrix');
     end

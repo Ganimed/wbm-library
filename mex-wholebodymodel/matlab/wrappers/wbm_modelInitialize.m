@@ -33,9 +33,9 @@ function wbm_modelInitialize(varargin)
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
     switch nargin
         case 0
-            mexWholeBodyModel('model-initialize');
+            yarpWBM('model-initialize');
         case 1
-            mexWholeBodyModel('model-initialize', varargin{1,1});
+            yarpWBM('model-initialize', varargin{1,1});
         otherwise
             wbm_narginError('wbm_modelInitialize');
     end

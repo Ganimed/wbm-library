@@ -35,5 +35,5 @@ function [vqT_b, q_j, v_b, dq_j] = wbm_getState()
     % A copy of the GNU Lesser General Public License can be found along
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
 
-    [vqT_b, q_j, v_b, dq_j] = mexWholeBodyModel('get-state');
+    [vqT_b, q_j, v_b, dq_j] = yarpWBM('get-state');
 end

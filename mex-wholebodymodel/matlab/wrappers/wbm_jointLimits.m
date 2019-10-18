@@ -23,5 +23,5 @@ function [jlim_lower, jlim_upper]  = wbm_jointLimits()
     % A copy of the GNU Lesser General Public License can be found along
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
 
-    [jlim_lower, jlim_upper] = mexWholeBodyModel('joint-limits');
+    [jlim_lower, jlim_upper] = yarpWBM('joint-limits');
 end

@@ -3,7 +3,7 @@ Introduction
 
 The *Whole-Body Model Library* (WBML) is an open source library for Matlab and provides, outside of
 of Simulink, fast *dynamics computation methods* for prototyping and testing purposes. The methods
-of the library are mainly based on the open source C++ program ``mexWholeBodyModel``, which is a
+of the library are mainly based on the open source C++ program ``yarpWBM``, which is a
 Matlab executable subroutine (MEX) and provides for Matlab a high-level interface to the
 ``yarpWholeBodyInterface`` for YARP-based robots, such as the iCub humanoid robot.
 
@@ -40,7 +40,7 @@ Example
 
 The given example in :numref:`code_example_int_fd` shows the basic usage of the WBM-Library. The
 robot model will be loaded from the given URDF description into the ``yarpWholeBodyInterface`` that
-is embedded in the MEX whole-body model interface (``mexWholeBodyModel``) for Matlab:
+is embedded in the MEX whole-body model interface (``yarpWBM``) for Matlab:
 
 .. code-block:: matlab
    :caption: ``examples/integrateForwardDynamics.m``

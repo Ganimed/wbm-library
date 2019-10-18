@@ -1746,13 +1746,13 @@ classdef WBM < WBM.WBMBase
                     WBM.utilities.chkfun.checkLinkName(pl_lnk_name, 'WBM::payloadFrame');
 
                     wf_R_b_arr = reshape(varargin{1,1}, 9, 1);
-                    wf_H_lnk = mexWholeBodyModel('transformation-matrix', wf_R_b_arr, varargin{1,2}, varargin{1,3}, pl_lnk_name);
+                    wf_H_lnk = yarpWBM('transformation-matrix', wf_R_b_arr, varargin{1,2}, varargin{1,3}, pl_lnk_name);
                 case 4
                     % use the values of the default payload-link ...
                     lnk_p_cm = obj.mwbm_config.payload_links(1,1).lnk_p_cm;
 
                     wf_R_b_arr = reshape(varargin{1,1}, 9, 1);
-                    wf_H_lnk = mexWholeBodyModel('transformation-matrix', wf_R_b_arr, varargin{1,2}, varargin{1,3}, ...
+                    wf_H_lnk = yarpWBM('transformation-matrix', wf_R_b_arr, varargin{1,2}, varargin{1,3}, ...
                                                  obj.mwbm_config.payload_links(1,1).urdf_link_name);
                 case 2 % optimized modes:
                     pl_idx      = varargin{1,1};
@@ -1761,10 +1761,10 @@ classdef WBM < WBM.WBMBase
 
                     WBM.utilities.chkfun.checkLinkName(pl_lnk_name, 'WBM::payloadFrame');
 
-                    wf_H_lnk = mexWholeBodyModel('transformation-matrix', pl_lnk_name);
+                    wf_H_lnk = yarpWBM('transformation-matrix', pl_lnk_name);
                 case 1
                     lnk_p_cm = obj.mwbm_config.payload_links(1,1).lnk_p_cm;
-                    wf_H_lnk = mexWholeBodyModel('transformation-matrix', obj.mwbm_config.payload_links(1,1).urdf_link_name);
+                    wf_H_lnk = yarpWBM('transformation-matrix', obj.mwbm_config.payload_links(1,1).urdf_link_name);
                 otherwise
                     error('WBM::payloadFrame: %s', WBM.wbmErrorMsg.WRONG_NARGIN);
             end
@@ -2106,24 +2106,24 @@ classdef WBM < WBM.WBMBase
                     ee_vqT_tt   = obj.mwbm_config.tool_links(t_idx,1).ee_vqT_tt;
 
                     wf_R_b_arr = reshape(varargin{1,1}, 9, 1);
-                    wf_H_ee = mexWholeBodyModel('transformation-matrix', wf_R_b_arr, varargin{1,2}, varargin{1,3}, ee_lnk_name);
+                    wf_H_ee = yarpWBM('transformation-matrix', wf_R_b_arr, varargin{1,2}, varargin{1,3}, ee_lnk_name);
                 case 4
                     % use the values of the default tool link (1st element of the list) ...
                     ee_vqT_tt = obj.mwbm_config.tool_links(1,1).ee_vqT_tt;
 
                     wf_R_b_arr = reshape(varargin{1,1}, 9, 1);
-                    wf_H_ee = mexWholeBodyModel('transformation-matrix', wf_R_b_arr, varargin{1,2}, varargin{1,3}, ...
+                    wf_H_ee = yarpWBM('transformation-matrix', wf_R_b_arr, varargin{1,2}, varargin{1,3}, ...
                                                 obj.mwbm_config.tool_links(1,1).urdf_link_name);
                 case 2 % optimized modes:
                     t_idx       = varargin{1,1};
                     ee_lnk_name = obj.mwbm_config.tool_links(t_idx,1).urdf_link_name;
                     ee_vqT_tt   = obj.mwbm_config.tool_links(t_idx,1).ee_vqT_tt;
 
-                    wf_H_ee = mexWholeBodyModel('transformation-matrix', ee_lnk_name);
+                    wf_H_ee = yarpWBM('transformation-matrix', ee_lnk_name);
                 case 1
                     % use the default tool link ...
                     ee_vqT_tt = obj.mwbm_config.tool_links(1,1).ee_vqT_tt;
-                    wf_H_ee   = mexWholeBodyModel('transformation-matrix', obj.mwbm_config.tool_links(1,1).urdf_link_name);
+                    wf_H_ee   = yarpWBM('transformation-matrix', obj.mwbm_config.tool_links(1,1).urdf_link_name);
                 otherwise
                     error('WBM::toolFrame: %s', WBM.wbmErrorMsg.WRONG_NARGIN);
             end
@@ -2219,8 +2219,8 @@ classdef WBM < WBM.WBMBase
                     ee_vqT_tt   = obj.mwbm_config.tool_links(t_idx,1).ee_vqT_tt;
 
                     wf_R_b_arr = reshape(varargin{1,1}, 9, 1);
-                    wf_H_ee = mexWholeBodyModel('transformation-matrix', wf_R_b_arr, wf_p_b, q_j, ee_lnk_name);
-                    wf_J_ee = mexWholeBodyModel('jacobian', wf_R_b_arr, wf_p_b, q_j, ee_lnk_name);
+                    wf_H_ee = yarpWBM('transformation-matrix', wf_R_b_arr, wf_p_b, q_j, ee_lnk_name);
+                    wf_J_ee = yarpWBM('jacobian', wf_R_b_arr, wf_p_b, q_j, ee_lnk_name);
                 case 4
                     % use the values of the default tool-link (1st element of the list) ...
                     wf_p_b = varargin{1,2};
@@ -2230,23 +2230,23 @@ classdef WBM < WBM.WBMBase
                     ee_vqT_tt   = obj.mwbm_config.tool_links(1,1).ee_vqT_tt;
 
                     wf_R_b_arr = reshape(varargin{1,1}, 9, 1);
-                    wf_H_ee = mexWholeBodyModel('transformation-matrix', wf_R_b_arr, wf_p_b, q_j, ee_lnk_name);
-                    wf_J_ee = mexWholeBodyModel('jacobian', wf_R_b_arr, wf_p_b, q_j, ee_lnk_name);
+                    wf_H_ee = yarpWBM('transformation-matrix', wf_R_b_arr, wf_p_b, q_j, ee_lnk_name);
+                    wf_J_ee = yarpWBM('jacobian', wf_R_b_arr, wf_p_b, q_j, ee_lnk_name);
                 case 2 % optimized modes:
                     t_idx = varargin{1,1};
 
                     ee_lnk_name = obj.mwbm_config.tool_links(t_idx,1).urdf_link_name;
                     ee_vqT_tt   = obj.mwbm_config.tool_links(t_idx,1).ee_vqT_tt;
 
-                    wf_H_ee = mexWholeBodyModel('transformation-matrix', ee_lnk_name);
-                    wf_J_ee = mexWholeBodyModel('jacobian', ee_lnk_name);
+                    wf_H_ee = yarpWBM('transformation-matrix', ee_lnk_name);
+                    wf_J_ee = yarpWBM('jacobian', ee_lnk_name);
                 case 1
                     % use the default tool-link ...
                     ee_lnk_name = obj.mwbm_config.tool_links(1,1).urdf_link_name;
                     ee_vqT_tt   = obj.mwbm_config.tool_links(1,1).ee_vqT_tt;
 
-                    wf_H_ee = mexWholeBodyModel('transformation-matrix', ee_lnk_name);
-                    wf_J_ee = mexWholeBodyModel('jacobian', ee_lnk_name);
+                    wf_H_ee = yarpWBM('transformation-matrix', ee_lnk_name);
+                    wf_J_ee = yarpWBM('jacobian', ee_lnk_name);
                 otherwise
                     error('WBM::jacobianTool: %s', WBM.wbmErrorMsg.WRONG_NARGIN);
             end
@@ -2315,7 +2315,7 @@ classdef WBM < WBM.WBMBase
 
                     if (nargin == 2)
                         % get the current state values ...
-                        [~,q_j,~,dq_j] = mexWholeBodyModel('get-state');
+                        [~,q_j,~,dq_j] = yarpWBM('get-state');
                     end
 
                     len = length(chain_names);
@@ -2383,7 +2383,7 @@ classdef WBM < WBM.WBMBase
 
                     if (nargin == 2)
                         % get the state values ...
-                        [~,q_j,~,dq_j] = mexWholeBodyModel('get-state');
+                        [~,q_j,~,dq_j] = yarpWBM('get-state');
                     end
                     len = length(joint_names);
 
@@ -2439,7 +2439,7 @@ classdef WBM < WBM.WBMBase
 
                     if (nargin == 2)
                         % get the values ...
-                        [~,q_j,~,dq_j] = mexWholeBodyModel('get-state');
+                        [~,q_j,~,dq_j] = yarpWBM('get-state');
                     end
                     len = length(jnt_idx);
 
@@ -2671,7 +2671,7 @@ classdef WBM < WBM.WBMBase
         end
 
         function vqT_b = get.vqT_base(~)
-            [vqT_b,~,~,~] = mexWholeBodyModel('get-state');
+            [vqT_b,~,~,~] = yarpWBM('get-state');
         end
 
         function vqT_b = get.init_vqT_base(obj)
@@ -2899,11 +2899,11 @@ classdef WBM < WBM.WBMBase
         function [M, c_qv] = wholeBodyDyn(~, wf_R_b_arr, wf_p_b, q_j, dq_j, v_b)
             switch nargin
                 case 6 % normal mode:
-                    M    = mexWholeBodyModel('mass-matrix', wf_R_b_arr, wf_p_b, q_j);
-                    c_qv = mexWholeBodyModel('generalized-forces', wf_R_b_arr, wf_p_b, q_j, dq_j, v_b);
+                    M    = yarpWBM('mass-matrix', wf_R_b_arr, wf_p_b, q_j);
+                    c_qv = yarpWBM('generalized-forces', wf_R_b_arr, wf_p_b, q_j, dq_j, v_b);
                 case 1 % optimized mode:
-                    M    = mexWholeBodyModel('mass-matrix');
-                    c_qv = mexWholeBodyModel('generalized-forces');
+                    M    = yarpWBM('mass-matrix');
+                    c_qv = yarpWBM('generalized-forces');
                 otherwise
                     error('WBM::wholeBodyDyn: %s', WBM.wbmErrorMsg.WRONG_NARGIN);
             end
@@ -2911,7 +2911,7 @@ classdef WBM < WBM.WBMBase
 
         function nu = fdynNewMixedVelocities(~, qt_b, dx_b, wf_omega_b, dq_j)
             % get the rotation matrix of the current VQ-transformation (base-to-world):
-            [vqT_b,~,~,~] = mexWholeBodyModel('get-state');
+            [vqT_b,~,~,~] = yarpWBM('get-state');
             [~,wf_R_b] = WBM.utilities.tfms.frame2posRotm(vqT_b);
 
             % We need to apply the world-to-base rotation b_R_wf to the spatial angular

@@ -38,9 +38,9 @@ function vqT_lnk = wbm_forwardKinematics(varargin)
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
     switch nargin
         case 1
-            vqT_lnk = mexWholeBodyModel('forward-kinematics', varargin{1,1});
+            vqT_lnk = yarpWBM('forward-kinematics', varargin{1,1});
         case 4
-            vqT_lnk = mexWholeBodyModel('forward-kinematics', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3}, varargin{1,4});
+            vqT_lnk = yarpWBM('forward-kinematics', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3}, varargin{1,4});
         otherwise
             wbm_narginError('wbm_forwardKinematics');
     end

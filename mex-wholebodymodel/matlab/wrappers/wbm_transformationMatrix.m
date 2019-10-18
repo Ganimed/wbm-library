@@ -35,9 +35,9 @@ function wf_H_lnk = wbm_transformationMatrix(varargin)
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
     switch nargin
         case 1
-            wf_H_lnk = mexWholeBodyModel('transformation-matrix', varargin{1,1});
+            wf_H_lnk = yarpWBM('transformation-matrix', varargin{1,1});
         case 4
-            wf_H_lnk = mexWholeBodyModel('transformation-matrix', reshape(varargin{1,1}, 9, 1), varargin{1,2}, ...
+            wf_H_lnk = yarpWBM('transformation-matrix', reshape(varargin{1,1}, 9, 1), varargin{1,2}, ...
                                                                   varargin{1,3}, varargin{1,4});
         otherwise
             wbm_narginError('wbm_transformationMatrix');

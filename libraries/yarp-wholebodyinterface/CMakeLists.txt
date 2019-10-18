@@ -1,13 +1,20 @@
 # Copyright: (C) 2013 CoDyCo Consortium
-# Authors: Andrea Del Prete
-# CopyPolicy: Released under the terms of the GNU GPL v2.0 (or any later version).
+# Authors: Andrea Del Prete; 2013
+#          Silvio Traversaro; 2014-2017
+#          Martin Neururer (martin.neururer@gmail.com); 2019
+# Date: October 2019
+#
+# This CMake file is part of the Whole-Body Model Library for Matlab (WBML).
+#
+# CopyPolicy: Released under the terms of the GNU GPL v2.0 or later.
+cmake_minimum_required(VERSION 2.8.12.2)
 
-cmake_minimum_required(VERSION 2.8.11)
 project(yarpWholeBodyInterface CXX)
 
 set(LIBRARY_NAME yarpwholebodyinterface)
+set(INCLUDE_DIR yarpWholeBodyInterface)
+
 set(VARS_PREFIX ${PROJECT_NAME})
-set(INCLUDE_DIRS yarpWholeBodyInterface)
 
 set(${VARS_PREFIX}_MAJOR_VERSION 0)
 set(${VARS_PREFIX}_MINOR_VERSION 3)
@@ -32,7 +39,7 @@ if (${YARP_VERSION} VERSION_LESS 2.3.69.8)
     add_definitions(-DYARPWBI_YARP_HAS_LEGACY_IOPENLOOP)
 endif ()
 
-find_package(iDynTree 0.3.14 REQUIRED)
+find_package(iDynTree 0.4.0 REQUIRED)
 find_package(ICUB REQUIRED)
 find_package(wholeBodyInterface 0.2.6 REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -101,12 +108,12 @@ target_include_directories(${LIBRARY_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CUR
                                         "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${${VARS_PREFIX}_INSTALL_INCLUDEDIR}>")
 
 target_include_directories(${LIBRARY_NAME} PUBLIC
-                                    ${YARP_INCLUDE_DIRS}
-                                    ${iDynTree_INCLUDE_DIRS}
-                                    ${wholeBodyInterface_INCLUDE_DIRS}
+                                    ${YARP_INCLUDE_DIR}
+                                    ${iDynTree_INCLUDE_DIR}
+                                    ${wholeBodyInterface_INCLUDE_DIR}
                                     ${EIGEN3_INCLUDE_DIR}
-                                    ${skinDynLib_INCLUDE_DIRS}
-                                    ${ctrlLib_INCLUDE_DIRS})
+                                    ${skinDynLib_INCLUDE_DIR}
+                                    ${ctrlLib_INCLUDE_DIR})
 
 
 target_link_libraries(${LIBRARY_NAME} LINK_PUBLIC ${YARP_LIBRARIES}
@@ -119,7 +126,7 @@ install(TARGETS ${LIBRARY_NAME}
         RUNTIME DESTINATION "${${VARS_PREFIX}_INSTALL_BINDIR}" COMPONENT bin
         LIBRARY DESTINATION "${${VARS_PREFIX}_INSTALL_LIBDIR}" COMPONENT shlib
         ARCHIVE DESTINATION "${${VARS_PREFIX}_INSTALL_LIBDIR}" COMPONENT lib
-        PUBLIC_HEADER DESTINATION "${${VARS_PREFIX}_INSTALL_INCLUDEDIR}/${INCLUDE_DIRS}" COMPONENT dev)
+        PUBLIC_HEADER DESTINATION "${${VARS_PREFIX}_INSTALL_INCLUDEDIR}/${INCLUDE_DIR}" COMPONENT dev)
 
 set_property(GLOBAL APPEND PROPERTY ${VARS_PREFIX}_TARGETS ${LIBRARY_NAME})
 

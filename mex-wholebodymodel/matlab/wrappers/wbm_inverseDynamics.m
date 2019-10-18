@@ -37,9 +37,9 @@ function tau_j = wbm_inverseDynamics(varargin)
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
     switch nargin
         case 2
-            tau_j = mexWholeBodyModel('inverse-dynamics', varargin{1,1}, varargin{1,2});
+            tau_j = yarpWBM('inverse-dynamics', varargin{1,1}, varargin{1,2});
         case 7
-            tau_j = mexWholeBodyModel('inverse-dynamics', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3}, ...
+            tau_j = yarpWBM('inverse-dynamics', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3}, ...
                                                           varargin{1,4}, varargin{1,5}, varargin{1,6}, varargin{1,7});
         otherwise
             wbm_narginError('wbm_inverseDynamics');

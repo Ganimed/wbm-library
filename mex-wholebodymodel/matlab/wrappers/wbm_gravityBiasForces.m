@@ -39,9 +39,9 @@ function g_q = wbm_gravityBiasForces(varargin)
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
     switch nargin
         case 0
-            g_q = mexWholeBodyModel('gravity-forces');
+            g_q = yarpWBM('gravity-forces');
         case 3
-            g_q = mexWholeBodyModel('gravity-forces', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3});
+            g_q = yarpWBM('gravity-forces', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3});
         otherwise
             wbm_narginError('wbm_gravityBiasForces');
     end

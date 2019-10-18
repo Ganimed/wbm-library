@@ -41,9 +41,9 @@ function c_qv = wbm_coriolisBiasForces(varargin)
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
     switch nargin
         case 0
-            c_qv = mexWholeBodyModel('coriolis-forces');
+            c_qv = yarpWBM('coriolis-forces');
         case 5
-            c_qv = mexWholeBodyModel('coriolis-forces', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3}, ...
+            c_qv = yarpWBM('coriolis-forces', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3}, ...
                                                         varargin{1,4}, varargin{1,5});
         otherwise
             wbm_narginError('wbm_coriolisBiasForces');

@@ -7,7 +7,7 @@ function wbm_setWorldFrame(varargin)
     % can also be a contact constraint link.
     %
     % Note:
-    %   The internally specified base-to-world transformation matrix wf_H_b of the mexWholeBodyModel
+    %   The internally specified base-to-world transformation matrix wf_H_b of the yarpWBM
     %   supports (w.r.t. a given joint configuration q_j) the optimized computations of all kinematic
     %   and dynamic functions of the given C++ component classes. Moreover, it supports also the
     %   computation of the base VQ-transformation vqT_b of the current model's state.
@@ -39,7 +39,7 @@ function wbm_setWorldFrame(varargin)
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
     switch nargin
         case 3
-            mexWholeBodyModel('set-world-frame', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3});
+            yarpWBM('set-world-frame', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3});
         otherwise
             wbm_narginError('wbm_setWorldFrame');
     end

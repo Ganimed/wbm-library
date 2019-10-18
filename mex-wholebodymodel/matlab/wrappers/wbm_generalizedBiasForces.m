@@ -41,9 +41,9 @@ function c_qv = wbm_generalizedBiasForces(varargin)
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
     switch nargin
         case 0
-            c_qv = mexWholeBodyModel('generalized-forces');
+            c_qv = yarpWBM('generalized-forces');
         case 5
-            c_qv = mexWholeBodyModel('generalized-forces', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3}, ...
+            c_qv = yarpWBM('generalized-forces', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3}, ...
                                                            varargin{1,4}, varargin{1,5});
         otherwise
             wbm_narginError('wbm_generalizedBiasForces');

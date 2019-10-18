@@ -43,14 +43,14 @@ function [M, c_qv, h_c] = wbm_wholeBodyDynamics(varargin)
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
     switch nargin
         case 0
-            M    = mexWholeBodyModel('mass-matrix');
-            c_qv = mexWholeBodyModel('generalized-forces');
-            h_c  = mexWholeBodyModel('centroidal-momentum');
+            M    = yarpWBM('mass-matrix');
+            c_qv = yarpWBM('generalized-forces');
+            h_c  = yarpWBM('centroidal-momentum');
         case 5
             wf_R_b_arr = reshape(varargin{1,1}, 9, 1);
-            M    = mexWholeBodyModel('mass-matrix', wf_R_b_arr, varargin{1,2}, varargin{1,3});
-            c_qv = mexWholeBodyModel('generalized-forces', wf_R_b_arr,varargin{1,2}, varargin{1,3}, varargin{1,4}, varargin{1,5});
-            h_c  = mexWholeBodyModel('centroidal-momentum', wf_R_b_arr, varargin{1,2}, varargin{1,3}, varargin{1,4}, varargin{1,5});
+            M    = yarpWBM('mass-matrix', wf_R_b_arr, varargin{1,2}, varargin{1,3});
+            c_qv = yarpWBM('generalized-forces', wf_R_b_arr,varargin{1,2}, varargin{1,3}, varargin{1,4}, varargin{1,5});
+            h_c  = yarpWBM('centroidal-momentum', wf_R_b_arr, varargin{1,2}, varargin{1,3}, varargin{1,4}, varargin{1,5});
         otherwise
             wbm_narginError('wbm_wholeBodyDynamics');
     end

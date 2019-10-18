@@ -29,7 +29,7 @@ function wbm_updateState(varargin)
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
     switch nargin
         case 3
-            mexWholeBodyModel('update-state', varargin{1,1}, varargin{1,2}, varargin{1,3});
+            yarpWBM('update-state', varargin{1,1}, varargin{1,2}, varargin{1,3});
         otherwise
             wbm_narginError('wbm_updateState');
     end

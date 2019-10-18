@@ -382,7 +382,7 @@ function [veT_cl, eul_cl] = calcDesiredRefPoseEul(obj, wf_R_b_arr, wf_p_b, q_j, 
     clnk_name = obj.mwbm_config.ccstr_link_names{1,clnk_idx};
 
     % get the forward kinematic transformation (clink-to-world) of the contact link ...
-    vqT_cl = mexWholeBodyModel('forward-kinematics', wf_R_b_arr, wf_p_b, q_j, clnk_name);
+    vqT_cl = yarpWBM('forward-kinematics', wf_R_b_arr, wf_p_b, q_j, clnk_name);
     % get the position and transform the orientation into Euler-angles ...
     [p_cl, eul_cl] = WBM.utilities.tfms.frame2posEul(vqT_cl);
 
@@ -396,7 +396,7 @@ function [vqT_cl, quat_cl] = calcDesiredRefPoseQuat(obj, wf_R_b_arr, wf_p_b, q_j
     clnk_name = obj.mwbm_config.ccstr_link_names{1,clnk_idx};
 
     % get the forward kinematic transformation (clink-to-world) of the contact link ...
-    vqT_cl = mexWholeBodyModel('forward-kinematics', wf_R_b_arr, wf_p_b, q_j, clnk_name);
+    vqT_cl = yarpWBM('forward-kinematics', wf_R_b_arr, wf_p_b, q_j, clnk_name);
     % get the quaternion part of the transformation ...
     quat_cl = vqT_cl(4:7,1);
 end

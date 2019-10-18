@@ -388,11 +388,11 @@ function fk_new_pose = poseTransformationsCL(clink_l, clink_r, varargin)
             % wf_R_b_arr = varargin{1}
             % wf_p_b     = varargin{2}
             % q_j        = varargin{3}
-            fk_new_pose.vqT_llnk = mexWholeBodyModel('forward-kinematics', varargin{1,1}, varargin{1,2}, varargin{1,3}, clink_l);
-            fk_new_pose.vqT_rlnk = mexWholeBodyModel('forward-kinematics', varargin{1,1}, varargin{1,2}, varargin{1,3}, clink_r);
+            fk_new_pose.vqT_llnk = yarpWBM('forward-kinematics', varargin{1,1}, varargin{1,2}, varargin{1,3}, clink_l);
+            fk_new_pose.vqT_rlnk = yarpWBM('forward-kinematics', varargin{1,1}, varargin{1,2}, varargin{1,3}, clink_r);
         case 2 % optimized mode:
-            fk_new_pose.vqT_llnk = mexWholeBodyModel('forward-kinematics', clink_l);
-            fk_new_pose.vqT_rlnk = mexWholeBodyModel('forward-kinematics', clink_r);
+            fk_new_pose.vqT_llnk = yarpWBM('forward-kinematics', clink_l);
+            fk_new_pose.vqT_rlnk = yarpWBM('forward-kinematics', clink_r);
         otherwise
             error('poseTransformationsCL: %s', WBM.wbmErrorMsg.WRONG_NARGIN);
     end
@@ -405,9 +405,9 @@ function fk_new_pose = poseTransformationLeftCL(clink_l, varargin)
             % wf_R_b_arr = varargin{1}
             % wf_p_b     = varargin{2}
             % q_j        = varargin{3}
-            fk_new_pose.vqT_llnk = mexWholeBodyModel('forward-kinematics', varargin{1,1}, varargin{1,2}, varargin{1,3}, clink_l);
+            fk_new_pose.vqT_llnk = yarpWBM('forward-kinematics', varargin{1,1}, varargin{1,2}, varargin{1,3}, clink_l);
         case 1 % optimized mode:
-            fk_new_pose.vqT_llnk = mexWholeBodyModel('forward-kinematics', clink_l);
+            fk_new_pose.vqT_llnk = yarpWBM('forward-kinematics', clink_l);
         otherwise
             error('poseTransformationLeftCL: %s', WBM.wbmErrorMsg.WRONG_NARGIN);
     end
@@ -420,9 +420,9 @@ function fk_new_pose = poseTransformationRightCL(clink_r, varargin)
             % wf_R_b_arr = varargin{1}
             % wf_p_b     = varargin{2}
             % q_j        = varargin{3}
-            fk_new_pose.vqT_rlnk = mexWholeBodyModel('forward-kinematics', varargin{1,1}, varargin{1,2}, varargin{1,3}, clink_r);
+            fk_new_pose.vqT_rlnk = yarpWBM('forward-kinematics', varargin{1,1}, varargin{1,2}, varargin{1,3}, clink_r);
         case 1 % optimized mode:
-            fk_new_pose.vqT_rlnk = mexWholeBodyModel('forward-kinematics', clink_r);
+            fk_new_pose.vqT_rlnk = yarpWBM('forward-kinematics', clink_r);
         otherwise
             error('poseTransformationRightCL: %s', WBM.wbmErrorMsg.WRONG_NARGIN);
     end

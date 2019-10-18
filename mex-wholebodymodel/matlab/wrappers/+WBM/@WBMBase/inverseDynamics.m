@@ -131,7 +131,7 @@ function tau_j = inverseDynamics(obj, varargin)
     switch nargin
         case 8 % normal modes:
             wf_R_b_arr = reshape(varargin{1,1}, 9, 1);
-            tau    = mexWholeBodyModel('inverse-dynamics', wf_R_b_arr, varargin{1,2}, varargin{1,3}, ...
+            tau    = yarpWBM('inverse-dynamics', wf_R_b_arr, varargin{1,2}, varargin{1,3}, ...
                                        varargin{1,4}, varargin{1,5}, varargin{1,6},  varargin{1,7});
             tau_fr = frictionForces(obj, varargin{1,4}); % friction torques (negative values)
             tau_fr = vertcat(zeros(6,1), tau_fr);
@@ -147,8 +147,8 @@ function tau_j = inverseDynamics(obj, varargin)
             ddq_j  = varargin{1,6};
 
             wf_R_b_arr = reshape(varargin{1,1}, 9, 1);
-            M    = mexWholeBodyModel('mass-matrix', wf_R_b_arr, wf_p_b, q_j);
-            c_qv = mexWholeBodyModel('generalized-forces', wf_R_b_arr, wf_p_b, q_j, dq_j, varargin{1,5});
+            M    = yarpWBM('mass-matrix', wf_R_b_arr, wf_p_b, q_j);
+            c_qv = yarpWBM('generalized-forces', wf_R_b_arr, wf_p_b, q_j, dq_j, varargin{1,5});
         case 4 % optimized modes:
             % dq_j  = varargin{1}
             % ddq_j = varargin{2}
@@ -157,7 +157,7 @@ function tau_j = inverseDynamics(obj, varargin)
             % Note: The same vector dq_j is already stored inside of the mex-subroutine. Because
             %       before any function can be used in optimized mode, the function "setState"
             %       must be called previously to update the state parameters q_j, dq_j and v_b.
-            tau    = mexWholeBodyModel('inverse-dynamics', varargin{1,2}, varargin{1,3});
+            tau    = yarpWBM('inverse-dynamics', varargin{1,2}, varargin{1,3});
             tau_fr = frictionForces(obj, varargin{1,1});
             tau_fr = vertcat(zeros(6,1), tau_fr);
 
@@ -168,8 +168,8 @@ function tau_j = inverseDynamics(obj, varargin)
             dq_j  = varargin{1,1};
             ddq_j = varargin{1,2};
 
-            M    = mexWholeBodyModel('mass-matrix');
-            c_qv = mexWholeBodyModel('generalized-forces');
+            M    = yarpWBM('mass-matrix');
+            c_qv = yarpWBM('generalized-forces');
     otherwise
         error('WBMBase::inverseDynamics: %s', WBM.wbmErrorMsg.WRONG_NARGIN);
     end

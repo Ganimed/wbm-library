@@ -31,5 +31,5 @@ function [wf_R_b, wf_p_b, v_b] = wbm_getFloatingBaseState()
     % A copy of the GNU Lesser General Public License can be found along
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
 
-    [wf_R_b, wf_p_b, v_b] = mexWholeBodyModel('get-base-state');
+    [wf_R_b, wf_p_b, v_b] = yarpWBM('get-base-state');
 end

@@ -41,9 +41,9 @@ function djdq_lnk = wbm_dJdq(varargin)
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
     switch nargin
         case 1
-            djdq_lnk = mexWholeBodyModel('dJdq', varargin{1,1});
+            djdq_lnk = yarpWBM('dJdq', varargin{1,1});
         case 6
-            djdq_lnk = mexWholeBodyModel('dJdq', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3}, ...
+            djdq_lnk = yarpWBM('dJdq', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3}, ...
                                                  varargin{1,4}, varargin{1,5}, varargin{1,6});
         otherwise
             wbm_narginError('wbm_dJdq');

@@ -40,9 +40,9 @@ function h_c = wbm_centroidalMomentum(varargin)
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
     switch nargin
         case 0
-            h_c = mexWholeBodyModel('centroidal-momentum');
+            h_c = yarpWBM('centroidal-momentum');
         case 5
-            h_c = mexWholeBodyModel('centroidal-momentum', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3}, ...
+            h_c = yarpWBM('centroidal-momentum', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3}, ...
                                                            varargin{1,4}, varargin{1,5});
         otherwise
             wbm_narginError('wbm_centroidalMomentum');

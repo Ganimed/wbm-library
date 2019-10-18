@@ -143,8 +143,8 @@ function [Jc, djcdq] = contactJacobians(obj, varargin)
             idx = idx_list(1,i);
             ccstr_link = obj.mwbm_config.ccstr_link_names{1,idx};
 
-            Jc(6*i-5:6*i,1:n)  = mexWholeBodyModel('jacobian', wf_R_b_arr, wf_p_b, q_j, ccstr_link); % 6*(i-1)+1 = 6*i-5
-            djcdq(6*i-5:6*i,1) = mexWholeBodyModel('dJdq', wf_R_b_arr, wf_p_b, q_j, dq_j, v_b, ccstr_link);
+            Jc(6*i-5:6*i,1:n)  = yarpWBM('jacobian', wf_R_b_arr, wf_p_b, q_j, ccstr_link); % 6*(i-1)+1 = 6*i-5
+            djcdq(6*i-5:6*i,1) = yarpWBM('dJdq', wf_R_b_arr, wf_p_b, q_j, dq_j, v_b, ccstr_link);
         end
     else
         % optimized mode:
@@ -152,8 +152,8 @@ function [Jc, djcdq] = contactJacobians(obj, varargin)
             idx = idx_list(1,i);
             ccstr_link = obj.mwbm_config.ccstr_link_names{1,idx};
 
-            Jc(6*i-5:6*i,1:n)  = mexWholeBodyModel('jacobian', ccstr_link);
-            djcdq(6*i-5:6*i,1) = mexWholeBodyModel('dJdq', ccstr_link);
+            Jc(6*i-5:6*i,1:n)  = yarpWBM('jacobian', ccstr_link);
+            djcdq(6*i-5:6*i,1) = yarpWBM('dJdq', ccstr_link);
         end
     end
 end

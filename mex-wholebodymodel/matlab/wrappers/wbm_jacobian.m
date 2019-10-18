@@ -36,9 +36,9 @@ function wf_J_lnk = wbm_jacobian(varargin)
     % with the WBML. If not, see <http://www.gnu.org/licenses/>.
     switch nargin
         case 1
-            wf_J_lnk = mexWholeBodyModel('jacobian', varargin{1,1});
+            wf_J_lnk = yarpWBM('jacobian', varargin{1,1});
         case 4
-            wf_J_lnk = mexWholeBodyModel('jacobian', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3}, varargin{1,4});
+            wf_J_lnk = yarpWBM('jacobian', reshape(varargin{1,1}, 9, 1), varargin{1,2}, varargin{1,3}, varargin{1,4});
         otherwise
             wbm_narginError('wbm_jacobian');
     end
